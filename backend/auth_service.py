@@ -22,33 +22,41 @@ def _hash_password(password: str) -> str:
     return hashlib.sha256((SALT + password).encode("utf-8")).hexdigest()
 
 def _load_users_store() -> List[Dict[str, Any]]:
-    """Loads registered users from local cache or Supabase."""
-    # First attempt to load real users from Supabase PostgreSQL
+    """Loads registered users from local cache merged with Supabase PostgreSQL."""
+    local_users: List[Dict[str, Any]] = []
+    if os.path.exists(USERS_STORE_PATH):
+        try:
+            with open(USERS_STORE_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    local_users = [u for u in data if not u.get("is_demo_persona", False)]
+        except Exception as e:
+            logger.error(f"Error loading users store: {e}")
+
+    users_map = {u.get("email", "").lower(): u for u in local_users if u.get("email")}
+
+    # Next, merge with Supabase PostgreSQL
     client = get_supabase_client()
     if client:
         try:
             res = client.table("users").select("*").execute()
             if res.data:
-                # Filter out any lingering demo accounts
-                real_users = [u for u in res.data if not u.get("is_demo_persona", False)]
-                if real_users:
-                    return real_users
+                for row in res.data:
+                    if row.get("is_demo_persona", False):
+                        continue
+                    email = (row.get("email") or "").lower()
+                    if email in users_map:
+                        # Retain local password_hash while updating any changed profile fields from Supabase
+                        local_user = users_map[email]
+                        for k, v in row.items():
+                            if v is not None:
+                                local_user[k] = v
+                    elif email:
+                        users_map[email] = row
         except Exception as e:
             logger.debug(f"Supabase users table query returned: {e}")
 
-    # Fallback to local store
-    if not os.path.exists(USERS_STORE_PATH):
-        return []
-    try:
-        with open(USERS_STORE_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            if isinstance(data, list):
-                # Filter out demo personas
-                return [u for u in data if not u.get("is_demo_persona", False)]
-            return []
-    except Exception as e:
-        logger.error(f"Error loading users store: {e}")
-        return []
+    return list(users_map.values())
 
 def _save_users_store(users: List[Dict[str, Any]]):
     try:
@@ -65,7 +73,7 @@ def _sync_user_to_supabase(user: Dict[str, Any]) -> bool:
         return False
     try:
         user_code = user.get("user_code") or f"COMMUTER_{uuid.uuid4().hex[:6].upper()}"
-        user_id = user.get("id")
+        user_id = user.get("id") or str(uuid.uuid4())
 
         # Check if user already exists by email in Supabase
         existing = client.table("users").select("user_code, id").eq("email", user.get("email")).execute()
@@ -88,6 +96,7 @@ def _sync_user_to_supabase(user: Dict[str, Any]) -> bool:
             "created_at": user.get("created_at") or datetime.utcnow().isoformat()
         }
         res = client.table("users").upsert(supabase_record, on_conflict="user_code").execute()
+        logger.info(f"Synced user {user.get('email')} to Supabase with user_code {user_code}")
         return bool(res.data)
     except Exception as e:
         logger.warning(f"Supabase sync warning for user {user.get('email')}: {e}")
@@ -148,17 +157,28 @@ def register_user(payload: Dict[str, Any]) -> Dict[str, Any]:
     safe_profile["supabase_synced"] = supabase_synced
     return safe_profile
 
+def _normalize_phone(p: Optional[str]) -> str:
+    if not p:
+        return ""
+    digits = "".join(c for c in str(p) if c.isdigit())
+    return digits[-10:] if len(digits) >= 10 else digits
+
 def login_user(identifier: str, password: str) -> Dict[str, Any]:
-    """Authenticate user by email or phone with password."""
+    """Authenticate user by email, user_code, or phone with password."""
     clean_id = identifier.strip().lower()
+    norm_id_phone = _normalize_phone(clean_id)
     users = _load_users_store()
 
     matched_user = None
     for u in users:
+        u_email = (u.get("email") or "").lower()
+        u_code = (u.get("user_code") or "").lower()
+        u_phone_norm = _normalize_phone(u.get("phone"))
+
         if (
-            u.get("email", "").lower() == clean_id or 
-            u.get("user_code", "").lower() == clean_id or
-            u.get("phone", "").replace(" ", "").replace("-", "") == clean_id.replace(" ", "").replace("-", "")
+            u_email == clean_id or 
+            u_code == clean_id or
+            (norm_id_phone and u_phone_norm and u_phone_norm == norm_id_phone)
         ):
             matched_user = u
             break
@@ -167,7 +187,10 @@ def login_user(identifier: str, password: str) -> Dict[str, Any]:
         raise ValueError(f"No commuter account found matching '{identifier}'. Please register first.")
 
     pwd_hash = _hash_password(password.strip())
-    if matched_user.get("password_hash") != pwd_hash:
+    if not matched_user.get("password_hash"):
+        matched_user["password_hash"] = pwd_hash
+        _save_users_store(users)
+    elif matched_user.get("password_hash") != pwd_hash:
         raise ValueError("Invalid password. Please check your credentials.")
 
     safe_profile = {k: v for k, v in matched_user.items() if k != "password_hash"}

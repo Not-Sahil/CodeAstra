@@ -70,10 +70,13 @@ class RegisterRequest(BaseModel):
     default_origin: Optional[str] = "Ashokvan (Borivali East)"
     default_destination: Optional[str] = "Rajiv Gandhi Institute of Technology (RGIT, Versova)"
     corridor_landmark: Optional[str] = ""
-    preferred_mode: Optional[str] = "MOTORCYCLE"
+    preferred_mode: Optional[str] = "DRIVE"
     secondary_mode: Optional[str] = "METRO"
     departure_time: Optional[str] = "08:00:00"
     target_arrival_time: Optional[str] = "09:00:00"
+    scheduled_sms_time: Optional[str] = "08:00"
+    sms_consent: Optional[bool] = False
+    sms_notifications_enabled: Optional[bool] = False
     alert_preferences: Optional[Dict[str, Any]] = None
     emergency_contact: Optional[Dict[str, Any]] = None
 

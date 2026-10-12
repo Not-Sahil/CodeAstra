@@ -102,5 +102,25 @@
     },
     "created_at": "2026-10-12T20:50:13.103782",
     "is_demo_persona": false
+  },
+  {
+    "id": "2d5df373-7bae-4938-8689-c0fd12d9cb65",
+    "user_code": "COMMUTER_106",
+    "full_name": "Sahil Surve",
+    "email": "sahilsurve681@gmail.com",
+    "phone": "+919372912368",
+    "password_hash": "e74df3889923e1e6bfd79a8cef8451a1070b32563c0f864a76aafc99ed8ab413",
+    "default_origin": "Borivali",
+    "default_destination": "Rajiv Gandhi Institute of Technology (RGIT, Versova)",
+    "preferred_mode": "MOTORCYCLE",
+    "scheduled_sms_time": "08:00",
+    "sms_consent": true,
+    "sms_notifications_enabled": true,
+    "alert_preferences": {
+      "notify_sms": true,
+      "notify_in_app": true
+    },
+    "created_at": "2026-10-12T21:15:45.342746",
+    "is_demo_persona": false
   }
 ]
