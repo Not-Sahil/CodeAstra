@@ -167,10 +167,17 @@ class CommuteEvaluationRequest(BaseModel):
     destination: str
     preferred_mode: str = "MOTORCYCLE"
     name: Optional[str] = "Sahil"
+    corridor_threshold_m: Optional[float] = 350.0
 
 @app.post("/api/commute/evaluate")
 def evaluate_commute(req: CommuteEvaluationRequest):
-    result = engine.evaluate_custom_commute(req.origin, req.destination, req.preferred_mode, req.name or "Commuter")
+    result = engine.evaluate_custom_commute(
+        origin=req.origin,
+        destination=req.destination,
+        preferred_mode=req.preferred_mode,
+        user_name=req.name or "Commuter",
+        corridor_threshold_m=req.corridor_threshold_m or 350.0
+    )
     save_commute_query_record({
         "user_name": req.name or "Commuter",
         "origin": req.origin,
@@ -182,7 +189,12 @@ def evaluate_commute(req: CommuteEvaluationRequest):
         "incident_exposure_score": result.get("incident_exposure_score", "MODERATE"),
         "nearby_hazards_count": result.get("nearby_hazards_count", 0),
         "intersecting_incidents": result.get("intersecting_incidents", []),
-        "itinerary_details": result.get("travel_options", [])
+        "itinerary_details": result.get("travel_options", []),
+        "corridor_threshold_m": req.corridor_threshold_m or 350.0,
+        "route_geometry": result.get("map_route", {}),
+        "alternative_routes": result.get("alternative_routes", []),
+        "is_authoritative_google_route": result.get("is_authoritative_google_route", True),
+        "routing_provider": result.get("routing_provider", "GOOGLE_ROUTES_API_V2")
     })
     return result
 
@@ -191,9 +203,16 @@ def evaluate_commute_get(
     origin: str = "Ashokvan (Borivali East)",
     destination: str = "RGIT (Versova)",
     preferred_mode: str = "MOTORCYCLE",
-    name: str = "Sahil"
+    name: str = "Sahil",
+    corridor_threshold_m: float = 350.0
 ):
-    result = engine.evaluate_custom_commute(origin, destination, preferred_mode, name)
+    result = engine.evaluate_custom_commute(
+        origin=origin,
+        destination=destination,
+        preferred_mode=preferred_mode,
+        user_name=name,
+        corridor_threshold_m=corridor_threshold_m
+    )
     save_commute_query_record({
         "user_name": name,
         "origin": origin,
@@ -205,9 +224,60 @@ def evaluate_commute_get(
         "incident_exposure_score": result.get("incident_exposure_score", "MODERATE"),
         "nearby_hazards_count": result.get("nearby_hazards_count", 0),
         "intersecting_incidents": result.get("intersecting_incidents", []),
-        "itinerary_details": result.get("travel_options", [])
+        "itinerary_details": result.get("travel_options", []),
+        "corridor_threshold_m": corridor_threshold_m,
+        "route_geometry": result.get("map_route", {}),
+        "alternative_routes": result.get("alternative_routes", []),
+        "is_authoritative_google_route": result.get("is_authoritative_google_route", True),
+        "routing_provider": result.get("routing_provider", "GOOGLE_ROUTES_API_V2")
     })
     return result
+
+@app.get("/api/routes/google")
+def get_google_route_geometry(
+    origin: str = "Ashokvan (Borivali East)",
+    destination: str = "RGIT (Versova)",
+    travel_mode: str = "DRIVE",
+    corridor_threshold_m: float = 350.0
+):
+    """Direct Google Routes API v2 route geometry and corridor inspection endpoint."""
+    orig_c, o_ok, o_msg = engine.google_routing.resolve_location(origin)
+    dest_c, d_ok, d_msg = engine.google_routing.resolve_location(destination)
+    if not o_ok or not d_ok:
+        return {
+            "status": "LOCATION_RESOLUTION_FAILED",
+            "success": False,
+            "origin_resolved": o_ok,
+            "destination_resolved": d_ok,
+            "message": f"Could not resolve locations: {o_msg if not o_ok else ''} {d_msg if not d_ok else ''}"
+        }
+    routes_res = engine.google_routing.compute_routes(orig_c, dest_c, travel_mode=travel_mode, compute_alternatives=True)
+    if not routes_res.get("success"):
+        return routes_res
+    
+    # Match against active incidents
+    active_incidents = engine.get_active_incidents()
+    routes = routes_res.get("routes", [])
+    primary_polyline = routes[0]["polyline_coords"] if routes else []
+    corridor_eval = engine.corridor_matcher.match_incidents_to_route(
+        route_polyline=primary_polyline,
+        incidents=active_incidents,
+        travel_mode=travel_mode,
+        corridor_threshold_m=corridor_threshold_m
+    )
+
+    return {
+        "status": "SUCCESS",
+        "provider": "GOOGLE_ROUTES_API_V2",
+        "origin_coordinates": orig_c,
+        "destination_coordinates": dest_c,
+        "total_routes_count": len(routes),
+        "corridor_threshold_m": corridor_threshold_m,
+        "route_relevant_incidents": corridor_eval["route_relevant_incidents"],
+        "route_relevant_count": len(corridor_eval["route_relevant_incidents"]),
+        "off_route_hazards_count": len(corridor_eval["off_route_hazards"]),
+        "routes": routes
+    }
 
 @app.get("/api/commute/locations")
 def get_commute_locations():

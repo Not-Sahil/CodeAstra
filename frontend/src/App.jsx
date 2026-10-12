@@ -388,7 +388,8 @@ export default function App() {
     origin = commuteOrigin,
     dest = commuteDestination,
     mode = commuteMode,
-    name = commuterName
+    name = commuterName,
+    corridorThresholdM = 350.0
   ) => {
     setIsEvaluating(true);
     try {
@@ -399,7 +400,8 @@ export default function App() {
           origin: origin || 'Ashokvan (Borivali East)',
           destination: dest || 'Rajiv Gandhi Institute of Technology (RGIT, Versova)',
           preferred_mode: mode,
-          name: name || 'Student 001 (Sahil)'
+          name: name || 'Student 001 (Sahil)',
+          corridor_threshold_m: corridorThresholdM || 350.0
         })
       });
       const data = await res.json();
@@ -535,29 +537,56 @@ export default function App() {
     googlePolylinesRef.current.forEach(p => p.setMap(null));
     googlePolylinesRef.current = [];
 
-    // Render incidents across Mumbai
+    // Map of route-relevant incidents for instant corridor lookup
+    const routeRelevantMap = new Map();
+    (customCommuteResult?.intersecting_incidents || []).forEach(inc => {
+      routeRelevantMap.set(inc.incident_id, inc);
+    });
+
+    // Render incidents across Mumbai (Objective 4: Coordinate-Based Visualization)
     incidents.forEach(inc => {
+      const lat = inc.latitude || inc.centroid_lat;
+      const lon = inc.longitude || inc.centroid_lon;
+      if (lat == null || lon == null) return;
+
+      const matchedRouteInc = routeRelevantMap.get(inc.incident_id);
+      const isRouteRelevant = Boolean(matchedRouteInc);
+      const isCritical = inc.severity_level && inc.severity_level.includes('4');
+      const markerColor = isRouteRelevant 
+        ? '#ef4444' 
+        : (isCritical ? '#f97316' : '#64748b');
+
       const marker = new window.google.maps.Marker({
-        position: { lat: inc.centroid_lat, lng: inc.centroid_lon },
+        position: { lat, lng: lon },
         map: map,
         title: inc.title,
         icon: {
           path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: inc.severity_level.includes('4') ? '#ef4444' : '#f59e0b',
+          scale: isRouteRelevant ? 11 : 7,
+          fillColor: markerColor,
           fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 2
+          strokeColor: isRouteRelevant ? '#ffffff' : '#e2e8f0',
+          strokeWeight: isRouteRelevant ? 3 : 1.5
         }
       });
 
+      const corridorBadge = isRouteRelevant
+        ? `<div style="background:#fee2e2;color:#991b1b;padding:3px 7px;border-radius:4px;font-weight:700;margin-bottom:5px;font-size:10px;">⚠️ ON COMMUTE ROUTE (${matchedRouteInc.distance_from_route_meters || 0}m from centerline)</div>`
+        : `<div style="background:#f1f5f9;color:#475569;padding:3px 7px;border-radius:4px;margin-bottom:5px;font-size:10px;">ℹ️ CITYWIDE INCIDENT (Outside route corridor)</div>`;
+
       const infoWindow = new window.google.maps.InfoWindow({
         content: `
-          <div style="color:#0f172a;padding:6px;max-width:220px;font-family:sans-serif;">
-            <b style="color:#dc2626">${inc.title}</b><br/>
-            <small><b>Type:</b> ${inc.scenario_type}</small><br/>
-            <small><b>Severity:</b> ${inc.severity_level}</small><br/>
-            <small><b>Cause:</b> ${inc.known_cause}</small>
+          <div style="color:#0f172a;padding:8px;max-width:260px;font-family:system-ui,-apple-system,sans-serif;font-size:12px;line-height:1.4;">
+            ${corridorBadge}
+            <b style="color:${isRouteRelevant ? '#dc2626' : '#1e293b'};font-size:13px;">${inc.title}</b><br/>
+            <div style="margin-top:4px;font-size:11px;color:#334155;">
+              <b>Type:</b> ${inc.scenario_type}<br/>
+              <b>Severity:</b> ${inc.severity_level}<br/>
+              <b>Coordinates:</b> ${Number(lat).toFixed(4)}, ${Number(lon).toFixed(4)}<br/>
+              <b>Source:</b> ${inc.source || 'CAD 112'} (Reliability: ${((inc.source_reliability || 0.94) * 100).toFixed(0)}%)<br/>
+              <b>Status:</b> ${inc.status || 'ACTIVE'} ${inc.is_simulated ? '• [SIMULATED SCENARIO]' : ''}<br/>
+              <b>Impact:</b> ${inc.known_cause || inc.description || 'Active disruption'}
+            </div>
           </div>
         `
       });
@@ -569,21 +598,21 @@ export default function App() {
 
       googleMarkersRef.current.push(marker);
 
-      // Circle buffer
+      // Circle buffer around incident
       const circle = new window.google.maps.Circle({
-        strokeColor: inc.severity_level.includes('4') ? '#ef4444' : '#f59e0b',
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        fillColor: inc.severity_level.includes('4') ? '#ef4444' : '#f59e0b',
-        fillOpacity: 0.25,
+        strokeColor: markerColor,
+        strokeOpacity: isRouteRelevant ? 0.9 : 0.4,
+        strokeWeight: isRouteRelevant ? 2 : 1,
+        fillColor: markerColor,
+        fillOpacity: isRouteRelevant ? 0.22 : 0.08,
         map: map,
-        center: { lat: inc.centroid_lat, lng: inc.centroid_lon },
+        center: { lat, lng: lon },
         radius: (inc.radius_km || 1.2) * 1000
       });
       googleMarkersRef.current.push(circle);
     });
 
-    // Render active evaluated route
+    // Render Authoritative Google Maps Evaluated Route (Objective 2 & 4)
     const activeRoute = customCommuteResult?.map_route;
     if (activeRoute) {
       if (activeRoute.origin) {
@@ -605,30 +634,65 @@ export default function App() {
         googleMarkersRef.current.push(destMarker);
       }
 
-      if (activeRoute.disrupted_leg && activeRoute.disrupted_leg.length > 0) {
-        const path = activeRoute.disrupted_leg.map(c => ({ lat: c[0], lng: c[1] }));
+      // 1. Authoritative Primary Route Polyline from Google Routes API v2
+      if (activeRoute.primary_polyline && activeRoute.primary_polyline.length > 1) {
+        const path = activeRoute.primary_polyline.map(c => ({ lat: c[0], lng: c[1] }));
+        const isDisrupted = (customCommuteResult?.intersecting_incidents_count || 0) > 0;
         const poly = new window.google.maps.Polyline({
           path,
           geodesic: true,
-          strokeColor: '#f43f5e',
-          strokeOpacity: 0.9,
-          strokeWeight: 5
+          strokeColor: isDisrupted ? '#f43f5e' : '#38bdf8',
+          strokeOpacity: 0.95,
+          strokeWeight: 6
         });
         poly.setMap(map);
         googlePolylinesRef.current.push(poly);
       }
 
-      if (activeRoute.recommended_leg && activeRoute.recommended_leg.length > 0) {
-        const path = activeRoute.recommended_leg.map(c => ({ lat: c[0], lng: c[1] }));
-        const poly = new window.google.maps.Polyline({
-          path,
-          geodesic: true,
-          strokeColor: '#06d6a0',
-          strokeOpacity: 1.0,
-          strokeWeight: 5
+      // 2. Alternative Routes returned by Google Routes API
+      if (activeRoute.alternative_polylines && activeRoute.alternative_polylines.length > 0) {
+        activeRoute.alternative_polylines.forEach((altPoly, aIdx) => {
+          if (altPoly && altPoly.length > 1) {
+            const altPath = altPoly.map(c => ({ lat: c[0], lng: c[1] }));
+            const polyAlt = new window.google.maps.Polyline({
+              path: altPath,
+              geodesic: true,
+              strokeColor: '#94a3b8',
+              strokeOpacity: 0.65,
+              strokeWeight: 4
+            });
+            polyAlt.setMap(map);
+            googlePolylinesRef.current.push(polyAlt);
+          }
         });
-        poly.setMap(map);
-        googlePolylinesRef.current.push(poly);
+      }
+
+      // Backwards-compatible legs fallback if primary_polyline is missing
+      if (!activeRoute.primary_polyline || activeRoute.primary_polyline.length <= 1) {
+        if (activeRoute.disrupted_leg && activeRoute.disrupted_leg.length > 0) {
+          const path = activeRoute.disrupted_leg.map(c => ({ lat: c[0], lng: c[1] }));
+          const poly = new window.google.maps.Polyline({
+            path,
+            geodesic: true,
+            strokeColor: '#f43f5e',
+            strokeOpacity: 0.9,
+            strokeWeight: 5
+          });
+          poly.setMap(map);
+          googlePolylinesRef.current.push(poly);
+        }
+        if (activeRoute.recommended_leg && activeRoute.recommended_leg.length > 0) {
+          const path = activeRoute.recommended_leg.map(c => ({ lat: c[0], lng: c[1] }));
+          const poly = new window.google.maps.Polyline({
+            path,
+            geodesic: true,
+            strokeColor: '#06d6a0',
+            strokeOpacity: 1.0,
+            strokeWeight: 5
+          });
+          poly.setMap(map);
+          googlePolylinesRef.current.push(poly);
+        }
       }
     }
 
@@ -761,34 +825,55 @@ export default function App() {
       });
     }
 
-    // 3. ALL MUMBAI LIVE INCIDENTS
-    incidents.forEach(inc => {
-      const isCritical = inc.severity_level.includes('4');
-      const incColor = isCritical ? '#ef4444' : (inc.scenario_type.includes('Flooding') ? '#f43f5e' : '#f59e0b');
+    // Map of route-relevant incidents for instant corridor lookup
+    const routeRelevantMap = new Map();
+    (customCommuteResult?.intersecting_incidents || []).forEach(inc => {
+      routeRelevantMap.set(inc.incident_id, inc);
+    });
 
-      const circle = L.circle([inc.centroid_lat, inc.centroid_lon], {
+    // 3. ALL MUMBAI LIVE INCIDENTS (Objective 1 & 4)
+    incidents.forEach(inc => {
+      const lat = inc.latitude || inc.centroid_lat;
+      const lon = inc.longitude || inc.centroid_lon;
+      if (lat == null || lon == null) return;
+
+      const matchedRouteInc = routeRelevantMap.get(inc.incident_id);
+      const isRouteRelevant = Boolean(matchedRouteInc);
+      const isCritical = inc.severity_level && inc.severity_level.includes('4');
+      const incColor = isRouteRelevant ? '#ef4444' : (isCritical ? '#f97316' : '#64748b');
+
+      const circle = L.circle([lat, lon], {
         radius: (inc.radius_km || 1.2) * 1000,
         color: incColor,
         fillColor: incColor,
-        fillOpacity: 0.25,
-        weight: 2
+        fillOpacity: isRouteRelevant ? 0.25 : 0.08,
+        weight: isRouteRelevant ? 2 : 1
       }).bindPopup(`
-        <div style="font-family:sans-serif;font-size:12px;">
-          <strong style="color:${incColor}">🚨 ${inc.title}</strong><br/>
+        <div style="font-family:sans-serif;font-size:12px;line-height:1.4;">
+          ${isRouteRelevant 
+            ? `<div style="background:#fee2e2;color:#991b1b;padding:3px 6px;border-radius:4px;font-weight:700;margin-bottom:4px;font-size:10px;">⚠️ ON COMMUTE ROUTE (${matchedRouteInc.distance_from_route_meters}m from centerline)</div>` 
+            : `<div style="background:#f1f5f9;color:#475569;padding:3px 6px;border-radius:4px;margin-bottom:4px;font-size:10px;">ℹ️ CITYWIDE INCIDENT (Outside corridor)</div>`
+          }
+          <strong style="color:${isRouteRelevant ? '#dc2626' : '#0f172a'}">🚨 ${inc.title}</strong><br/>
           <b>Type:</b> ${inc.scenario_type}<br/>
           <b>Severity:</b> ${inc.severity_level}<br/>
-          <b>Affected Infrastructure:</b> ${inc.affected_infrastructure}<br/>
-          <b>Known Cause:</b> ${inc.known_cause}
+          <b>Coordinates:</b> ${Number(lat).toFixed(4)}, ${Number(lon).toFixed(4)}<br/>
+          <b>Source:</b> ${inc.source || 'CAD 112'} • Reliability: ${((inc.source_reliability || 0.94) * 100).toFixed(0)}%<br/>
+          <b>Cause:</b> ${inc.known_cause || inc.description || 'Active disruption'}
         </div>
       `);
 
-      const marker = L.circleMarker([inc.centroid_lat, inc.centroid_lon], {
-        radius: isCritical ? 8 : 6,
-        color: '#ffffff',
+      const marker = L.circleMarker([lat, lon], {
+        radius: isRouteRelevant ? 11 : 6,
+        color: isRouteRelevant ? '#ffffff' : '#cbd5e1',
         fillColor: incColor,
         fillOpacity: 1,
-        weight: 2
-      }).bindPopup(`<strong>${inc.title}</strong><br/>Click to inspect incident`);
+        weight: isRouteRelevant ? 3 : 1.5
+      }).bindPopup(`
+        <strong>${isRouteRelevant ? '⚠️ On Commute Route: ' : ''}${inc.title}</strong><br/>
+        ${isRouteRelevant ? `<span style="color:#ef4444;font-size:11px;">${matchedRouteInc.distance_from_route_meters}m from Google route</span><br/>` : ''}
+        <small>Click to inspect full evidence</small>
+      `);
 
       marker.on('click', () => setSelectedIncidentId(inc.incident_id));
 
@@ -796,36 +881,69 @@ export default function App() {
       layerGroupsRef.current.incidents.addLayer(marker);
     });
 
-    // 4. EVALUATED ROUTE OVERLAYS
+    // 4. EVALUATED ROUTE OVERLAYS (Objective 2 & 4: Authoritative Google Polyline)
     const activeRoute = customCommuteResult?.map_route;
     if (activeRoute && mapLayers.evaluatedRoute) {
-      if (activeRoute.clear_leg && activeRoute.clear_leg.length > 0) {
-        const leg1 = L.polyline(activeRoute.clear_leg, {
-          color: '#10b981',
+      // Authoritative Google Maps Primary Polyline
+      if (activeRoute.primary_polyline && activeRoute.primary_polyline.length > 1) {
+        const isDisrupted = (customCommuteResult?.intersecting_incidents_count || 0) > 0;
+        const mainPoly = L.polyline(activeRoute.primary_polyline, {
+          color: isDisrupted ? '#f43f5e' : '#38bdf8',
           weight: 6,
           opacity: 0.95
-        }).bindPopup(`<strong>🟢 Clear Section:</strong> Normal Corridor Flow`);
-        layerGroupsRef.current.evaluatedRoute.addLayer(leg1);
+        }).bindPopup(`
+          <strong>🗺️ Authoritative Route (${customCommuteResult?.routing_provider || 'Google Maps'})</strong><br/>
+          Distance: <b>${customCommuteResult?.distance_km} km</b> • Duration: <b>${customCommuteResult?.current_eta_min} mins</b><br/>
+          Corridor Buffer: <b>${activeRoute.corridor_threshold_m || 350}m</b>
+        `);
+        layerGroupsRef.current.evaluatedRoute.addLayer(mainPoly);
       }
 
-      if (activeRoute.disrupted_leg && activeRoute.disrupted_leg.length > 0) {
-        const leg2 = L.polyline(activeRoute.disrupted_leg, {
-          color: '#f43f5e',
-          weight: 6,
-          opacity: 0.9,
-          dashArray: '8, 8',
-          className: 'pulsing-flood-route'
-        }).bindPopup(`<strong>🔴 Disrupted Segment:</strong> +${customCommuteResult?.delay_min || 20}m Delay`);
-        layerGroupsRef.current.evaluatedRoute.addLayer(leg2);
+      // Alternative Routes if present
+      if (activeRoute.alternative_polylines && activeRoute.alternative_polylines.length > 0) {
+        activeRoute.alternative_polylines.forEach((altPoly, aIdx) => {
+          if (altPoly && altPoly.length > 1) {
+            const altLine = L.polyline(altPoly, {
+              color: '#94a3b8',
+              weight: 4,
+              opacity: 0.65,
+              dashArray: '5, 5'
+            }).bindPopup(`<strong>Alternative Option ${aIdx + 1}</strong>`);
+            layerGroupsRef.current.evaluatedRoute.addLayer(altLine);
+          }
+        });
       }
 
-      if (activeRoute.recommended_leg && activeRoute.recommended_leg.length > 0) {
-        const legRec = L.polyline(activeRoute.recommended_leg, {
-          color: '#06d6a0',
-          weight: 6,
-          opacity: 1
-        }).bindPopup(`<strong>⭐ Recommended Reroute:</strong> ${customCommuteResult?.recommended_mode}<br/>Saves ${customCommuteResult?.net_time_saved_min || 17} mins!`);
-        layerGroupsRef.current.evaluatedRoute.addLayer(legRec);
+      // Backwards-compatible legacy legs
+      if (!activeRoute.primary_polyline || activeRoute.primary_polyline.length <= 1) {
+        if (activeRoute.clear_leg && activeRoute.clear_leg.length > 0) {
+          const leg1 = L.polyline(activeRoute.clear_leg, {
+            color: '#10b981',
+            weight: 6,
+            opacity: 0.95
+          }).bindPopup(`<strong>🟢 Clear Section:</strong> Normal Flow`);
+          layerGroupsRef.current.evaluatedRoute.addLayer(leg1);
+        }
+
+        if (activeRoute.disrupted_leg && activeRoute.disrupted_leg.length > 0) {
+          const leg2 = L.polyline(activeRoute.disrupted_leg, {
+            color: '#f43f5e',
+            weight: 6,
+            opacity: 0.9,
+            dashArray: '8, 8',
+            className: 'pulsing-flood-route'
+          }).bindPopup(`<strong>🔴 Disrupted Segment:</strong> +${customCommuteResult?.delay_min || 20}m Delay`);
+          layerGroupsRef.current.evaluatedRoute.addLayer(leg2);
+        }
+
+        if (activeRoute.recommended_leg && activeRoute.recommended_leg.length > 0) {
+          const legRec = L.polyline(activeRoute.recommended_leg, {
+            color: '#06d6a0',
+            weight: 6,
+            opacity: 1
+          }).bindPopup(`<strong>⭐ Recommended Reroute:</strong> ${customCommuteResult?.recommended_mode}<br/>Saves ${customCommuteResult?.net_time_saved_min || 17} mins!`);
+          layerGroupsRef.current.evaluatedRoute.addLayer(legRec);
+        }
       }
 
       if (activeRoute.origin) {

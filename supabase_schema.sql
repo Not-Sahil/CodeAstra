@@ -54,9 +54,21 @@ CREATE TABLE IF NOT EXISTS public.incidents (
     confidence_score DOUBLE PRECISION DEFAULT 0.90,
     known_cause TEXT,
     status VARCHAR(50) DEFAULT 'ACTIVE', -- ACTIVE, CONTAINED, RESOLVED, VERIFYING
+    is_simulated BOOLEAN DEFAULT true, -- Explicitly distinguishes simulated scenarios from real-world incidents
+    location_verified BOOLEAN DEFAULT true, -- Marks whether geographic coordinates have been validated
+    source VARCHAR(100) DEFAULT 'MUMBAI_DISASTER_MANAGEMENT_CAD_112',
+    source_reliability DOUBLE PRECISION DEFAULT 0.94,
+    last_updated TIMESTAMPTZ DEFAULT NOW(),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Backward compatibility ALTER statements for incidents:
+ALTER TABLE public.incidents ADD COLUMN IF NOT EXISTS is_simulated BOOLEAN DEFAULT true;
+ALTER TABLE public.incidents ADD COLUMN IF NOT EXISTS location_verified BOOLEAN DEFAULT true;
+ALTER TABLE public.incidents ADD COLUMN IF NOT EXISTS source VARCHAR(100) DEFAULT 'MUMBAI_DISASTER_MANAGEMENT_CAD_112';
+ALTER TABLE public.incidents ADD COLUMN IF NOT EXISTS source_reliability DOUBLE PRECISION DEFAULT 0.94;
+ALTER TABLE public.incidents ADD COLUMN IF NOT EXISTS last_updated TIMESTAMPTZ DEFAULT NOW();
 
 -- 3. MULTIMODAL INCOMING EVENTS TABLE (Sensors, Feeds, Citizen Reports)
 CREATE TABLE IF NOT EXISTS public.incident_events (
@@ -89,8 +101,20 @@ CREATE TABLE IF NOT EXISTS public.commute_queries (
     nearby_hazards_count INTEGER DEFAULT 0,
     intersecting_incidents JSONB DEFAULT '[]'::jsonb,
     itinerary_details JSONB DEFAULT '{}'::jsonb,
+    corridor_threshold_m DOUBLE PRECISION DEFAULT 350.0,
+    route_geometry JSONB DEFAULT '{}'::jsonb,
+    alternative_routes JSONB DEFAULT '[]'::jsonb,
+    is_authoritative_google_route BOOLEAN DEFAULT true,
+    routing_provider VARCHAR(100) DEFAULT 'GOOGLE_ROUTES_API_V2',
     searched_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Backward compatibility ALTER statements for commute_queries:
+ALTER TABLE public.commute_queries ADD COLUMN IF NOT EXISTS corridor_threshold_m DOUBLE PRECISION DEFAULT 350.0;
+ALTER TABLE public.commute_queries ADD COLUMN IF NOT EXISTS route_geometry JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE public.commute_queries ADD COLUMN IF NOT EXISTS alternative_routes JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.commute_queries ADD COLUMN IF NOT EXISTS is_authoritative_google_route BOOLEAN DEFAULT true;
+ALTER TABLE public.commute_queries ADD COLUMN IF NOT EXISTS routing_provider VARCHAR(100) DEFAULT 'GOOGLE_ROUTES_API_V2';
 
 -- 5. REPLAY LAB & RESILIENCE STRESS LOGS
 CREATE TABLE IF NOT EXISTS public.replay_logs (

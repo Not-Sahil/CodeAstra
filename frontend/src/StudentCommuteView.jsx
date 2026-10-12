@@ -28,6 +28,9 @@ export default function StudentCommuteView({
   const [selectedModeKey, setSelectedModeKey] = useState('METRO');
   const [activePresetIndex, setActivePresetIndex] = useState(0);
 
+  const [corridorThreshold, setCorridorThreshold] = useState(350);
+  const [activeAltRouteIndex, setActiveAltRouteIndex] = useState(0);
+
   // Quick One-Click Mumbai Student Routes
   const STUDENT_PRESETS = [
     {
@@ -69,7 +72,7 @@ export default function StudentCommuteView({
     setCommuteOrigin(preset.origin);
     setCommuteDestination(preset.dest);
     setCommuteMode(preset.mode);
-    evaluateUserCommute(preset.origin, preset.dest, preset.mode, commuterName);
+    evaluateUserCommute(preset.origin, preset.dest, preset.mode, commuterName, corridorThreshold);
   };
 
   // Turn-by-Turn Rerouting Step-by-Step Itinerary
@@ -256,9 +259,24 @@ export default function StudentCommuteView({
           </select>
         </div>
 
+        <div className="input-group">
+          <span className="input-label">Route Corridor Filter</span>
+          <select 
+            className="input-select"
+            value={corridorThreshold}
+            onChange={e => setCorridorThreshold(Number(e.target.value))}
+          >
+            <option value={150}>150m (Strict Centerline)</option>
+            <option value={250}>250m (Narrow Corridor)</option>
+            <option value={350}>350m (Standard Buffer - Recommended)</option>
+            <option value={500}>500m (Wider Corridor)</option>
+            <option value={1000}>1000m (Advisory Sector)</option>
+          </select>
+        </div>
+
         <button 
           className="evaluate-btn"
-          onClick={() => evaluateUserCommute(commuteOrigin, commuteDestination, commuteMode, commuterName)}
+          onClick={() => evaluateUserCommute(commuteOrigin, commuteDestination, commuteMode, commuterName, corridorThreshold)}
           disabled={isEvaluating}
         >
           {isEvaluating ? (
@@ -281,64 +299,231 @@ export default function StudentCommuteView({
         </datalist>
       </div>
 
-      {/* 5. NEARBY HAZARDS ALERT STRIP (AMBER STRIP IN SCREENSHOT) */}
-      <div className="nearby-hazards-alert-bar">
-        <AlertTriangle size={16} className="nha-icon" />
-        <div>
-          <strong>Nearby Hazards Alert (Within 3.5 km of {commuteOrigin.split(' ')[0]}): </strong>
-          <span>Severe Track Submergence at Malad-Kandivali section • Multi-Vehicle Collision on WEH Pathanwadi Flyover • BEST Power Trip at Mithchowki Junction</span>
-        </div>
-      </div>
-
-      {/* 6. BIG RED ROUTE IMPACT ALERT CARD (EXACT MATCH TO PANEL 4) */}
-      <div className="route-impact-alert-card">
-        <div className="ria-top">
-          <AlertOctagon size={22} color="#b91c1c" />
-          <div>
-            <h3>Your route may be affected by active incidents</h3>
-            <span style={{ fontSize: '11px', color: '#7f1d1d' }}>Correlated 4 physical sensor anomalies intersecting your travel corridor.</span>
-          </div>
-        </div>
-
-        <div className="ria-details-grid">
-          <div className="ria-col">
-            <span className="ria-col-label">Detected Incident:</span>
-            <span className="ria-col-val" style={{ color: '#dc2626' }}>
-              {customCommuteResult?.personalized_alert?.incident || 'Possible flooding-related road disruption'}
+      {/* AUTHORITATIVE GOOGLE MAPS ROUTE METADATA BANNER (OBJECTIVE 2) */}
+      {customCommuteResult && (
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: customCommuteResult.is_authoritative_google_route ? '#f0fdf4' : '#f8fafc',
+          border: `1px solid ${customCommuteResult.is_authoritative_google_route ? '#bbf7d0' : '#e2e8f0'}`,
+          borderRadius: '8px',
+          padding: '8px 14px',
+          marginBottom: '12px',
+          fontSize: '12px',
+          color: '#334155',
+          gap: '10px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontWeight: 700,
+              color: customCommuteResult.is_authoritative_google_route ? '#15803d' : '#0369a1',
+              background: '#ffffff',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              border: '1px solid currentColor'
+            }}>
+              🗺️ {customCommuteResult.routing_provider || 'GOOGLE_ROUTES_API_V2'}
+            </span>
+            <span>
+              Authoritative Geometry: <strong>{customCommuteResult.distance_km} km</strong> • Base Duration: <strong>{customCommuteResult.normal_eta_min} min</strong>
             </span>
           </div>
-          <div className="ria-col">
-            <span className="ria-col-label">Affected Corridor:</span>
-            <span className="ria-col-val">
-              {customCommuteResult?.personalized_alert?.affected_area || 'Western Railway Slow & Fast Tracks, Malad Subway, SV Road'}
-            </span>
-          </div>
-          <div className="ria-col">
-            <span className="ria-col-label">Potential Impact:</span>
-            <span className="ria-col-val" style={{ color: '#d97706' }}>
-              {customCommuteResult?.personalized_alert?.potential_impact || 'Your motorcycle route may experience delays of approximately 20-35 minutes.'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span>Corridor Threshold: <strong>{customCommuteResult.corridor_threshold_m || corridorThreshold}m buffer</strong></span>
+            <span style={{ color: (customCommuteResult.intersecting_incidents_count || 0) > 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}>
+              {(customCommuteResult.intersecting_incidents_count || 0) > 0 
+                ? `⚠️ ${customCommuteResult.intersecting_incidents_count} Corridor Disruptions` 
+                : '✓ 0 Disruptions on Route'}
             </span>
           </div>
         </div>
+      )}
 
-        <div className="ria-advice-row">
-          <div>
-            <strong>What UrbanPulse Recommends:</strong>
-            <ul style={{ paddingLeft: '16px', marginTop: '6px', lineHeight: '1.6' }}>
-              <li>Switch immediately to elevated <strong>Metro Line 2A</strong> viaduct at Lower Malad Station.</li>
-              <li>Avoid low-lying SV Road subways (Malad Subway is impassable with 68cm standing water).</li>
-              <li>Check Western Railway local train status before selecting rail transit (track TC-284 submerged).</li>
-              <li>Save <strong>~17 to 29 minutes</strong> and arrive safely before your 09:00 AM lecture.</li>
-            </ul>
-          </div>
-          <div className="ria-why-box">
-            <strong>Why you received this alert:</strong>
-            <p style={{ marginTop: '6px' }}>
-              The reported incident overlaps your saved daily college commute. Active physical Doppler rain gauges, ultrasonic depth sensors, and traffic slowdowns confirm critical water accumulation on your default route.
-            </p>
+      {/* 5. NEARBY CONTEXTUAL HAZARDS ALERT STRIP (OBJECTIVE 3 & 5: SEPARATED CATEGORY) */}
+      {customCommuteResult?.nearby_hazards && customCommuteResult.nearby_hazards.length > 0 && (
+        <div className="nearby-hazards-alert-bar">
+          <AlertTriangle size={16} className="nha-icon" />
+          <div style={{ fontSize: '11px', lineHeight: '1.4' }}>
+            <strong>Nearby Advisory Hazards (Within 3.5 km of Origin • Outside Route Corridor): </strong>
+            <span>
+              {customCommuteResult.nearby_hazards.map((h, i) => (
+                <span key={i}>
+                  {i > 0 ? ' • ' : ''}
+                  <strong>{h.title}</strong> ({h.distance_km || 1.2} km away, off-corridor)
+                </span>
+              ))}
+            </span>
+            <div style={{ color: '#92400e', marginTop: '2px', fontSize: '10px' }}>
+              Notice: These hazards are outside your {customCommuteResult.corridor_threshold_m || corridorThreshold}m route corridor and do not obstruct your selected path.
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* 6. ROUTE IMPACT ASSESSMENT CARD (OBJECTIVE 3 & 5: STRICT CORRIDOR MATCHING) */}
+      {(customCommuteResult?.intersecting_incidents_count || 0) > 0 ? (
+        <div className="route-impact-alert-card">
+          <div className="ria-top">
+            <AlertOctagon size={22} color="#b91c1c" />
+            <div>
+              <h3>Your route may be affected by active corridor disruptions</h3>
+              <span style={{ fontSize: '11px', color: '#7f1d1d' }}>
+                Spatial intersection confirmed: {customCommuteResult.intersecting_incidents_count} incident(s) within the {customCommuteResult.corridor_threshold_m || corridorThreshold}m route corridor.
+              </span>
+            </div>
+          </div>
+
+          <div className="ria-details-grid">
+            <div className="ria-col">
+              <span className="ria-col-label">Detected Incident:</span>
+              <span className="ria-col-val" style={{ color: '#dc2626' }}>
+                {customCommuteResult?.personalized_alert?.incident || 'Active Corridor Disruption'}
+              </span>
+            </div>
+            <div className="ria-col">
+              <span className="ria-col-label">Affected Road Segment:</span>
+              <span className="ria-col-val">
+                {customCommuteResult?.personalized_alert?.affected_area || 'Corridor Roadway'}
+              </span>
+            </div>
+            <div className="ria-col">
+              <span className="ria-col-label">Estimated Delay:</span>
+              <span className="ria-col-val" style={{ color: '#d97706' }}>
+                {customCommuteResult?.personalized_alert?.potential_impact || `+${customCommuteResult?.delay_min} mins`}
+              </span>
+            </div>
+          </div>
+
+          {/* List of each specific intersecting incident and its distance from centerline */}
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '10px', marginTop: '10px' }}>
+            <strong style={{ fontSize: '11px', color: '#991b1b' }}>Confirmed Route-Intersecting Incidents:</strong>
+            <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {(customCommuteResult?.intersecting_incidents || []).map((inc, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', background: '#ffffff', padding: '6px 10px', borderRadius: '4px', border: '1px solid #fee2e2' }}>
+                  <div>
+                    <strong style={{ color: '#dc2626' }}>{inc.title}</strong>
+                    <div style={{ color: '#64748b', fontSize: '10px' }}>{inc.relevance_evidence || inc.affected_infrastructure}</div>
+                  </div>
+                  <span style={{ background: '#fee2e2', color: '#991b1b', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', fontSize: '10px' }}>
+                    {inc.distance_from_route_meters != null ? `${inc.distance_from_route_meters}m from centerline` : 'Intersecting'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="ria-advice-row">
+            <div>
+              <strong>What UrbanPulse Recommends:</strong>
+              <ul style={{ paddingLeft: '16px', marginTop: '6px', lineHeight: '1.6' }}>
+                {(customCommuteResult?.personalized_alert?.recommendations || []).map((rec, rIdx) => (
+                  <li key={rIdx}>{rec}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="ria-why-box">
+              <strong>Why you received this alert:</strong>
+              <p style={{ marginTop: '6px' }}>
+                {customCommuteResult?.personalized_alert?.why_you_received_alert || 'Spatial proximity to calculated Google Maps route polyline.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* REASSURING 0-DISRUPTIONS CARD: ELIMINATES INCORRECT COMMUTE ALERTS */
+        <div style={{
+          background: '#f0fdf4',
+          border: '1px solid #86efac',
+          borderRadius: '10px',
+          padding: '16px 20px',
+          marginBottom: '16px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <CheckCircle2 size={24} color="#16a34a" />
+            <div>
+              <h3 style={{ margin: 0, fontSize: '16px', color: '#15803d', fontWeight: 700 }}>
+                Route Corridor Clear: 0 Disruptions Detected
+              </h3>
+              <p style={{ margin: '3px 0 0', fontSize: '12px', color: '#166534' }}>
+                Google Maps calculated route does not intersect any active incidents within the {customCommuteResult?.corridor_threshold_m || corridorThreshold}m route corridor.
+              </p>
+            </div>
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: '10px',
+            marginTop: '12px',
+            background: '#ffffff',
+            padding: '12px',
+            borderRadius: '6px',
+            border: '1px solid #dcfce7'
+          }}>
+            <div>
+              <span style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Calculated Distance</span>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{customCommuteResult?.distance_km} km</div>
+            </div>
+            <div>
+              <span style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Normal Flow ETA</span>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#16a34a' }}>{customCommuteResult?.current_eta_min} mins (0m delay)</div>
+            </div>
+            <div>
+              <span style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Off-Route Hazards Excluded</span>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#475569' }}>{customCommuteResult?.off_route_hazards_count || 0} citywide incidents</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MULTIPLE ALTERNATIVE ROUTES COMPARISON (OBJECTIVE 6) */}
+      {customCommuteResult?.alternative_routes && customCommuteResult.alternative_routes.length > 1 && (
+        <div style={{
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '10px',
+          padding: '14px',
+          marginBottom: '16px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Layers size={16} className="text-blue" />
+              <strong style={{ fontSize: '13px', color: '#0f172a' }}>Google Maps Candidate Alternative Routes Evaluated</strong>
+            </div>
+            <span style={{ fontSize: '11px', color: '#64748b' }}>Independent corridor matching per route</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+            {customCommuteResult.alternative_routes.map((alt, idx) => (
+              <div 
+                key={idx} 
+                style={{
+                  background: activeAltRouteIndex === idx ? '#eff6ff' : '#ffffff',
+                  border: `1.5px solid ${activeAltRouteIndex === idx ? '#3b82f6' : '#cbd5e1'}`,
+                  borderRadius: '6px',
+                  padding: '10px',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setActiveAltRouteIndex(idx)}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <strong style={{ fontSize: '12px', color: '#0f172a' }}>{alt.description || `Route Option ${idx + 1}`}</strong>
+                  {alt.is_primary && <span style={{ fontSize: '9px', background: '#3b82f6', color: '#ffffff', padding: '1px 5px', borderRadius: '3px', fontWeight: 700 }}>PRIMARY</span>}
+                </div>
+                <div style={{ fontSize: '11px', color: '#475569', marginTop: '4px' }}>
+                  Distance: <strong>{alt.distance_km} km</strong> • Duration: <strong>{alt.total_journey_min} min</strong>
+                </div>
+                <div style={{ fontSize: '11px', marginTop: '4px', color: alt.intersecting_incidents_count > 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}>
+                  {alt.intersecting_incidents_count > 0 ? `⚠️ ${alt.intersecting_incidents_count} Disruptions (+${alt.estimated_delay_min}m)` : '✓ 0 Disruptions on Corridor'}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 7. LIVE SENSOR TELEMETRY STRIP (TRANSPARENCY & EVIDENCE) */}
       <div className="corridor-sensor-strip-card">
