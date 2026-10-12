@@ -1,0 +1,64 @@
+{
+  "Model_1_Incident_Correlation": {
+    "LogisticRegression_Baseline": {
+      "accuracy": 0.9837,
+      "precision": 0.9684,
+      "recall": 1.0,
+      "f1": 0.984,
+      "roc_auc": 0.9991
+    },
+    "RandomForest": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0
+    },
+    "XGBoost_Best": {
+      "accuracy": 0.9973,
+      "precision": 1.0,
+      "recall": 0.9946,
+      "f1": 0.9973,
+      "roc_auc": 1.0
+    }
+  },
+  "Model_2_Anomaly_Detection": {
+    "IsolationForest": {
+      "accuracy": 0.9867,
+      "precision": 0.9944,
+      "recall": 0.9227,
+      "f1": 0.9572
+    },
+    "DomainRules_Baseline": {
+      "accuracy": 0.915,
+      "precision": 1.0,
+      "recall": 0.4742,
+      "f1": 0.6434
+    },
+    "Hybrid_Engine": {
+      "accuracy": 0.9867,
+      "precision": 0.9944,
+      "recall": 0.9227,
+      "f1": 0.9572
+    }
+  },
+  "Model_3_Route_Impact_Classifier": {
+    "RuleBased_Baseline": {
+      "accuracy": 0.3467,
+      "macro_f1": 0.2228,
+      "high_disruption_recall": 0.0
+    },
+    "RandomForest_Weighted": {
+      "accuracy": 0.98,
+      "macro_f1": 0.9865,
+      "high_disruption_precision": 1.0,
+      "high_disruption_recall": 1.0
+    },
+    "XGBoost_Weighted": {
+      "accuracy": 0.98,
+      "macro_f1": 0.9865,
+      "high_disruption_precision": 1.0,
+      "high_disruption_recall": 1.0
+    }
+  }
+}
