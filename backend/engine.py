@@ -1233,3 +1233,131 @@ class IncidentIntelligenceEngine:
                 }
             }
         }
+
+    def get_proximity_incident_analysis(self, lat: float, lon: float, radius_km: float = 8.0):
+        """Calculates real-time proximity radar and threat vectors for any live GPS coordinates in Mumbai."""
+        def haversine(lat1, lon1, lat2, lon2):
+            R = 6371.0
+            p1, p2 = math.radians(lat1), math.radians(lat2)
+            dlat = math.radians(lat2 - lat1)
+            dlon = math.radians(lon2 - lon1)
+            a = math.sin(dlat / 2)**2 + math.cos(p1) * math.cos(p2) * math.sin(dlon / 2)**2
+            return R * 2 * math.asin(math.sqrt(a))
+
+        def calculate_bearing(lat1, lon1, lat2, lon2):
+            p1, p2 = math.radians(lat1), math.radians(lat2)
+            dlon = math.radians(lon2 - lon1)
+            y = math.sin(dlon) * math.cos(p2)
+            x = math.cos(p1) * math.sin(p2) - math.sin(p1) * math.cos(p2) * math.cos(dlon)
+            deg = (math.degrees(math.atan2(y, x)) + 360) % 360
+            compass_sectors = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
+            idx = int((deg + 11.25) / 22.5) % 16
+            return round(deg, 1), compass_sectors[idx]
+
+        # Find nearest landmark
+        nearest_landmark = "Greater Mumbai Corridor"
+        min_landmark_dist = 999.0
+        for _, st in self.df_stations.iterrows():
+            if pd.notna(st.get("latitude")) and pd.notna(st.get("longitude")):
+                try:
+                    d = haversine(lat, lon, float(st["latitude"]), float(st["longitude"]))
+                    if d < min_landmark_dist:
+                        min_landmark_dist = d
+                        nearest_landmark = str(st["station_name"])
+                except Exception:
+                    pass
+
+        all_incidents = self.get_active_incidents()
+        nearby_hazards = []
+
+        for inc in all_incidents:
+            inc_lat = float(inc["centroid_lat"])
+            inc_lon = float(inc["centroid_lon"])
+            dist_km = haversine(lat, lon, inc_lat, inc_lon)
+            bearing_deg, compass_dir = calculate_bearing(lat, lon, inc_lat, inc_lon)
+
+            incident_radius = float(inc.get("radius_km", 1.5))
+            if dist_km <= incident_radius or dist_km <= 1.2:
+                proximity_zone = "IMMEDIATE_THREAT_PERIMETER"
+                urgency = "CRITICAL_EVADE_NOW"
+                color = "#ef4444"
+            elif dist_km <= (incident_radius + 2.0) or dist_km <= 3.5:
+                proximity_zone = "CRITICAL_PROXIMITY_ZONE"
+                urgency = "WARNING_APPROACHING"
+                color = "#f59e0b"
+            elif dist_km <= radius_km:
+                proximity_zone = "ADVISORY_MONITORING_ZONE"
+                urgency = "MONITOR_CONDITIONS"
+                color = "#06b6d4"
+            else:
+                proximity_zone = "OUTSIDE_SCAN_RADIUS"
+                urgency = "LOW_RISK"
+                color = "#64748b"
+
+            scenario = inc.get("scenario_type", "")
+            if "Flooding" in scenario:
+                evasion = f"Avoid low-lying subways. Switch immediately to elevated Metro Line or Western Express Highway flyover."
+            elif "Accident" in scenario:
+                evasion = f"Traffic bottleneck detected {round(dist_km, 1)}km ahead. Divert via SV Road or secondary arterial link road."
+            elif "Utility" in scenario:
+                evasion = f"Traffic signals disabled at junction. Expect manual police gating; reduce transit speed."
+            else:
+                evasion = f"Corridor disruption reported. Maintain alert status and monitor real-time feeds."
+
+            hazard_entry = {
+                "incident_id": inc["incident_id"],
+                "title": inc["title"],
+                "scenario_type": inc["scenario_type"],
+                "severity_level": inc["severity_level"],
+                "centroid_lat": inc_lat,
+                "centroid_lon": inc_lon,
+                "distance_km": round(dist_km, 2),
+                "distance_meters": int(dist_km * 1000),
+                "bearing_deg": bearing_deg,
+                "compass_dir": compass_dir,
+                "proximity_zone": proximity_zone,
+                "urgency": urgency,
+                "color": color,
+                "affected_infrastructure": inc["affected_infrastructure"],
+                "known_cause": inc.get("known_cause", "Unverified"),
+                "estimated_commuters_affected": inc.get("commuters_affected", 0),
+                "evasion_recommendation": evasion,
+                "estimated_approach_time_min": max(1, int(dist_km / 25 * 60))
+            }
+
+            if dist_km <= radius_km:
+                nearby_hazards.append(hazard_entry)
+
+        nearby_hazards.sort(key=lambda x: x["distance_km"])
+
+        immediate_threats = [h for h in nearby_hazards if h["proximity_zone"] == "IMMEDIATE_THREAT_PERIMETER"]
+        warning_threats = [h for h in nearby_hazards if h["proximity_zone"] == "CRITICAL_PROXIMITY_ZONE"]
+
+        if immediate_threats:
+            system_status = "RED_ALERT_HAZARD_IMMEDIATE"
+            headline = f"ALERT: You are within {immediate_threats[0]['distance_meters']}m of {immediate_threats[0]['title']}"
+        elif warning_threats:
+            system_status = "AMBER_WARNING_APPROACHING"
+            headline = f"Warning: {len(warning_threats)} active urban incident(s) detected within 3.5 km"
+        else:
+            system_status = "GREEN_CLEAR_MONITORING"
+            headline = f"Immediate 1.2 km perimeter clear. {len(nearby_hazards)} incident(s) within {radius_km} km"
+
+        return {
+            "user_gps": {
+                "lat": round(lat, 5),
+                "lon": round(lon, 5),
+                "nearest_landmark": nearest_landmark,
+                "distance_to_landmark_km": round(min_landmark_dist, 2),
+                "timestamp": datetime.now().strftime("%H:%M:%S IST")
+            },
+            "scan_radius_km": radius_km,
+            "system_status": system_status,
+            "headline_alert": headline,
+            "total_hazards_in_radius": len(nearby_hazards),
+            "immediate_threats_count": len(immediate_threats),
+            "warning_threats_count": len(warning_threats),
+            "closest_hazard": nearby_hazards[0] if nearby_hazards else None,
+            "nearby_hazards": nearby_hazards
+        }
+

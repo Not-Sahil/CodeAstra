@@ -91,5 +91,36 @@
     },
     "created_at": "2026-10-12T14:05:00.000000+00:00",
     "is_demo_persona": true
+  },
+  {
+    "id": "795a5a61-fc2c-4957-b1a2-a181e5026076",
+    "user_code": "STUD_104",
+    "full_name": "Vipul Sawant",
+    "email": "sawantvipul77@gmail.com",
+    "phone": "8788201742",
+    "password_hash": "69035044e58a8e12c4e985a0f52125e27b27b8f51bde7bf4d039b6d0b9b0396d",
+    "role": "STUDENT",
+    "organization": "Talakunchi Networks",
+    "employee_or_student_id": "TKVips",
+    "default_origin": "National Park (Borivali East)",
+    "default_destination": "Andheri Subway",
+    "corridor_landmark": "Via Western Express Highway & JVLR",
+    "preferred_mode": "MOTORCYCLE",
+    "secondary_mode": "METRO",
+    "departure_time": "08:30:00",
+    "target_arrival_time": "09:30:00",
+    "alert_preferences": {
+      "flood_sensitivity": "MODERATE",
+      "delay_sensitivity_min": 10,
+      "notify_in_app": true,
+      "notify_sms_whatsapp": true,
+      "notify_emergency_sos": true
+    },
+    "emergency_contact": {
+      "name": "Sahil",
+      "phone": "9372912368"
+    },
+    "created_at": "2026-10-12T14:41:51.629114",
+    "is_demo_persona": false
   }
 ]

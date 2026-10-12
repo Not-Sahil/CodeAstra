@@ -4,20 +4,53 @@ import {
   CheckCircle2, Compass, Activity, Play, Pause, RefreshCw, BarChart3, 
   MapPin, Clock, ArrowRight, Eye, GitBranch, Layers, Sparkles, User,
   Radio, Send, Bot, Check, Info, FileText, ChevronRight, Zap, Database,
-  Settings, ExternalLink, Filter, HelpCircle, AlertOctagon, RotateCcw
+  Settings, ExternalLink, Filter, HelpCircle, AlertOctagon, RotateCcw,
+  LogIn, LogOut, UserPlus, Locate, Target, Menu, X, Home, LayoutDashboard, ChevronDown
 } from 'lucide-react';
+import AuthView from './AuthView';
+import ProximityRadarView from './ProximityRadarView';
+import LandingView from './LandingView';
+import DashboardView from './DashboardView';
+import StudentCommuteView from './StudentCommuteView';
+import CommandCentreMapView from './CommandCentreMapView';
+import UrbanRippleGraphView from './UrbanRippleGraphView';
+import ReplayLabView from './ReplayLabView';
+import SecondIncidentView from './SecondIncidentView';
+import EvaluationView from './EvaluationView';
 
 const API_BASE = window.location.origin;
 
 export default function App() {
-  // Navigation: 6 structured tabs matching the 7 Acts
-  const [activeTab, setActiveTab] = useState('map'); 
-  // 'map' (Act 1: Command Centre & Live Ingestion)
+  // Navigation: 10 structured pages matching the screenshot theme
+  const [activeTab, setActiveTab] = useState('landing'); 
+  // 'landing' (Landing Page with Hero & Platform Overview)
+  // 'dashboard' (Executive Operations Dashboard)
+  // 'map' (Act 1: Command Centre & Citywide Map with Live User Radar)
+  // 'proximity' (Live User Location Tracking & Nearby Hazard Radar)
   // 'graph' (Act 2: Urban Ripple Graph)
   // 'replay' (Act 3: AI Challenges Its Own Conclusion - Replay Lab)
   // 'commute' (Acts 4 & 5: Commute Assistant & Intelligent Rerouting)
   // 'second_incident' (Act 6: Second Incident Extension)
   // 'eval' (Act 7: Evaluation & Evidence Metrics)
+  // 'auth' (Commuter Account, Profile & Supabase Sync)
+
+  // Closable / Openable Left Sidebar State (Toggled via 3-lines hamburger menu)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // Commuter Identity & Authentication State
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Live User GPS Location Tracking State (Defaults to Malad Inundation Hotspot)
+  const [userLocation, setUserLocation] = useState({
+    lat: 19.1875,
+    lon: 72.8504,
+    accuracy: 8,
+    heading: 180,
+    speed: 24,
+    source: 'HOTSPOT_PRESET',
+    locationName: 'Malad Subway Inundation Hotspot',
+    lastUpdated: '08:10:00 IST'
+  });
 
   // Incidents & Intelligence Data
   const [incidents, setIncidents] = useState([]);
@@ -37,6 +70,63 @@ export default function App() {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [availableLocations, setAvailableLocations] = useState([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
+
+  // Auth & Session Handlers
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+    if (user.full_name) setCommuterName(user.full_name);
+    if (user.default_origin) setCommuteOrigin(user.default_origin);
+    if (user.default_destination) setCommuteDestination(user.default_destination);
+    if (user.preferred_mode) setCommuteMode(user.preferred_mode);
+    try {
+      localStorage.setItem('urbanpulse_user', JSON.stringify(user));
+    } catch (e) {}
+    evaluateUserCommute(
+      user.default_origin || commuteOrigin,
+      user.default_destination || commuteDestination,
+      user.preferred_mode || commuteMode,
+      user.full_name || commuterName
+    );
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    try {
+      localStorage.removeItem('urbanpulse_user');
+    } catch (e) {}
+  };
+
+  // Restore session from localStorage or load seed user
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('urbanpulse_user');
+      if (saved) {
+        const u = JSON.parse(saved);
+        if (u && u.user_code) {
+          setCurrentUser(u);
+          if (u.full_name) setCommuterName(u.full_name);
+          if (u.default_origin) setCommuteOrigin(u.default_origin);
+          if (u.default_destination) setCommuteDestination(u.default_destination);
+          if (u.preferred_mode) setCommuteMode(u.preferred_mode);
+          return;
+        }
+      }
+    } catch (e) {}
+
+    // Auto-load default hero student from backend
+    fetch(`${API_BASE}/api/auth/user/STUDENT_001`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.user) {
+          setCurrentUser(d.user);
+          if (d.user.full_name) setCommuterName(d.user.full_name);
+          try {
+            localStorage.setItem('urbanpulse_user', JSON.stringify(d.user));
+          } catch (e) {}
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Supabase Live Status
   const [supabaseStatus, setSupabaseStatus] = useState({ connected: false, mode: 'CHECKING...' });
@@ -65,7 +155,8 @@ export default function App() {
     metroViaduct: true,
     floodZones: true,
     evaluatedRoute: true,
-    trafficLayer: true
+    trafficLayer: true,
+    userScanRadar: true
   });
   const [mapTileStyle, setMapTileStyle] = useState('osm'); // 'osm' or 'dark'
 
@@ -90,6 +181,15 @@ export default function App() {
   const tileLayerRef = useRef(null);
   const graphContainerRef = useRef(null);
   const graphInstanceRef = useRef(null);
+
+  const handleLocateBeacon = () => {
+    if (mapProvider === 'google' && googleMapInstanceRef.current && window.google) {
+      googleMapInstanceRef.current.panTo({ lat: userLocation.lat, lng: userLocation.lon });
+      googleMapInstanceRef.current.setZoom(14);
+    } else if (mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo([userLocation.lat, userLocation.lon], 14, { duration: 1.2 });
+    }
+  };
 
   // Clock
   useEffect(() => {
@@ -131,7 +231,7 @@ export default function App() {
     }
   }, [activeTab, mapProvider, mapTileStyle, googleApiKey]);
 
-  // Re-populate map vectors when custom commute result updates
+  // Re-populate map vectors when custom commute result or userLocation updates
   useEffect(() => {
     if (activeTab === 'map') {
       if (mapProvider === 'google' && googleMapInstanceRef.current) {
@@ -143,7 +243,7 @@ export default function App() {
           .catch(console.error);
       }
     }
-  }, [customCommuteResult, mapLayers, incidents]);
+  }, [customCommuteResult, mapLayers, incidents, userLocation]);
 
   // =========================================================================
   // REAL-TIME STREAMING: WebSockets with SSE Fallback
@@ -531,6 +631,36 @@ export default function App() {
         googlePolylinesRef.current.push(poly);
       }
     }
+
+    // Render Live User Scanning Beacon on Google Maps
+    if (mapLayers.userScanRadar && userLocation?.lat && userLocation?.lon) {
+      const userMarker = new window.google.maps.Marker({
+        position: { lat: userLocation.lat, lng: userLocation.lon },
+        map: map,
+        title: `Your Live Position: ${userLocation.locationName || 'Mumbai Corridor'}`,
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 10,
+          fillColor: '#0284c7',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 3
+        }
+      });
+      googleMarkersRef.current.push(userMarker);
+
+      const userScanCircle = new window.google.maps.Circle({
+        strokeColor: '#38bdf8',
+        strokeOpacity: 0.85,
+        strokeWeight: 1.5,
+        fillColor: '#38bdf8',
+        fillOpacity: 0.12,
+        map: map,
+        center: { lat: userLocation.lat, lng: userLocation.lon },
+        radius: 1200
+      });
+      googleMarkersRef.current.push(userScanCircle);
+    }
   };
 
   const handleSaveApiKey = () => {
@@ -564,7 +694,8 @@ export default function App() {
         metro: L.layerGroup().addTo(map),
         flood: L.layerGroup().addTo(map),
         evaluatedRoute: L.layerGroup().addTo(map),
-        incidents: L.layerGroup().addTo(map)
+        incidents: L.layerGroup().addTo(map),
+        userRadar: L.layerGroup().addTo(map)
       };
     }
 
@@ -603,6 +734,7 @@ export default function App() {
     layerGroupsRef.current.flood.clearLayers();
     layerGroupsRef.current.evaluatedRoute.clearLayers();
     layerGroupsRef.current.incidents.clearLayers();
+    if (layerGroupsRef.current.userRadar) layerGroupsRef.current.userRadar.clearLayers();
 
     // 1. RAIL TRACKS
     if (mapLayers.railTracks && layerData.rail_tracks) {
@@ -718,6 +850,74 @@ export default function App() {
         layerGroupsRef.current.evaluatedRoute.addLayer(destMarker);
       }
     }
+
+    // 5. LIVE USER LOCATION SCANNING RADAR BEACON (VISIBLE ON MAP)
+    if (mapLayers.userScanRadar && userLocation?.lat && userLocation?.lon && layerGroupsRef.current.userRadar) {
+      // Concentric Radar Scan Rings (1.2 km Immediate Perimeter & 3.5 km Advisory Perimeter)
+      const scanCircle1 = L.circle([userLocation.lat, userLocation.lon], {
+        radius: 1200,
+        color: '#38bdf8',
+        fillColor: '#38bdf8',
+        fillOpacity: 0.12,
+        weight: 1.5,
+        dashArray: '4, 4'
+      });
+      const scanCircle2 = L.circle([userLocation.lat, userLocation.lon], {
+        radius: 3500,
+        color: '#0284c7',
+        fillColor: '#0284c7',
+        fillOpacity: 0.04,
+        weight: 1,
+        dashArray: '6, 6'
+      });
+
+      // Animated Pulsating Radar Marker
+      const userPulseIcon = L.divIcon({
+        className: 'user-pulse-marker-wrapper',
+        html: `
+          <div class="user-pulse-marker">
+            <div class="radar-scan-ring-1"></div>
+            <div class="radar-scan-ring-2"></div>
+            <div class="user-beacon-core">
+              <span class="user-beacon-dot"></span>
+            </div>
+            <div class="user-beacon-tag">YOU (LIVE GPS)</div>
+          </div>
+        `,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
+      });
+
+      const userMarker = L.marker([userLocation.lat, userLocation.lon], { icon: userPulseIcon })
+        .bindPopup(`
+          <div style="font-family:sans-serif;font-size:12px;padding:4px;color:#0f172a;">
+            <strong style="color:#0284c7">📍 Your Live Position</strong><br/>
+            <b>Coordinates:</b> ${userLocation.lat.toFixed(5)}° N, ${userLocation.lon.toFixed(5)}° E<br/>
+            <b>Nearest Landmark:</b> ${userLocation.locationName || 'Mumbai Metropolitan Region'}<br/>
+            <b>Speed:</b> ${userLocation.speed || 0} km/h • <b>Accuracy:</b> ±${userLocation.accuracy || 8}m
+          </div>
+        `);
+
+      layerGroupsRef.current.userRadar.addLayer(scanCircle1);
+      layerGroupsRef.current.userRadar.addLayer(scanCircle2);
+      layerGroupsRef.current.userRadar.addLayer(userMarker);
+
+      // Connect threat vectors (dashed lines) to closest active incidents within 4.0 km
+      incidents.forEach(inc => {
+        const dLat = inc.centroid_lat - userLocation.lat;
+        const dLon = inc.centroid_lon - userLocation.lon;
+        const approxDistKm = Math.sqrt(dLat * dLat + dLon * dLon) * 111;
+        if (approxDistKm <= 4.0) {
+          const threatLine = L.polyline([[userLocation.lat, userLocation.lon], [inc.centroid_lat, inc.centroid_lon]], {
+            color: inc.severity_level.includes('4') ? '#ef4444' : '#f59e0b',
+            weight: 2,
+            dashArray: '5, 8',
+            opacity: 0.75
+          }).bindPopup(`<strong>Hazard Threat Vector:</strong> ${inc.title} (~${approxDistKm.toFixed(1)} km away)`);
+          layerGroupsRef.current.userRadar.addLayer(threatLine);
+        }
+      });
+    }
   };
 
   // =========================================================================
@@ -742,7 +942,7 @@ export default function App() {
           nodes: {
             shape: 'box',
             margin: 12,
-            font: { face: 'Inter, sans-serif', color: '#ffffff', size: 13, bold: true },
+            font: { face: 'Inter, sans-serif', color: '#ffffff', size: 13, bold: 'bold' },
             borderWidth: 2,
             shadow: { enabled: true, color: 'rgba(0,0,0,0.5)', size: 8 }
           },
@@ -770,767 +970,386 @@ export default function App() {
   return (
     <div className="ca-app-wrapper">
       {/* =====================================================================
-          HEADER NAVBAR: Real-Time Badges & Status Indicators
+          TOP WINDOW BAR: Exact Match to Screenshot Header
          ===================================================================== */}
-      <header className="ca-navbar">
-        <div className="ca-nav-brand">
-          <div className="brand-icon-box">
-            <ShieldAlert size={24} />
+      <header className="ca-window-header">
+        <div className="header-left">
+          {/* macOS Window Control Dots */}
+          <div className="mac-window-dots">
+            <span className="dot dot-red"></span>
+            <span className="dot dot-yellow"></span>
+            <span className="dot dot-green"></span>
           </div>
-          <div className="brand-titles">
-            <h1>UrbanPulse</h1>
-            <div className="brand-sub">
-              <span>CodeAstra Multimodal Urban Incident Intelligence</span>
-              <span className="corridor-badge">Greater Mumbai Corridor Network</span>
+
+          {/* 3-Lines Side Drop Button (Hamburger Menu) to Collapse/Open Sidebar */}
+          <button 
+            className="hamburger-toggle-btn" 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            title={isSidebarOpen ? "Collapse navigation sidebar" : "Open navigation sidebar"}
+            aria-label="Toggle navigation sidebar"
+          >
+            <Menu size={18} />
+          </button>
+
+          {/* Brand Logo & Title */}
+          <div className="header-brand" onClick={() => setActiveTab('landing')} style={{ cursor: 'pointer' }}>
+            <div className="brand-pin-icon">
+              <MapPin size={18} />
+            </div>
+            <div className="brand-text-col">
+              <span className="brand-title">UrbanPulse</span>
+              <span className="brand-sub">CodeAstra Multimodal Urban Incident Intelligence</span>
             </div>
           </div>
         </div>
 
-        <div className="ca-nav-stats">
-          {/* SUPABASE STATUS PILL */}
+        {/* Header Right Badges & Controls */}
+        <div className="header-right">
+          {/* Corridor Dropdown Pill */}
+          <div className="corridor-select-pill">
+            <span>Greater Mumbai Corridor Network</span>
+            <ChevronDown size={13} />
+          </div>
+
+          {/* Supabase Status Pill */}
           <button 
-            className="supabase-status-pill" 
+            className="header-pill-btn" 
             onClick={syncSupabase} 
             title="Click to sync active incidents with Supabase database"
           >
-            <Database size={13} className={supabaseStatus.connected ? "text-emerald" : "text-amber"} />
+            <Database size={13} className={supabaseStatus.connected ? "text-green" : "text-amber"} />
             <span>{supabaseStatus.connected ? "Supabase Live" : "Supabase Local Cache"}</span>
-            <span className="sync-sub-tag">{isSyncingSupabase ? "Syncing..." : "Sync"}</span>
+            <span className="pill-action-tag">{isSyncingSupabase ? "Syncing..." : "Sync"}</span>
           </button>
 
-          {/* GOOGLE MAPS API KEY BADGE */}
+          {/* Google Maps / Traffic Status Pill */}
           <button 
-            className={`gmaps-pill ${mapProvider === 'google' ? 'active-gmaps' : ''}`}
+            className="header-pill-btn"
             onClick={() => setShowApiKeyModal(true)}
             title="Configure Google Maps API Key or switch map engine"
           >
-            <Compass size={13} />
-            <span>{mapProvider === 'google' ? 'Google Maps (Traffic On)' : 'Leaflet / OSM Mode'}</span>
-            <Settings size={12} style={{ opacity: 0.7 }} />
+            <span className="status-dot green"></span>
+            <span>{mapProvider === 'google' ? 'Google Maps - Traffic On' : 'Leaflet / OSM Mode'}</span>
           </button>
 
-          {/* LIVE STREAM TICKER BADGE */}
-          <div className={`live-pulse-badge ${isStreamPaused ? 'badge-paused' : ''}`}>
-            <span className={`pulse-circle ${isStreamPaused ? 'paused' : ''}`}></span>
-            <span>{isStreamPaused ? 'STREAM PAUSED' : 'LIVE TELEMETRY (2.5s)'}</span>
-            <span className="event-count-badge">#{eventCounter}</span>
+          {/* Red SIMULATED DATA Tag */}
+          <span className="simulated-data-tag">SIMULATED DATA</span>
+
+          {/* System Time Pill */}
+          <div className="system-time-pill">
+            <span className="st-label">SYSTEM TIME</span>
+            <span className="st-val">{currentTime}</span>
           </div>
 
-          <div className="stat-pill">
-            <span className="stat-label">System Time</span>
-            <span className="stat-val">{currentTime}</span>
+          {/* Live User GPS Radar Pill */}
+          <button 
+            className={`live-gps-pill ${activeTab === 'proximity' ? 'active' : ''}`}
+            onClick={() => setActiveTab('proximity')}
+            title="Click to view live user GPS proximity radar and nearby threats"
+          >
+            <span className="radar-ping-dot"></span>
+            <span>{userLocation?.lat?.toFixed(4)}°N, {userLocation?.lon?.toFixed(4)}°E</span>
+          </button>
+
+          {/* Commuter Account Profile Chip */}
+          <div 
+            className="user-nav-chip"
+            onClick={() => setActiveTab('auth')}
+            title="Click to view commuter pass or switch accounts"
+          >
+            <div className="user-chip-avatar">
+              {currentUser ? (currentUser.full_name?.charAt(0) || 'U') : <User size={13} />}
+            </div>
+            <span className="user-chip-name">{currentUser ? currentUser.full_name : 'Sign In'}</span>
           </div>
         </div>
       </header>
 
       {/* =====================================================================
-          ACT ONE: TOP 4 LIVE-UPDATING INDICATORS QUAD (0:00–0:45)
+          APP BODY LAYOUT: SIDEBAR + MAIN CONTENT
          ===================================================================== */}
-      <section className="indicators-quad-strip">
-        <div className="indicator-quad-box">
-          <span className="iq-label">Active Incidents</span>
-          <div className="iq-val-row">
-            <span className="iq-num text-cyan">{activeIncidentsCount}</span>
-            <span className="iq-pill text-cyan">Citywide Mumbai</span>
-          </div>
-          <span className="iq-sub">Monitored across 7 multimodal transit grids</span>
-        </div>
-
-        <div className="indicator-quad-box">
-          <span className="iq-label">High-Severity Incidents</span>
-          <div className="iq-val-row">
-            <span className="iq-num text-rose">{highSeverityCount}</span>
-            <span className="iq-pill text-rose">Level 3 & 4 Disruptions</span>
-          </div>
-          <span className="iq-sub">Malad track inundation, JVLR blockage, Kurla flood</span>
-        </div>
-
-        <div className="indicator-quad-box">
-          <span className="iq-label">Affected Routes</span>
-          <div className="iq-val-row">
-            <span className="iq-num text-amber">{affectedRoutesCount}</span>
-            <span className="iq-pill text-amber">Major Corridors</span>
-          </div>
-          <span className="iq-sub">SV Road, WEH Pathanwadi, WR suburban line, JVLR</span>
-        </div>
-
-        <div className="indicator-quad-box">
-          <span className="iq-label">Data Quality Warnings</span>
-          <div className="iq-val-row">
-            <span className="iq-num text-purple">{dataQualityWarningsCount}</span>
-            <span className="iq-pill text-purple">Signal Resilience Active</span>
-          </div>
-          <span className="iq-sub">Duplicates suppressed, sensor dropout buffered</span>
-        </div>
-      </section>
-
-      {/* =====================================================================
-          TAB NAVIGATION (Aligning perfectly with Demonstration Acts)
-         ===================================================================== */}
-      <nav className="ca-tab-nav">
-        <button 
-          className={`tab-btn ${activeTab === 'map' ? 'active' : ''}`}
-          onClick={() => setActiveTab('map')}
-        >
-          <Layers size={17} /> Act 1: Command Centre & Map
-          <span className="tab-sub-tag highlight-blue">Citywide Feed</span>
-        </button>
-
-        <button 
-          className={`tab-btn ${activeTab === 'graph' ? 'active' : ''}`}
-          onClick={() => setActiveTab('graph')}
-        >
-          <GitBranch size={17} /> Act 2: Urban Ripple Graph
-          <span className="tab-sub-tag highlight-cyan">Signature Feature</span>
-        </button>
-
-        <button 
-          className={`tab-btn ${activeTab === 'replay' ? 'active' : ''}`}
-          onClick={() => setActiveTab('replay')}
-        >
-          <RotateCcw size={17} /> Act 3: AI Replay Lab
-          <span className="tab-sub-tag highlight-amber">Uncertainty Proof</span>
-        </button>
-
-        <button 
-          className={`tab-btn ${activeTab === 'commute' ? 'active' : ''}`}
-          onClick={() => setActiveTab('commute')}
-        >
-          <Navigation size={17} /> Acts 4 & 5: Student Commute Assistant
-          <span className="tab-sub-tag highlight-green">
-            {customCommuteResult?.net_time_saved_min ? `Saves ${customCommuteResult.net_time_saved_min}m` : 'Rerouting'}
-          </span>
-        </button>
-
-        <button 
-          className={`tab-btn ${activeTab === 'second_incident' ? 'active' : ''}`}
-          onClick={() => setActiveTab('second_incident')}
-        >
-          <Zap size={17} /> Act 6: Second Incident
-          <span className="tab-sub-tag">Mithchowki Fault</span>
-        </button>
-
-        <button 
-          className={`tab-btn ${activeTab === 'eval' ? 'active' : ''}`}
-          onClick={() => setActiveTab('eval')}
-        >
-          <BarChart3 size={17} /> Act 7: Evaluation & Evidence
-          <span className="tab-sub-tag highlight-blue">Synthetic Benchmarks</span>
-        </button>
-      </nav>
-
-      {/* =====================================================================
-          MAIN VIEWPORT
-         ===================================================================== */}
-      <main className="ca-main-viewport">
+      <div className="ca-body-layout">
         {/* ===================================================================
-            ACT ONE: COMMAND CENTRE, MAP & SIMULATION EVENT FEED (0:00–0:45)
+            LEFT NAVIGATION SIDEBAR (CLOSABLE / OPENABLE VIA 3 LINES BUTTON)
            =================================================================== */}
-        {activeTab === 'map' && (
-          <div className="map-streaming-layout">
-            <div className="map-view-card">
-              {/* MAP TOOLBAR */}
-              <div className="map-toolbar-strip">
-                <div className="map-layer-toggles">
-                  <span className="toolbar-label">Map Engine:</span>
-                  <button 
-                    className={`style-btn ${mapProvider === 'google' ? 'active' : ''}`}
-                    onClick={() => {
-                      if (!googleApiKey) setShowApiKeyModal(true);
-                      else setMapProvider('google');
-                    }}
-                  >
-                    Google Maps (Traffic Layer)
-                  </button>
-                  <button 
-                    className={`style-btn ${mapProvider === 'leaflet' ? 'active' : ''}`}
-                    onClick={() => setMapProvider('leaflet')}
-                  >
-                    Free Leaflet / OSM
-                  </button>
+        <aside className={`ca-sidebar ${isSidebarOpen ? 'expanded' : 'collapsed'}`}>
+          <div className="sidebar-nav-list">
+            {/* 1. LANDING PAGE */}
+            <button 
+              className={`sidebar-nav-item ${activeTab === 'landing' ? 'active' : ''}`}
+              onClick={() => setActiveTab('landing')}
+              title="Landing Page & Overview"
+            >
+              <Home size={18} />
+              {isSidebarOpen && <span className="nav-item-label">Landing Page</span>}
+            </button>
 
-                  <span className="toolbar-label" style={{ marginLeft: '12px' }}>Layers:</span>
-                  <label className={`layer-toggle-btn ${mapLayers.railTracks ? 'active' : ''}`}>
-                    <input 
-                      type="checkbox" 
-                      checked={mapLayers.railTracks} 
-                      onChange={e => setMapLayers(prev => ({ ...prev, railTracks: e.target.checked }))} 
-                    />
-                    <span className="dot" style={{ background: '#ef4444' }}></span>
-                    Rail Tracks
-                  </label>
-                  <label className={`layer-toggle-btn ${mapLayers.metroViaduct ? 'active' : ''}`}>
-                    <input 
-                      type="checkbox" 
-                      checked={mapLayers.metroViaduct} 
-                      onChange={e => setMapLayers(prev => ({ ...prev, metroViaduct: e.target.checked }))} 
-                    />
-                    <span className="dot" style={{ background: '#10b981' }}></span>
-                    Metro Viaduct
-                  </label>
-                  <label className={`layer-toggle-btn ${mapLayers.evaluatedRoute ? 'active' : ''}`}>
-                    <input 
-                      type="checkbox" 
-                      checked={mapLayers.evaluatedRoute} 
-                      onChange={e => setMapLayers(prev => ({ ...prev, evaluatedRoute: e.target.checked }))} 
-                    />
-                    <span className="dot" style={{ background: '#06d6a0' }}></span>
-                    Route Overlay
-                  </label>
+            {/* 2. EXECUTIVE DASHBOARD */}
+            <button 
+              className={`sidebar-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+              onClick={() => setActiveTab('dashboard')}
+              title="Executive Operations Dashboard"
+            >
+              <LayoutDashboard size={18} />
+              {isSidebarOpen && <span className="nav-item-label">Dashboard</span>}
+            </button>
+
+            {/* 3. COMMAND CENTRE & MAP */}
+            <button 
+              className={`sidebar-nav-item ${activeTab === 'map' ? 'active' : ''}`}
+              onClick={() => setActiveTab('map')}
+              title="Command Centre & Map"
+            >
+              <Layers size={18} />
+              {isSidebarOpen && <span className="nav-item-label">Command Centre & Map</span>}
+            </button>
+
+            {/* 4. PROXIMITY RADAR & HAZARDS */}
+            <button 
+              className={`sidebar-nav-item ${activeTab === 'proximity' ? 'active' : ''}`}
+              onClick={() => setActiveTab('proximity')}
+              title="Proximity Radar & Hazards"
+            >
+              <Radio size={18} />
+              {isSidebarOpen && (
+                <div className="nav-item-content">
+                  <span className="nav-item-label">Proximity Radar</span>
+                  <span className="nav-item-pill red">Live GPS</span>
                 </div>
-
-                <div className="map-style-switch">
-                  <button 
-                    className="style-btn"
-                    onClick={() => setShowApiKeyModal(true)}
-                    title="Configure Google Maps API Key"
-                  >
-                    <Settings size={12} /> Set API Key
-                  </button>
-                </div>
-              </div>
-
-              {/* MAP CONTAINERS (GOOGLE OR LEAFLET) */}
-              {mapProvider === 'google' ? (
-                <div ref={googleMapContainerRef} className="leaflet-map-wrapper"></div>
-              ) : (
-                <div ref={mapContainerRef} className="leaflet-map-wrapper"></div>
               )}
+            </button>
 
-              {/* ROUTE LEGEND BANNER */}
-              <div className="route-legend-banner">
-                <div className="legend-tag-title">Active Overlays:</div>
-                <div className="legend-item">
-                  <span className="legend-line" style={{ background: '#10b981' }}></span>
-                  <span><strong>Clear Section:</strong> Normal Flow</span>
-                </div>
-                <div className="legend-item">
-                  <span className="legend-line line-pulsing" style={{ background: '#f43f5e' }}></span>
-                  <span><strong>Disrupted Corridor:</strong> Flooding / Accident Blockage</span>
-                </div>
-                <div className="legend-item">
-                  <span className="legend-line" style={{ background: '#06d6a0' }}></span>
-                  <span><strong>Resilient Alternative:</strong> Flood-Immune Metro Viaduct</span>
-                </div>
-              </div>
-            </div>
+            {/* 5. URBAN RIPPLE GRAPH */}
+            <button 
+              className={`sidebar-nav-item ${activeTab === 'graph' ? 'active' : ''}`}
+              onClick={() => setActiveTab('graph')}
+              title="Urban Ripple Graph"
+            >
+              <GitBranch size={18} />
+              {isSidebarOpen && <span className="nav-item-label">Urban Ripple Graph</span>}
+            </button>
 
-            {/* RIGHT SIDEBAR: ACT ONE PROGRESSIVE SIMULATION STREAM */}
-            <div className="streaming-ticker-sidebar">
-              <div className="sidebar-header-box">
-                <div className="shb-top">
-                  <div className="shb-title">
-                    <Radio size={18} className="pulse-icon text-cyan" />
-                    <h4>Incoming Event Stream</h4>
-                  </div>
-                  <button 
-                    className="pause-toggle-btn"
-                    onClick={() => setIsStreamPaused(!isStreamPaused)}
-                  >
-                    {isStreamPaused ? <Play size={13} /> : <Pause size={13} />}
-                    {isStreamPaused ? 'Resume' : 'Pause'}
-                  </button>
-                </div>
-                <p className="shb-desc">Observations arrive chronologically. System unifies them dynamically.</p>
-              </div>
+            {/* 6. AI REPLAY LAB */}
+            <button 
+              className={`sidebar-nav-item ${activeTab === 'replay' ? 'active' : ''}`}
+              onClick={() => setActiveTab('replay')}
+              title="AI Replay Lab"
+            >
+              <RotateCcw size={18} />
+              {isSidebarOpen && <span className="nav-item-label">AI Replay Lab</span>}
+            </button>
 
-              {/* ACT ONE UNIFIED INCIDENT ASSESSMENT BANNER */}
-              <div className="act1-assessment-callout">
-                <div className="callout-badge">
-                  <Sparkles size={14} /> AI SITUATIONAL ASSESSMENT
+            {/* 7. STUDENT COMMUTE ASSISTANT */}
+            <button 
+              className={`sidebar-nav-item ${activeTab === 'commute' ? 'active' : ''}`}
+              onClick={() => setActiveTab('commute')}
+              title="Student Commute Assistant"
+            >
+              <Navigation size={18} />
+              {isSidebarOpen && (
+                <div className="nav-item-content">
+                  <span className="nav-item-label">Student Commute</span>
                 </div>
-                <h4>POSSIBLE FLOODING-RELATED URBAN INCIDENT DETECTED</h4>
-                <p>System correlated 5 incoming signals across timestamps, spatial proximity (Malad corridor), and source reliability.</p>
-              </div>
+              )}
+            </button>
 
-              {/* TIMELINE FEED (08:05 to 08:10) */}
-              <div className="simulation-timeline-feed">
-                {simulationTimeline?.events?.map((ev, idx) => (
-                  <div key={idx} className="timeline-item-card">
-                    <div className="tic-top">
-                      <span className="tic-time">{ev.time} ({ev.timestamp})</span>
-                      <span className={`tic-tier tier-${ev.evidence_tier.toLowerCase().replace(/[^a-z]/g, '-')}`}>
-                        {ev.evidence_tier}
-                      </span>
-                    </div>
-                    <div className="tic-event">{ev.event}</div>
-                    <div className="tic-meta">
-                      <span>Source: <b>{ev.source}</b></span>
-                      <span>Measured: <b>{ev.measured}</b></span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* 8. SECOND INCIDENT */}
+            <button 
+              className={`sidebar-nav-item ${activeTab === 'second_incident' ? 'active' : ''}`}
+              onClick={() => setActiveTab('second_incident')}
+              title="Second Incident"
+            >
+              <Zap size={18} />
+              {isSidebarOpen && <span className="nav-item-label">Second Incident</span>}
+            </button>
+
+            {/* 9. EVALUATION & EVIDENCE */}
+            <button 
+              className={`sidebar-nav-item ${activeTab === 'eval' ? 'active' : ''}`}
+              onClick={() => setActiveTab('eval')}
+              title="Evaluation & Evidence"
+            >
+              <BarChart3 size={18} />
+              {isSidebarOpen && <span className="nav-item-label">Evaluation & Evidence</span>}
+            </button>
+
+            {/* 10. COMMUTER ACCOUNT */}
+            <button 
+              className={`sidebar-nav-item ${activeTab === 'auth' ? 'active' : ''}`}
+              onClick={() => setActiveTab('auth')}
+              title="Commuter Account & Profile"
+            >
+              <User size={18} />
+              {isSidebarOpen && (
+                <div className="nav-item-content">
+                  <span className="nav-item-label">Commuter Account</span>
+                  <span className="nav-item-pill purple">{currentUser ? 'Active' : 'Sign In'}</span>
+                </div>
+              )}
+            </button>
           </div>
+
+          {/* Sidebar Footer Box */}
+          {isSidebarOpen && (
+            <div className="sidebar-footer-box">
+              <span className="sfb-title">CodeAstra UrbanPulse</span>
+              <span className="sfb-status">
+                <span className="status-dot green"></span> Live Telemetry Active
+              </span>
+            </div>
+          )}
+        </aside>
+
+        {/* ===================================================================
+            MAIN VIEWPORT CONTENT
+           =================================================================== */}
+        <main className="ca-main-content">
+          {/* LANDING PAGE VIEW */}
+          {activeTab === 'landing' && (
+            <LandingView 
+              onNavigate={setActiveTab}
+              userLocation={userLocation}
+              incidentsCount={incidents.length}
+            />
+          )}
+
+          {/* EXECUTIVE DASHBOARD VIEW */}
+          {activeTab === 'dashboard' && (
+            <DashboardView 
+              onNavigate={setActiveTab}
+              incidents={incidents}
+              userLocation={userLocation}
+              activeIncidentsCount={activeIncidentsCount}
+              highSeverityCount={highSeverityCount}
+              affectedRoutesCount={affectedRoutesCount}
+              dataQualityWarningsCount={dataQualityWarningsCount}
+              currentTime={currentTime}
+              onSelectIncident={setSelectedIncidentId}
+            />
+          )}
+
+          {/* USER SIGN IN, REGISTRATION & COMMUTER PROFILE */}
+          {activeTab === 'auth' && (
+            <AuthView 
+              currentUser={currentUser}
+              onLoginSuccess={handleLoginSuccess}
+              onLogout={handleLogout}
+              onNavigateToCommute={() => setActiveTab('commute')}
+              onNavigateToMap={() => setActiveTab('map')}
+              availableLocations={availableLocations}
+              supabaseStatus={supabaseStatus}
+            />
+          )}
+
+          {/* ACT ONE: COMMAND CENTRE & MAP */}
+          {activeTab === 'map' && (
+            <CommandCentreMapView 
+              mapContainerRef={mapContainerRef}
+              googleMapContainerRef={googleMapContainerRef}
+              mapProvider={mapProvider}
+              setMapProvider={setMapProvider}
+              googleApiKey={googleApiKey}
+              setShowApiKeyModal={setShowApiKeyModal}
+              mapLayers={mapLayers}
+              setMapLayers={setMapLayers}
+              userLocation={userLocation}
+              activeIncidentsCount={activeIncidentsCount}
+              highSeverityCount={highSeverityCount}
+              affectedRoutesCount={affectedRoutesCount}
+              dataQualityWarningsCount={dataQualityWarningsCount}
+              isStreamPaused={isStreamPaused}
+              setIsStreamPaused={setIsStreamPaused}
+              simulationTimeline={simulationTimeline}
+              incidents={incidents}
+              selectedIncidentId={selectedIncidentId}
+              setSelectedIncidentId={setSelectedIncidentId}
+              onLocateBeacon={handleLocateBeacon}
+              onNavigate={setActiveTab}
+            />
+          )}
+
+        {/* ===================================================================
+            LIVE USER LOCATION TRACKING & NEARBY HAZARD RADAR SECTION
+           =================================================================== */}
+        {activeTab === 'proximity' && (
+          <ProximityRadarView 
+            userLocation={userLocation}
+            onUpdateUserLocation={setUserLocation}
+            onNavigateToMap={() => setActiveTab('map')}
+            onNavigateToCommute={() => setActiveTab('commute')}
+            currentUser={currentUser}
+            incidents={incidents}
+          />
         )}
 
         {/* ===================================================================
             ACT TWO: THE URBAN RIPPLE GRAPH (0:45–1:30)
            =================================================================== */}
         {activeTab === 'graph' && (
-          <div className="graph-tab-layout">
-            <div className="graph-header-strip">
-              <div className="ghs-left">
-                <GitBranch size={22} className="text-cyan" />
-                <div>
-                  <h3>The Urban Ripple Graph — Causal Evidence Reconstruction</h3>
-                  <p>Distinguishes Observed Events, Correlated Telemetry, Supported Hypotheses, Potential Consequences, and Unmerged Rail Disruption.</p>
-                </div>
-              </div>
-              <div className="ghs-legend">
-                <span className="legend-chip" style={{ borderColor: '#3a86ff' }}><span className="dot" style={{ background: '#3a86ff' }}></span> Observed</span>
-                <span className="legend-chip" style={{ borderColor: '#f4a261' }}><span className="dot" style={{ background: '#f4a261' }}></span> Correlated</span>
-                <span className="legend-chip" style={{ borderColor: '#e63946' }}><span className="dot" style={{ background: '#e63946' }}></span> Supported Hypothesis</span>
-                <span className="legend-chip" style={{ borderColor: '#9b5de5' }}><span className="dot" style={{ background: '#9b5de5' }}></span> Potential Consequence</span>
-                <span className="legend-chip" style={{ borderColor: '#d90429' }}><span className="dot" style={{ background: '#d90429' }}></span> Related Weather Episode (Unmerged)</span>
-              </div>
-            </div>
-
-            <div className="graph-container-card">
-              <div ref={graphContainerRef} className="vis-network-wrapper"></div>
-            </div>
-
-            <div className="graph-explainer-banner">
-              <Info size={18} className="text-cyan" />
-              <div>
-                <strong>Architectural Note for Judges:</strong>
-                Western Railway disruption is connected to the broader weather episode with an explicit relationship, but is <em>NOT</em> incorrectly merged into the road flooding incident. UrbanPulse recognizes relationships without merging every nearby event into one.
-              </div>
-            </div>
-          </div>
+          <UrbanRippleGraphView 
+            graphContainerRef={graphContainerRef}
+            renderIncidentGraph={renderIncidentGraph}
+            selectedIncidentId={selectedIncidentId}
+            onNavigate={setActiveTab}
+          />
         )}
 
         {/* ===================================================================
             ACT THREE: AI CHALLENGES ITS OWN CONCLUSION (1:30–2:15)
            =================================================================== */}
         {activeTab === 'replay' && (
-          <div className="replay-lab-layout">
-            {/* LEFT: REPLAY INJECTION CONTROLS */}
-            <div className="replay-controls-card">
-              <div className="rcc-header">
-                <RotateCcw size={20} className="text-amber" />
-                <div>
-                  <h3>Incident Replay Lab — Resilience Testing</h3>
-                  <p>Inject real adversarial edge cases into the live intelligence pipeline.</p>
-                </div>
-              </div>
-
-              <div className="replay-buttons-grid">
-                <button 
-                  className={`replay-btn ${replayChallengeActive === 'INJECT_DUPLICATE' ? 'active' : ''}`}
-                  onClick={() => triggerReplayAction('INJECT_DUPLICATE')}
-                  disabled={isReplaying}
-                >
-                  <div className="rb-title">Challenge 1: Inject Duplicate Report</div>
-                  <div className="rb-desc">Two citizen reports with identical content. Engine excludes redundant duplicate from evidence count.</div>
-                </button>
-
-                <button 
-                  className={`replay-btn ${replayChallengeActive === 'DELAY_EVENT' ? 'active' : ''}`}
-                  onClick={() => triggerReplayAction('DELAY_EVENT', { lag_sec: 540 })}
-                  disabled={isReplaying}
-                >
-                  <div className="rb-title">Challenge 2: Delay Event (Late Arrival)</div>
-                  <div className="rb-desc">08:03 sensor observation arrives late at 08:12. Engine buffers and reorders on timeline.</div>
-                </button>
-
-                <button 
-                  className={`replay-btn ${replayChallengeActive === 'ADD_CONTRADICTORY' ? 'active' : ''}`}
-                  onClick={() => triggerReplayAction('ADD_CONTRADICTORY')}
-                  disabled={isReplaying}
-                >
-                  <div className="rb-title">Challenge 3: Add Contradictory Signal</div>
-                  <div className="rb-desc">Nearby sensor reports dry conditions. Preserves contradiction and lowers confidence to Moderate.</div>
-                </button>
-
-                <button 
-                  className={`replay-btn ${replayChallengeActive === 'DISCONNECT_SENSOR' ? 'active' : ''}`}
-                  onClick={() => triggerReplayAction('DISCONNECT_SENSOR', { sensor_id: 'BMC_FLD_MALAD_SUB' })}
-                  disabled={isReplaying}
-                >
-                  <div className="rb-title">Challenge 4: Disconnect Sensor</div>
-                  <div className="rb-desc">Primary ultrasonic depth gauge drops offline. Logs data quality warning.</div>
-                </button>
-
-                <button 
-                  className="replay-reset-btn"
-                  onClick={() => triggerReplayAction('RESET')}
-                  disabled={isReplaying}
-                >
-                  <RefreshCw size={14} /> Reset Pipeline to Baseline
-                </button>
-              </div>
-            </div>
-
-            {/* RIGHT: UPDATED INCIDENT ASSESSMENT & CONFIDENCE LEDGER */}
-            <div className="replay-assessment-card">
-              <div className="rac-top">
-                <span className="rac-tag">LIVE LEDGER STATE</span>
-                <h3>INCIDENT ASSESSMENT UPDATED</h3>
-              </div>
-
-              <div className="rac-counts-grid">
-                <div className="count-tile">
-                  <span className="ct-num text-emerald">{ledgerData?.counts?.supporting || 3}</span>
-                  <span className="ct-label">Supporting Evidence</span>
-                </div>
-                <div className="count-tile">
-                  <span className="ct-num text-amber">{ledgerData?.counts?.contradictory || 0}</span>
-                  <span className="ct-label">Contradictory Evidence</span>
-                </div>
-                <div className="count-tile">
-                  <span className="ct-num text-purple">{ledgerData?.counts?.duplicates_excluded || 0}</span>
-                  <span className="ct-label">Duplicates Excluded</span>
-                </div>
-                <div className="count-tile">
-                  <span className="ct-num text-rose">{ledgerData?.counts?.missing_or_stale || 0}</span>
-                  <span className="ct-label">Missing / Stale Feeds</span>
-                </div>
-              </div>
-
-              <div className="rac-verdict-box">
-                <div className="rvb-row">
-                  <span className="rvb-key">Current Assessment:</span>
-                  <span className="rvb-val">Possible flooding-related disruption</span>
-                </div>
-                <div className="rvb-row">
-                  <span className="rvb-key">Confidence Grade:</span>
-                  <span className={`rvb-badge rating-${ledgerData?.confidence_rating?.toLowerCase().replace(/[^a-z]/g, '-')}`}>
-                    {ledgerData?.confidence_rating || 'High'} ({Math.round((ledgerData?.confidence_score || 0.93) * 100)}%)
-                  </span>
-                </div>
-                <div className="rvb-row">
-                  <span className="rvb-key">Next Prescribed Action:</span>
-                  <span className="rvb-val text-cyan">Verify water conditions and road accessibility</span>
-                </div>
-              </div>
-
-              {/* DETAILED EVIDENCE BREAKDOWN */}
-              <div className="evidence-list-box">
-                <h4>Supporting Corroboration:</h4>
-                {ledgerData?.supporting_evidence?.map((item, i) => (
-                  <div key={i} className="evidence-item-row">
-                    <span className="ei-icon">●</span>
-                    <span className="ei-source">[{item.source}]</span>
-                    <span className="ei-text">{item.measured || item.type}</span>
-                    <span className="ei-rel">Rel: {item.reliability}</span>
-                  </div>
-                ))}
-
-                {ledgerData?.conflicting_evidence?.length > 0 && (
-                  <>
-                    <h4 style={{ color: '#f59e0b', marginTop: '12px' }}>Contradictory Observations Preserved:</h4>
-                    {ledgerData?.conflicting_evidence?.map((item, i) => (
-                      <div key={i} className="evidence-item-row conflict-row">
-                        <span className="ei-icon">▲</span>
-                        <span className="ei-source">[{item.source}]</span>
-                        <span className="ei-text">{item.claim}</span>
-                        <span className="ei-rel">Rel: {item.reliability}</span>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
+          <ReplayLabView 
+            replayChallengeActive={replayChallengeActive}
+            triggerReplayAction={triggerReplayAction}
+            isReplaying={isReplaying}
+            ledgerData={ledgerData}
+          />
         )}
 
         {/* ===================================================================
             ACTS FOUR & FIVE: PERSONALIZED COMMUTE ASSISTANT (2:15–3:45)
            =================================================================== */}
         {activeTab === 'commute' && (
-          <div className="commute-assistant-layout">
-            {/* PLANNER INPUT CARD */}
-            <div className="commuter-card-box">
-              <div className="ccb-header">
-                <div className="ccb-title-group">
-                  <Navigation size={22} className="text-cyan" />
-                  <div>
-                    <h3>Personalized Commute Impact Fingerprint</h3>
-                    <p>Evaluates how active incidents intersect your journey and recommends resilient reroutes.</p>
-                  </div>
-                </div>
-                <div className="profile-chip">
-                  <User size={14} /> USER: STUDENT 001
-                </div>
-              </div>
-
-              {/* SEARCH & ROUTE FORM */}
-              <div className="commuter-form-strip">
-                <div className="input-group">
-                  <label>Origin Location (Any Mumbai Area):</label>
-                  <input 
-                    type="text" 
-                    value={commuteOrigin} 
-                    onChange={e => setCommuteOrigin(e.target.value)} 
-                    list="mumbai-locations"
-                    placeholder="e.g., Ashokvan (Borivali East)"
-                  />
-                </div>
-
-                <div className="input-group">
-                  <label>Destination (Any Mumbai Area):</label>
-                  <input 
-                    type="text" 
-                    value={commuteDestination} 
-                    onChange={e => setCommuteDestination(e.target.value)} 
-                    list="mumbai-locations"
-                    placeholder="e.g., Rajiv Gandhi Institute of Technology (RGIT, Versova)"
-                  />
-                </div>
-
-                <div className="input-group">
-                  <label>Preferred Travel Mode:</label>
-                  <select value={commuteMode} onChange={e => setCommuteMode(e.target.value)}>
-                    <option value="MOTORCYCLE">Motorcycle / Personal Vehicle</option>
-                    <option value="TRAIN">Western / Central Suburban Railway</option>
-                    <option value="METRO">Metro Line (Elevated Viaduct)</option>
-                    <option value="BUS">BEST Bus Transit</option>
-                  </select>
-                </div>
-
-                <button 
-                  className="evaluate-btn"
-                  onClick={() => evaluateUserCommute(commuteOrigin, commuteDestination, commuteMode, commuterName)}
-                  disabled={isEvaluating}
-                >
-                  {isEvaluating ? <RefreshCw className="spin" size={16} /> : <Compass size={16} />}
-                  Evaluate Route
-                </button>
-              </div>
-
-              <datalist id="mumbai-locations">
-                {availableLocations.map((loc, i) => (
-                  <option key={i} value={loc} />
-                ))}
-              </datalist>
-
-              {/* REAL-TIME NEARBY HAZARD RADAR */}
-              {customCommuteResult?.nearby_hazards?.length > 0 && (
-                <div className="nearby-hazards-banner">
-                  <AlertTriangle size={18} className="text-amber" />
-                  <div>
-                    <strong>Nearby Hazards Alert (Within 3.5 km of {commuteOrigin}):</strong>
-                    <div className="hazards-chips-list">
-                      {customCommuteResult.nearby_hazards.map((h, i) => (
-                        <span key={i} className="hazard-chip">
-                          ⚠️ {h.title} ({h.distance_km} km away)
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* PERSONALIZED ALERT CARD */}
-              <div className="personalized-alert-card">
-                <div className="pac-header">
-                  <AlertOctagon size={20} className="text-rose" />
-                  <h4>{customCommuteResult?.personalized_alert?.alert_headline || "Your college journey may be affected"}</h4>
-                </div>
-                <div className="pac-grid">
-                  <div>
-                    <span className="pac-k">Detected Incident:</span>
-                    <span className="pac-v">{customCommuteResult?.personalized_alert?.incident}</span>
-                  </div>
-                  <div>
-                    <span className="pac-k">Affected Corridor:</span>
-                    <span className="pac-v">{customCommuteResult?.personalized_alert?.affected_area}</span>
-                  </div>
-                  <div>
-                    <span className="pac-k">Potential Impact:</span>
-                    <span className="pac-v text-amber">{customCommuteResult?.personalized_alert?.potential_impact}</span>
-                  </div>
-                </div>
-
-                <div className="pac-recommendations">
-                  <strong>What UrbanPulse Recommends:</strong>
-                  <ul>
-                    {customCommuteResult?.personalized_alert?.recommendations?.map((rec, i) => (
-                      <li key={i}>{rec}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="pac-why">
-                  <strong>Why you received this alert:</strong> {customCommuteResult?.personalized_alert?.why_you_received_alert}
-                </div>
-              </div>
-
-              {/* ACT FIVE: 4-MODE COMPARISON TABLE */}
-              <div className="mode-comparison-section">
-                <div className="mcs-header">
-                  <h3>Multimodal Travel Options Comparison</h3>
-                  <button className="compare-btn" onClick={() => setShowCompareModal(true)}>
-                    <Sparkles size={14} /> Compare My Options Breakdown
-                  </button>
-                </div>
-
-                <div className="mode-options-grid">
-                  {customCommuteResult?.travel_options?.map((opt, i) => (
-                    <div key={i} className={`mode-card ${opt.recommended ? 'recommended-mode' : ''}`}>
-                      <div className="mc-top">
-                        <div className="mc-mode-title">
-                          {opt.mode === 'Motorcycle' && <Bike size={18} />}
-                          {opt.mode === 'Western Railway' && <Train size={18} />}
-                          {opt.mode === 'Metro' && <Navigation size={18} />}
-                          {opt.mode === 'Bus' && <Bus size={18} />}
-                          <span>{opt.mode}</span>
-                        </div>
-                        {opt.recommended && <span className="rec-badge">⭐ Recommended</span>}
-                      </div>
-
-                      <div className="mc-time-row">
-                        <span className="mc-eta">{opt.estimated_journey_time} mins</span>
-                        {opt.delay_min > 0 ? (
-                          <span className="mc-delay text-rose">+{opt.delay_min}m delay</span>
-                        ) : (
-                          <span className="mc-delay text-emerald">On schedule</span>
-                        )}
-                      </div>
-
-                      <div className="mc-assessment">
-                        <strong>Exposure:</strong> {opt.incident_exposure}
-                      </div>
-
-                      <p className="mc-notes">{opt.corridor_notes}</p>
-                      <div className="mc-rec-text">{opt.recommendation}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          <StudentCommuteView
+            customCommuteResult={customCommuteResult}
+            commuteOrigin={commuteOrigin}
+            setCommuteOrigin={setCommuteOrigin}
+            commuteDestination={commuteDestination}
+            setCommuteDestination={setCommuteDestination}
+            commuteMode={commuteMode}
+            setCommuteMode={setCommuteMode}
+            commuterName={commuterName}
+            setCommuterName={setCommuterName}
+            isEvaluating={isEvaluating}
+            evaluateUserCommute={evaluateUserCommute}
+            availableLocations={availableLocations}
+            onNavigateToMap={() => setActiveTab('map')}
+            onNavigateToRadar={() => setActiveTab('proximity')}
+            currentUser={currentUser}
+            showCompareModal={showCompareModal}
+            setShowCompareModal={setShowCompareModal}
+          />
         )}
 
         {/* ===================================================================
             ACT SIX: SECOND INCIDENT SHOWCASE (ELECTRICAL / SIGNAL FAULT)
            =================================================================== */}
         {activeTab === 'second_incident' && (
-          <div className="second-incident-layout">
-            <div className="sic-card">
-              <div className="sic-header">
-                <Zap size={22} className="text-amber" />
-                <div>
-                  <h3>Act Six: Second Incident — Mithchowki Electrical & Signal Failure</h3>
-                  <p>Demonstrating that the same intelligence engine correlates non-flooding utility incidents.</p>
-                </div>
-              </div>
-
-              <div className="sic-events-grid">
-                <div className="sic-box">
-                  <span className="sic-label">1. Electrical Fault Alert</span>
-                  <p>BEST distribution feeder cable short-circuit following underground trench seepage.</p>
-                </div>
-                <div className="sic-box">
-                  <span className="sic-label">2. Signal Failure Report</span>
-                  <p>Mithchowki 4-way junction traffic signals completely blanked out.</p>
-                </div>
-                <div className="sic-box">
-                  <span className="sic-label">3. Traffic Slowdown</span>
-                  <p>Vehicular movement collapsed to 4.1 km/h along New Link Road.</p>
-                </div>
-                <div className="sic-box">
-                  <span className="sic-label">4. Citizen Complaint</span>
-                  <p>112 CAD emergency report logged by commuter at Kandivali West.</p>
-                </div>
-              </div>
-
-              <div className="sic-action-strip">
-                <button 
-                  className="sic-trigger-btn"
-                  onClick={() => {
-                    setSelectedIncidentId('INC_MUM_20260715_03');
-                    setIsSecondIncidentTriggered(true);
-                    alert("Switched active focus to Second Incident: BEST Power Substation Trip at Mithchowki Junction!");
-                  }}
-                >
-                  <Zap size={16} /> Load Mithchowki Incident Cluster in Engine
-                </button>
-                <span className="sic-note">
-                  Reuses the exact same event schema, correlation pipeline, evidence graph, and route-impact mechanism!
-                </span>
-              </div>
-            </div>
-          </div>
+          <SecondIncidentView 
+            setSelectedIncidentId={setSelectedIncidentId}
+            setIsSecondIncidentTriggered={setIsSecondIncidentTriggered}
+            onNavigate={setActiveTab}
+          />
         )}
 
         {/* ===================================================================
             ACT SEVEN: EVALUATION & EVIDENCE METRICS
            =================================================================== */}
         {activeTab === 'eval' && (
-          <div className="eval-metrics-layout">
-            <div className="em-card">
-              <div className="em-header">
-                <BarChart3 size={22} className="text-cyan" />
-                <div>
-                  <h3>Act Seven: Evaluation & Evidence on Held-Out Synthetic Scenarios</h3>
-                  <p>Measurements from held-out labelled synthetic test scenarios for prototype evaluation.</p>
-                </div>
-              </div>
-
-              <div className="metrics-table-wrapper">
-                <table className="metrics-table">
-                  <thead>
-                    <tr>
-                      <th>Evaluation Area</th>
-                      <th>Precision</th>
-                      <th>Recall</th>
-                      <th>F1-Score / Metric</th>
-                      <th>Status & Handling</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><strong>Event Correlation Engine</strong></td>
-                      <td className="text-emerald">94.2%</td>
-                      <td className="text-emerald">91.8%</td>
-                      <td className="text-cyan">93.0% F1</td>
-                      <td>Automated multimodal spatial-temporal clustering</td>
-                    </tr>
-                    <tr>
-                      <td><strong>Duplicate Detection Module</strong></td>
-                      <td className="text-emerald">97.1%</td>
-                      <td className="text-emerald">95.4%</td>
-                      <td className="text-cyan">96.2% F1</td>
-                      <td>NLP semantic filtering prevents artificial inflation</td>
-                    </tr>
-                    <tr>
-                      <td><strong>Route Impact Prediction</strong></td>
-                      <td className="text-emerald">92.5%</td>
-                      <td className="text-emerald">89.1%</td>
-                      <td className="text-cyan">90.8% Macro F1</td>
-                      <td>Correctly classifies multi-mode corridor delays</td>
-                    </tr>
-                    <tr>
-                      <td><strong>Incident Severity Classifier</strong></td>
-                      <td className="text-emerald">93.4%</td>
-                      <td className="text-emerald">90.2%</td>
-                      <td className="text-cyan">91.8% F1</td>
-                      <td>Classifies Levels 1 to 4 with confusion matrix</td>
-                    </tr>
-                    <tr>
-                      <td><strong>Adversarial Replay Resilience</strong></td>
-                      <td className="text-emerald">100.0%</td>
-                      <td className="text-emerald">100.0%</td>
-                      <td className="text-cyan">100% Robust</td>
-                      <td>Verified handling of late, duplicate, and contradictory feeds</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="honesty-disclaimer">
-                <Info size={16} />
-                <span>
-                  <strong>Prototype Integrity Note:</strong> Evaluated on held-out synthetic test scenarios. Demonstrates the engineering approach and algorithmic resilience, but cannot establish performance on live, unverified city feeds.
-                </span>
-              </div>
-            </div>
-          </div>
+          <EvaluationView />
         )}
-      </main>
+        </main>
+      </div>
 
       {/* =====================================================================
           MODAL: GOOGLE MAPS API KEY CONFIGURATION

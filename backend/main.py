@@ -142,6 +142,26 @@ def get_incident_ledger(incident_id: str):
 def get_commute_fingerprint(user_id: str):
     return engine.get_personal_commute_fingerprint(user_id)
 
+class ProximityHazardsRequest(BaseModel):
+    lat: float = 19.1875
+    lon: float = 72.8504
+    radius_km: float = 8.0
+
+@app.post("/api/nearby/hazards")
+def post_nearby_hazards(req: ProximityHazardsRequest):
+    """Calculates live proximity radar hazards from user's current GPS location."""
+    return engine.get_proximity_incident_analysis(req.lat, req.lon, req.radius_km)
+
+@app.get("/api/nearby/hazards")
+def get_nearby_hazards(
+    lat: float = 19.1875,
+    lon: float = 72.8504,
+    radius_km: float = 8.0
+):
+    """Returns proximity hazard scan sorted by distance for user's GPS coordinates."""
+    return engine.get_proximity_incident_analysis(lat, lon, radius_km)
+
+
 class CommuteEvaluationRequest(BaseModel):
     origin: str
     destination: str
