@@ -1,0 +1,95 @@
+[
+  {
+    "id": "ed75c626-a60b-4bcc-b934-df65ca542589",
+    "user_code": "STUDENT_001",
+    "full_name": "Sahil (Student 001)",
+    "email": "sahil.student@rgit.edu.in",
+    "phone": "+91 98201 54321",
+    "password_hash": "1a667338c2898f0c1980ff5a19f836c8e09ac039db1308044d177067f46b7301",
+    "role": "STUDENT",
+    "organization": "Rajiv Gandhi Institute of Technology (RGIT, Versova)",
+    "employee_or_student_id": "RGIT-BE-EXTC-2024",
+    "default_origin": "Ashokvan (Borivali East)",
+    "default_destination": "Rajiv Gandhi Institute of Technology (RGIT, Versova)",
+    "corridor_landmark": "Via Western Express Highway & JVLR",
+    "preferred_mode": "MOTORCYCLE",
+    "secondary_mode": "METRO",
+    "departure_time": "08:00:00",
+    "target_arrival_time": "09:00:00",
+    "alert_preferences": {
+      "flood_sensitivity": "HIGH",
+      "delay_sensitivity_min": 10,
+      "notify_in_app": true,
+      "notify_sms_whatsapp": true,
+      "notify_emergency_sos": true
+    },
+    "emergency_contact": {
+      "name": "Pradip Shinde (Parent)",
+      "phone": "+91 98200 11223"
+    },
+    "created_at": "2026-10-12T13:56:01.374724+00:00",
+    "is_demo_persona": true
+  },
+  {
+    "id": "c1a2b3c4-1111-2222-3333-444455556666",
+    "user_code": "CORP_002",
+    "full_name": "Pooja Mehta (Corporate IT)",
+    "email": "pooja.mehta@tcs.com",
+    "phone": "+91 98204 88776",
+    "password_hash": "1a667338c2898f0c1980ff5a19f836c8e09ac039db1308044d177067f46b7301",
+    "role": "CORPORATE",
+    "organization": "Tata Consultancy Services (BKC G-Block)",
+    "employee_or_student_id": "TCS-MUM-89211",
+    "default_origin": "Kandivali West (Link Road)",
+    "default_destination": "Bandra Kurla Complex (BKC G-Block)",
+    "corridor_landmark": "Via Western Railway Local & BKC Connector",
+    "preferred_mode": "TRAIN",
+    "secondary_mode": "METRO",
+    "departure_time": "08:15:00",
+    "target_arrival_time": "09:15:00",
+    "alert_preferences": {
+      "flood_sensitivity": "MODERATE",
+      "delay_sensitivity_min": 15,
+      "notify_in_app": true,
+      "notify_sms_whatsapp": true,
+      "notify_emergency_sos": false
+    },
+    "emergency_contact": {
+      "name": "Karan Mehta (Spouse)",
+      "phone": "+91 98209 99887"
+    },
+    "created_at": "2026-10-12T14:00:00.000000+00:00",
+    "is_demo_persona": true
+  },
+  {
+    "id": "e9f8d7c6-7777-8888-9999-000011112222",
+    "user_code": "EMERGENCY_003",
+    "full_name": "Dr. Vikram Rao (KEM Trauma)",
+    "email": "vikram.rao@kemhospital.org",
+    "phone": "+91 98210 33445",
+    "password_hash": "1a667338c2898f0c1980ff5a19f836c8e09ac039db1308044d177067f46b7301",
+    "role": "EMERGENCY",
+    "organization": "KEM Hospital Trauma Care (Parel)",
+    "employee_or_student_id": "KEM-SURG-045",
+    "default_origin": "Andheri West (Lokhandwala)",
+    "default_destination": "KEM Hospital (Parel)",
+    "corridor_landmark": "Emergency Priority Corridor via WEH & Sea Link",
+    "preferred_mode": "PERSONAL_VEHICLE",
+    "secondary_mode": "METRO",
+    "departure_time": "07:30:00",
+    "target_arrival_time": "08:15:00",
+    "alert_preferences": {
+      "flood_sensitivity": "HIGH",
+      "delay_sensitivity_min": 5,
+      "notify_in_app": true,
+      "notify_sms_whatsapp": true,
+      "notify_emergency_sos": true
+    },
+    "emergency_contact": {
+      "name": "Dr. Neha Rao (Hospital Staff)",
+      "phone": "+91 98210 55667"
+    },
+    "created_at": "2026-10-12T14:05:00.000000+00:00",
+    "is_demo_persona": true
+  }
+]
