@@ -942,15 +942,25 @@ class IncidentIntelligenceEngine:
             rail_delay += 25
 
         # Base travel times
+        # Base travel times
         motorcycle_base_time = google_primary_duration_min
+        car_base_time = int(round(google_primary_duration_min * 1.05 + 4))
         rail_base_time = int(round(total_dist_km * 1.6 + 12))
         metro_base_time = int(round(total_dist_km * 1.7 + 10))
         bus_base_time = int(round(total_dist_km * 2.8 + 15))
+
+        # Realistic Mumbai travel costs in INR (₹)
+        motorcycle_cost = max(25, int(round(total_dist_km * 2.8)))
+        car_cost = max(60, int(round(total_dist_km * 9.5)))
+        rail_cost = 5 if total_dist_km <= 10 else (10 if total_dist_km <= 25 else 15)
+        metro_cost = 10 if total_dist_km <= 3 else (20 if total_dist_km <= 12 else (30 if total_dist_km <= 18 else (40 if total_dist_km <= 24 else 50)))
+        bus_cost = 6 if total_dist_km <= 5 else (10 if total_dist_km <= 10 else (15 if total_dist_km <= 15 else 20))
 
         # Hero Story override (Student 001: Ashokvan -> RGIT Versova)
         is_hero_journey = ("ashokvan" in origin.lower() and "rgit" in destination.lower())
         if is_hero_journey:
             motorcycle_base_time = max(40, google_primary_duration_min)
+            car_base_time = max(45, int(round(google_primary_duration_min * 1.1 + 5)))
             # If pathanwadi collision intersects WEH corridor, delay applies
             if has_road_accident or has_subway_flood:
                 motorcycle_delay = 20
@@ -958,8 +968,25 @@ class IncidentIntelligenceEngine:
             metro_delay = 0
             bus_delay = 17
 
-        # 7. Build 4 Multimodal Transport Options Comparison
+        car_delay = motorcycle_delay
+
+        # 7. Build Multimodal Transport Options Comparison with Realistic Mumbai Costs
         options = [
+            {
+                "mode": "Drive / Car",
+                "mode_key": "DRIVE",
+                "icon": "Car",
+                "estimated_journey_time": car_base_time + car_delay,
+                "base_time": car_base_time,
+                "delay_min": car_delay,
+                "estimated_cost_inr": car_cost,
+                "incident_exposure": "High road-disruption exposure" if car_delay > 0 else "Low (No corridor disruptions)",
+                "assessment": f"Route encounters {len(route_relevant_incidents)} corridor disruptions" if car_delay > 0 else "Clear road corridor according to Google Maps geometry",
+                "recommendation": "Consider recommended multimodal alternative" if car_delay > 15 else "Optimal personal vehicle flow",
+                "recommended": False if (car_delay > 15 or is_hero_journey) else True,
+                "corridor_notes": f"Corridor delay of +{car_delay}m detected." if car_delay > 0 else "No obstructive incidents within the 350m route corridor.",
+                "color": "#ef4444" if car_delay > 15 else "#10b981"
+            },
             {
                 "mode": "Motorcycle",
                 "mode_key": "MOTORCYCLE",
@@ -967,6 +994,7 @@ class IncidentIntelligenceEngine:
                 "estimated_journey_time": motorcycle_base_time + motorcycle_delay,
                 "base_time": motorcycle_base_time,
                 "delay_min": motorcycle_delay,
+                "estimated_cost_inr": motorcycle_cost,
                 "incident_exposure": "High road-disruption exposure" if motorcycle_delay > 0 else "Low (No corridor disruptions)",
                 "assessment": f"Route encounters {len(route_relevant_incidents)} corridor disruptions" if motorcycle_delay > 0 else "Clear road corridor according to Google Maps geometry",
                 "recommendation": "Consider recommended multimodal alternative" if motorcycle_delay > 15 else "Optimal personal vehicle flow",
@@ -981,6 +1009,7 @@ class IncidentIntelligenceEngine:
                 "estimated_journey_time": rail_base_time + rail_delay,
                 "base_time": rail_base_time,
                 "delay_min": rail_delay,
+                "estimated_cost_inr": rail_cost,
                 "incident_exposure": "High / Track Submergence" if rail_delay > 20 else ("Moderate" if rail_delay > 0 else "Low"),
                 "assessment": "Track circuit TC-284 waterlogging reported" if rail_delay > 0 else "Regular timetable operations",
                 "recommendation": "Check live local train status" if rail_delay > 0 else "Suburban trains operating normally",
@@ -995,6 +1024,7 @@ class IncidentIntelligenceEngine:
                 "estimated_journey_time": metro_base_time + metro_delay,
                 "base_time": metro_base_time,
                 "delay_min": metro_delay,
+                "estimated_cost_inr": metro_cost,
                 "incident_exposure": "Low in current simulation",
                 "assessment": "Grade-separated elevated viaduct has zero water ingress",
                 "recommendation": "Recommended resilient transit option",
@@ -1009,6 +1039,7 @@ class IncidentIntelligenceEngine:
                 "estimated_journey_time": bus_base_time + bus_delay,
                 "base_time": bus_base_time,
                 "delay_min": bus_delay,
+                "estimated_cost_inr": bus_cost,
                 "incident_exposure": "High road-congestion exposure" if bus_delay > 0 else "Low",
                 "assessment": "BEST feeder routes diverted" if bus_delay > 0 else "Normal transit flow",
                 "recommendation": "Check bus diversions along affected corridor" if bus_delay > 0 else "Regular BEST operations",
@@ -1019,8 +1050,11 @@ class IncidentIntelligenceEngine:
         ]
 
         chosen_mode_obj = next((o for o in options if o["mode_key"] in mode_upper), options[0])
-        recommended_obj = next((o for o in options if o["recommended"]), options[2])
+        recommended_obj = next((o for o in options if o["recommended"]), options[3])
         net_time_saved = max(0, chosen_mode_obj["estimated_journey_time"] - recommended_obj["estimated_journey_time"])
+        recommended_cost = recommended_obj.get("estimated_cost_inr", 30)
+        current_cost = chosen_mode_obj.get("estimated_cost_inr", 45)
+        cost_difference = current_cost - recommended_cost
 
         # Map Route Geometry (Objective 4: Accurate Visualization)
         map_route = {
@@ -1090,6 +1124,15 @@ class IncidentIntelligenceEngine:
             "net_time_saved_min": net_time_saved,
             "recommended_mode": recommended_obj["mode"],
             "recommended_eta_min": recommended_obj["estimated_journey_time"],
+            "recommended_cost_inr": recommended_cost,
+            "current_cost_inr": current_cost,
+            "cost_difference_inr": cost_difference,
+            "alternative_route_name": f"{recommended_obj['mode']} (Resilient Alternative)",
+            "alternative_route_reason": (
+                "Grade-separated elevated viaduct has zero water ingress, bypassing flooded subways."
+                if "metro" in recommended_obj["mode"].lower()
+                else "Bypasses active waterlogging clusters with optimal traffic flow."
+            ),
             "incident_exposure_score": chosen_mode_obj["incident_exposure"],
             "corridor_threshold_m": corridor_threshold,
             # Strict Route Incident Matching Results (Objective 3)

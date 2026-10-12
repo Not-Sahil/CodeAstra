@@ -5,7 +5,7 @@ import {
   ExternalLink, Car, Bike, Train, Footprints, Plus, Shield, 
   Radio, Check, X, Info, Settings, Compass, LocateFixed,
   LogIn, UserPlus, CheckCircle, ArrowRight, Activity, Database,
-  LayoutDashboard, LogOut
+  LayoutDashboard, LogOut, IndianRupee, Zap
 } from 'lucide-react';
 import './App.css';
 
@@ -479,6 +479,35 @@ export default function App() {
     } finally {
       setIsSendingTestSms(false);
     }
+  };
+
+  // Estimate realistic commute costs across Mumbai transit modes
+  const getCommuteCost = (mode, distKm) => {
+    const d = Math.max(1, distKm || 12);
+    const m = (mode || 'DRIVE').toUpperCase();
+    if (m === 'DRIVE' || m.includes('CAR')) {
+      return Math.max(60, Math.round(d * 9.5));
+    } else if (m === 'MOTORCYCLE' || m.includes('BIKE')) {
+      return Math.max(25, Math.round(d * 2.8));
+    } else if (m.includes('METRO') || m === 'TRANSIT') {
+      if (d <= 3) return 10;
+      if (d <= 12) return 20;
+      if (d <= 18) return 30;
+      if (d <= 24) return 40;
+      return 50;
+    } else if (m.includes('TRAIN') || m.includes('RAIL')) {
+      if (d <= 10) return 5;
+      if (d <= 25) return 10;
+      return 15;
+    } else if (m.includes('BUS')) {
+      if (d <= 5) return 6;
+      if (d <= 10) return 10;
+      if (d <= 15) return 15;
+      return 20;
+    } else if (m.includes('WALK')) {
+      return 0;
+    }
+    return Math.max(25, Math.round(d * 3.0));
   };
 
   return (
@@ -1182,75 +1211,162 @@ export default function App() {
                 )}
               </div>
 
-              {/* ROUTE CORRIDOR EVALUATION RESULTS (Phase 10) */}
-              {commuteResult && (
-                <div className="macos-card" style={{ marginTop: '16px' }}>
-                  <div className="macos-card-header">
-                    <span className="macos-card-title">
-                      <Clock size={16} /> Route Assessment
-                    </span>
-                    <button 
-                      className="macos-btn-secondary" 
-                      style={{ padding: '3px 8px', fontSize: '11px' }}
-                      onClick={handleSaveDefaultCommute}
-                      title="Save this commute for automatic daily SMS notifications"
-                    >
-                      <span>Save Default</span>
-                    </button>
-                  </div>
+              {/* ROUTE ASSESSMENT & COMMUTE RECOMMENDATION CARD */}
+              {commuteResult && (() => {
+                const distKm = commuteResult.distance_km || 14.5;
+                const currentCost = commuteResult.current_cost_inr ?? getCommuteCost(travelMode, distKm);
+                const recommendedMode = commuteResult.recommended_mode || (commuteResult.intersecting_incidents?.length > 0 ? 'Metro' : (travelMode === 'DRIVE' ? 'Drive / Car' : travelMode));
+                const recommendedEta = commuteResult.recommended_eta_min ?? (commuteResult.net_time_saved_min ? Math.max(15, commuteResult.current_eta_min - commuteResult.net_time_saved_min) : commuteResult.current_eta_min);
+                const recommendedCost = commuteResult.recommended_cost_inr ?? getCommuteCost(recommendedMode, distKm);
+                const timeSaved = Math.max(0, (commuteResult.current_eta_min || 0) - recommendedEta);
+                const costDiff = currentCost - recommendedCost;
+                const altName = commuteResult.alternative_route_name || (recommendedMode.toUpperCase().includes('METRO') ? 'Elevated Metro Line 2A' : (recommendedMode.toUpperCase().includes('TRAIN') ? 'Western Railway Suburban' : `${recommendedMode} Corridor`));
+                const altReason = commuteResult.alternative_route_reason || (recommendedMode.toUpperCase().includes('METRO') ? 'Grade-separated elevated viaduct has zero water ingress, completely bypassing flooded subways.' : 'Fastest and most flood-resilient route for this corridor.');
 
-                  {/* ETA & ROUTE SUMMARY */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
-                    <div style={{ background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                      <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>ESTIMATED ETA</div>
-                      <div style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
-                        {commuteResult.current_eta_min} mins
+                return (
+                  <div className="macos-card" style={{ marginTop: '16px' }}>
+                    <div className="macos-card-header">
+                      <span className="macos-card-title">
+                        <Clock size={16} /> Route Assessment & Alternatives
+                      </span>
+                      <button 
+                        className="macos-btn-secondary" 
+                        style={{ padding: '3px 8px', fontSize: '11px' }}
+                        onClick={handleSaveDefaultCommute}
+                        title="Save this commute for automatic daily SMS notifications"
+                      >
+                        <span>Save Default</span>
+                      </button>
+                    </div>
+
+                    {/* TOP SUMMARY TILES: CURRENT VS RECOMMENDED */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+                      <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>
+                          Current ({travelMode})
+                        </div>
+                        <div style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', margin: '3px 0 1px 0' }}>
+                          {commuteResult.current_eta_min} mins
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>
+                          Est. Cost: <strong style={{ color: '#0f172a' }}>₹{currentCost}</strong>
+                        </div>
                       </div>
-                      <div style={{ fontSize: '11px', color: '#059669' }}>
-                        Recommended: {commuteResult.recommended_mode || travelMode}
+
+                      <div style={{ background: '#f0fdf4', padding: '10px 12px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                        <div style={{ fontSize: '10px', color: '#15803d', fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Zap size={11} /> Recommended
+                        </div>
+                        <div style={{ fontSize: '18px', fontWeight: 700, color: '#166534', margin: '3px 0 1px 0' }}>
+                          {recommendedEta} mins
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#15803d', fontWeight: 600 }}>
+                          Est. Cost: <strong>₹{recommendedCost}</strong> {timeSaved > 0 ? `(saves ${timeSaved}m)` : ''}
+                        </div>
                       </div>
                     </div>
 
-                    <div style={{ background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                      <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>CORRIDOR HAZARDS</div>
-                      <div style={{ fontSize: '18px', fontWeight: 700, color: (commuteResult.intersecting_incidents?.length > 0 ? '#e11d48' : '#059669') }}>
-                        {commuteResult.intersecting_incidents?.length || 0} on route
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#64748b' }}>
-                        Corridor threshold: 350m
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ROUTE SPECIFIC INCIDENTS LIST */}
-                  <div className="route-incidents-section">
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                      Route-Affecting Incidents ({commuteResult.intersecting_incidents?.length || 0})
-                    </div>
-
-                    {(!commuteResult.intersecting_incidents || commuteResult.intersecting_incidents.length === 0) ? (
-                      <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '8px', padding: '12px', fontSize: '12px', color: '#065f46', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <CheckCircle2 size={16} />
-                        <span>No reported disruptions along your route within the 350m corridor.</span>
-                      </div>
-                    ) : (
-                      commuteResult.intersecting_incidents.map((inc, i) => (
-                        <div key={i} className="route-incident-card">
-                          <div className="route-incident-header">
-                            <span className="route-incident-title">{inc.title}</span>
-                            <span className="route-incident-dist">{inc.distance_from_route_meters}m from route</span>
+                    {/* RECOMMENDATION CARD (REPLACES CORRIDOR HAZARDS CARD) */}
+                    <div className="macos-recommendation-card">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#dcfce7', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Zap size={18} />
                           </div>
-                          <div className="route-incident-desc">{inc.description || inc.known_cause}</div>
-                          <div className="route-incident-footer">
-                            <span className="provenance-badge provenance-live">{inc.provenance || 'MUNICIPAL FEED'}</span>
-                            <span>Status: {inc.status}</span>
+                          <div>
+                            <div style={{ fontSize: '14px', fontWeight: 700, color: '#14532d' }}>
+                              Recommended Alternative Route
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#15803d', fontWeight: 600 }}>
+                              {altName}
+                            </div>
                           </div>
                         </div>
-                      ))
-                    )}
+                        <span className="provenance-badge provenance-live" style={{ background: '#dcfce7', color: '#15803d', borderColor: '#bbf7d0', fontSize: '10px', fontWeight: 700 }}>
+                          {timeSaved > 0 ? `⚡ ${timeSaved}m Faster` : 'Resilient Choice'}
+                        </span>
+                      </div>
+
+                      {/* TIME & COST METRICS */}
+                      <div className="recommendation-metrics-grid">
+                        <div className="recommendation-metric-box">
+                          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Clock size={11} style={{ color: '#16a34a' }} />
+                            <span>Alternative Time</span>
+                          </div>
+                          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: '4px 0 2px 0' }}>
+                            {recommendedEta} mins
+                          </div>
+                          <div style={{ fontSize: '11px', color: timeSaved > 0 ? '#16a34a' : '#64748b', fontWeight: 600 }}>
+                            {timeSaved > 0 ? `▼ ${timeSaved} mins faster than current mode` : 'Fastest available corridor'}
+                          </div>
+                        </div>
+
+                        <div className="recommendation-metric-box">
+                          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <IndianRupee size={11} style={{ color: '#0284c7' }} />
+                            <span>Alternative Cost</span>
+                          </div>
+                          <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: '4px 0 2px 0' }}>
+                            ₹{recommendedCost}
+                          </div>
+                          <div style={{ fontSize: '11px', color: costDiff > 0 ? '#16a34a' : (costDiff < 0 ? '#64748b' : '#0284c7'), fontWeight: 600 }}>
+                            {costDiff > 0 ? `▼ Saves ₹${costDiff} vs ${travelMode.toLowerCase()}` : (costDiff < 0 ? `▲ ₹${Math.abs(costDiff)} vs current` : 'Same cost as current')}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* REASON & WHY SWITCH */}
+                      <div style={{ background: '#ffffff', border: '1px solid #dcfce7', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#166534', lineHeight: 1.5, marginBottom: '12px' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <CheckCircle2 size={13} />
+                          <span>Why Follow This Alternative?</span>
+                        </div>
+                        <div>{altReason}</div>
+                        {commuteResult.intersecting_incidents?.length > 0 && (
+                          <div style={{ marginTop: '8px', fontSize: '11px', color: '#991b1b', background: '#fef2f2', border: '1px solid #fecaca', padding: '5px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <AlertTriangle size={13} style={{ flexShrink: 0 }} />
+                            <span>Bypasses <strong>{commuteResult.intersecting_incidents.length} active disruption(s)</strong> on your initial path ({commuteResult.intersecting_incidents[0]?.title}).</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* ACTION BUTTON */}
+                      <button
+                        type="button"
+                        className="macos-btn-primary"
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          background: '#16a34a',
+                          borderColor: '#15803d',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)'
+                        }}
+                        onClick={() => {
+                          const newMode = (recommendedMode.toUpperCase().includes('METRO') || recommendedMode.toUpperCase().includes('TRAIN') || recommendedMode.toUpperCase().includes('TRANSIT'))
+                            ? 'TRANSIT' 
+                            : (recommendedMode.toUpperCase().includes('BIKE') || recommendedMode.toUpperCase().includes('MOTORCYCLE') ? 'MOTORCYCLE' : 'DRIVE');
+                          setTravelMode(newMode);
+                          if (commuteResult.map_route?.recommended_leg && window.L && mapInstanceRef.current && routePolylineRef.current) {
+                            routePolylineRef.current.setLatLngs(commuteResult.map_route.recommended_leg);
+                            routePolylineRef.current.setStyle({ color: '#16a34a', weight: 6 });
+                          }
+                        }}
+                      >
+                        <Navigation size={14} />
+                        <span>Follow Recommended Route ({recommendedMode})</span>
+                        <ArrowRight size={13} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* RIGHT MAP DISPLAY */}

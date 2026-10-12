@@ -668,3 +668,36 @@ input:checked + .macos-slider:before {
   border-color: #93c5fd;
   box-shadow: 0 8px 24px rgba(2, 132, 199, 0.12);
 }
+
+/* ==========================================================================
+   RECOMMENDED ALTERNATIVE COMMUTE CARD
+   ========================================================================== */
+.macos-recommendation-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+  border: 1px solid #86efac;
+  border-radius: var(--macos-radius-md);
+  padding: 16px;
+  margin-top: 12px;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.08);
+  transition: all 0.2s ease;
+}
+
+.macos-recommendation-card:hover {
+  border-color: #4ade80;
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.12);
+}
+
+.recommendation-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.recommendation-metric-box {
+  background: #ffffff;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--macos-radius-sm);
+  padding: 10px 12px;
+  box-shadow: var(--macos-shadow-sm);
+}
