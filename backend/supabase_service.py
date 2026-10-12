@@ -95,8 +95,26 @@ def save_commute_query_record(query_data: dict):
             client.table("commute_queries").insert(record).execute()
             return {"status": "SAVED_TO_SUPABASE", "record": record}
         except Exception as e:
-            logger.warning(f"Failed to write commute query to Supabase: {e}")
-            return {"status": "CACHED_LOCALLY", "error": str(e), "record": record}
+            # If extended columns (e.g. alternative_routes) are not yet in remote schema, fallback to base fields
+            try:
+                base_record = {
+                    "user_name": record["user_name"],
+                    "origin": record["origin"],
+                    "destination": record["destination"],
+                    "preferred_mode": record["preferred_mode"],
+                    "calculated_travel_time_min": record["calculated_travel_time_min"],
+                    "recommended_mode": record["recommended_mode"],
+                    "net_time_saved_min": record["net_time_saved_min"],
+                    "incident_exposure_score": record["incident_exposure_score"],
+                    "nearby_hazards_count": record["nearby_hazards_count"],
+                    "intersecting_incidents": record["intersecting_incidents"],
+                    "itinerary_details": record["itinerary_details"]
+                }
+                client.table("commute_queries").insert(base_record).execute()
+                return {"status": "SAVED_TO_SUPABASE_BASE_SCHEMA", "record": base_record}
+            except Exception as e_base:
+                logger.warning(f"Failed to write commute query to Supabase: {e_base}")
+                return {"status": "CACHED_LOCALLY", "error": str(e_base), "record": record}
 
     return {"status": "SAVED_LOCALLY", "record": record}
 

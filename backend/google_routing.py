@@ -1,9 +1,11 @@
 import os
+import re
 import json
 import math
 import logging
 import urllib.request
 import urllib.error
+import requests
 from typing import Dict, List, Tuple, Optional, Any
 from dotenv import load_dotenv
 
@@ -169,8 +171,9 @@ class GoogleRoutingService:
         Resolves a location input into [latitude, longitude].
         Supports:
         - [lat, lon] array / tuple
-        - "lat, lon" coordinate string
+        - "lat, lon" or "GPS: lat, lon" coordinate string
         - Verified landmark name string from database
+        - OpenStreetMap Nominatim free geocoding fallback for broad location search
         Returns: ([lat, lon], is_verified, message)
         """
         if not loc_input:
@@ -187,18 +190,18 @@ class GoogleRoutingService:
 
         loc_str = str(loc_input).strip()
 
-        # 2. If coordinate pair string e.g. "19.2372, 72.8695"
-        if "," in loc_str:
-            parts = loc_str.split(",")
-            if len(parts) == 2:
-                try:
-                    lat = float(parts[0].strip())
-                    lon = float(parts[1].strip())
+        # 2. Extract numeric coordinates using regex (handles "GPS: 19.1196, 72.8433", "(19.1, 72.8)", etc.)
+        coord_nums = re.findall(r"[-+]?\d*\.\d+|\b[-+]?\d+\b", loc_str)
+        if len(coord_nums) >= 2:
+            try:
+                lat = float(coord_nums[0])
+                lon = float(coord_nums[1])
+                if -90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0:
                     is_valid, msg = self.validate_coordinates(lat, lon)
                     if is_valid:
-                        return [round(lat, 6), round(lon, 6)], True, "Resolved from coordinate string"
-                except ValueError:
-                    pass
+                        return [round(lat, 6), round(lon, 6)], True, "Resolved coordinates from device location"
+            except (ValueError, TypeError):
+                pass
 
         # 3. Known Verified Mumbai Landmark Dictionary
         loc_clean = loc_str.lower()
@@ -206,12 +209,32 @@ class GoogleRoutingService:
             coords = self.VERIFIED_MUMBAI_LOCATIONS[loc_clean]
             return coords, True, f"Resolved verified landmark: {loc_str}"
 
-        # Substring search
+        # Substring search in verified dictionary
         for key, coords in self.VERIFIED_MUMBAI_LOCATIONS.items():
             if key in loc_clean or loc_clean in key:
                 return coords, True, f"Matched verified Mumbai landmark: {key.title()}"
 
-        # 4. Unknown / Unverified location
+        # 4. OpenStreetMap Nominatim Geocoding Fallback (Phase 8.A: broad location search)
+        try:
+            query = loc_str if "mumbai" in loc_clean else f"{loc_str}, Mumbai"
+            resp = requests.get(
+                "https://nominatim.openstreetmap.org/search",
+                params={"q": query, "format": "json", "limit": 1},
+                headers={"User-Agent": "UrbanPulseAI-Geocoding-Service"},
+                timeout=3.5
+            )
+            if resp.status_code == 200:
+                results = resp.json()
+                if results and len(results) > 0:
+                    g_lat = float(results[0]["lat"])
+                    g_lon = float(results[0]["lon"])
+                    is_valid, msg = self.validate_coordinates(g_lat, g_lon)
+                    if is_valid:
+                        return [round(g_lat, 6), round(g_lon, 6)], True, f"Geocoded location: {results[0].get('display_name', loc_str)[:45]}"
+        except Exception as ge_err:
+            logger.debug(f"Nominatim geocoding fallback note: {ge_err}")
+
+        # 5. Unknown / Unverified location
         return None, False, f"Location '{loc_str}' cannot be resolved reliably. Marking as location-unverified."
 
     def map_travel_mode(self, mode_str: str) -> str:

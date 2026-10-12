@@ -6,8 +6,8 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from pydantic import BaseModel, Field
+from typing import Optional, Dict, Any, List
 
 from backend.engine import IncidentIntelligenceEngine
 from backend.supabase_service import (
@@ -23,11 +23,16 @@ from backend.auth_service import (
     get_user_by_code,
     update_user_profile
 )
+from backend.weather_service import WeatherService
+from backend.source_health import source_health_monitor
+from backend.citizen_reports import citizen_report_manager, CitizenReportSubmission
+from backend.sms_service import sms_service, sendCommuteSmsAlert
+from backend.scheduler import commute_scheduler
 
 app = FastAPI(
-    title="CodeAstra: Multimodal Urban Incident Intelligence Engine",
+    title="UrbanPulse AI: Multimodal Urban Incident Intelligence Engine",
     description="24-hour multimodal incident correlation, evidence graph, confidence ledger, and personalized commute alert API.",
-    version="2.0.0"
+    version="2.1.0"
 )
 
 app.add_middleware(
@@ -39,6 +44,16 @@ app.add_middleware(
 )
 
 engine = IncidentIntelligenceEngine()
+weather_service = WeatherService()
+
+@app.on_event("startup")
+async def app_startup():
+    """Start background daily commute alert scheduler."""
+    await commute_scheduler.start(engine)
+
+@app.on_event("shutdown")
+def app_shutdown():
+    commute_scheduler.stop()
 
 class LoginRequest(BaseModel):
     identifier: str
@@ -120,6 +135,45 @@ def supabase_sync_incidents():
     """Sync active Mumbai incidents to Supabase database."""
     incidents = engine.get_active_incidents()
     return sync_active_incidents(incidents)
+
+@app.get("/api/weather")
+def get_live_weather(lat: Optional[float] = None, lon: Optional[float] = None, force_refresh: bool = False):
+    """Real Open-Meteo live Mumbai weather connector with honest data provenance and caching."""
+    return weather_service.get_weather(lat, lon, force_refresh)
+
+@app.get("/api/sources/health")
+def get_sources_health():
+    """Phase 6 / Phase 4: Data source health, connectivity, and resilience monitoring."""
+    return source_health_monitor.get_all_sources_health()
+
+@app.post("/api/incidents/report")
+def submit_citizen_incident_report(report: CitizenReportSubmission):
+    """Phase 4.D: Authenticated citizen hazard report submission with coordinate validation and spam controls."""
+    res = citizen_report_manager.submit_report(report)
+    if not res.get("success"):
+        raise HTTPException(status_code=400, detail=res.get("error", "Invalid report submission"))
+    return res
+
+class TestSmsPayload(BaseModel):
+    phone: str = Field(..., description="10-digit Indian mobile number")
+    message: Optional[str] = "UrbanPulse: Rain and waterlogging alert along your commute corridor."
+
+@app.post("/api/alerts/test-sms")
+def test_sms_dispatch(payload: TestSmsPayload):
+    """Phase 13.E: Protected test-sms dispatch endpoint with Indian phone normalization and rate limiting."""
+    result = sms_service.send_commute_sms_alert(payload.phone, payload.message or "UrbanPulse test alert")
+    if not result.get("success"):
+        # If disabled or mocked, returns 200 with structured status
+        if result.get("status") in ["mock_accepted", "duplicate_suppressed"]:
+            return result
+        raise HTTPException(status_code=400, detail=result.get("error") or "SMS dispatch rejected")
+    return result
+
+@app.post("/api/scheduler/trigger")
+async def trigger_scheduler_check():
+    """Trigger on-demand check for scheduled morning commute alerts."""
+    dispatched = await commute_scheduler.check_and_dispatch_due_alerts()
+    return {"status": "SUCCESS", "dispatched_count": len(dispatched), "details": dispatched}
 
 @app.get("/api/simulation/timeline")
 def get_simulation_timeline():

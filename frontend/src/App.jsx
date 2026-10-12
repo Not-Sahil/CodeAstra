@@ -1,1557 +1,1238 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  ShieldAlert, Train, Navigation, Bike, Bus, AlertTriangle, 
-  CheckCircle2, Compass, Activity, Play, Pause, RefreshCw, BarChart3, 
-  MapPin, Clock, ArrowRight, Eye, GitBranch, Layers, Sparkles, User,
-  Radio, Send, Bot, Check, Info, FileText, ChevronRight, Zap, Database,
-  Settings, ExternalLink, Filter, HelpCircle, AlertOctagon, RotateCcw,
-  LogIn, LogOut, UserPlus, Locate, Target, Menu, X, Home, LayoutDashboard, ChevronDown
+  Navigation, AlertTriangle, ShieldCheck, User, MapPin, 
+  Clock, Cloud, RefreshCw, Send, CheckCircle2, AlertCircle, 
+  ExternalLink, Car, Bike, Train, Footprints, Plus, Shield, 
+  Radio, Check, X, Info, Settings, Compass, LocateFixed
 } from 'lucide-react';
-import AuthView from './AuthView';
-import ProximityRadarView from './ProximityRadarView';
-import LandingView from './LandingView';
-import DashboardView from './DashboardView';
-import StudentCommuteView from './StudentCommuteView';
-import CommandCentreMapView from './CommandCentreMapView';
-import UrbanRippleGraphView from './UrbanRippleGraphView';
-import ReplayLabView from './ReplayLabView';
-import SecondIncidentView from './SecondIncidentView';
-import EvaluationView from './EvaluationView';
+import './App.css';
 
 const API_BASE = window.location.origin;
 
 export default function App() {
-  // Navigation: 10 structured pages matching the screenshot theme
-  const [activeTab, setActiveTab] = useState('landing'); 
-  // 'landing' (Landing Page with Hero & Platform Overview)
-  // 'dashboard' (Executive Operations Dashboard)
-  // 'map' (Act 1: Command Centre & Citywide Map with Live User Radar)
-  // 'proximity' (Live User Location Tracking & Nearby Hazard Radar)
-  // 'graph' (Act 2: Urban Ripple Graph)
-  // 'replay' (Act 3: AI Challenges Its Own Conclusion - Replay Lab)
-  // 'commute' (Acts 4 & 5: Commute Assistant & Intelligent Rerouting)
-  // 'second_incident' (Act 6: Second Incident Extension)
-  // 'eval' (Act 7: Evaluation & Evidence Metrics)
-  // 'auth' (Commuter Account, Profile & Supabase Sync)
+  // Navigation: Exactly 3 primary sections (Phase 2.C)
+  const [activeTab, setActiveTab] = useState('commute'); // 'commute', 'incidents', 'profile'
 
-  // Closable / Openable Left Sidebar State (Toggled via 3-lines hamburger menu)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-  // Commuter Identity & Authentication State
-  const [currentUser, setCurrentUser] = useState(null);
-
-  // Live User GPS Location Tracking State (Defaults to Malad Inundation Hotspot)
-  const [userLocation, setUserLocation] = useState({
-    lat: 19.1875,
-    lon: 72.8504,
-    accuracy: 8,
-    heading: 180,
-    speed: 24,
-    source: 'HOTSPOT_PRESET',
-    locationName: 'Malad Subway Inundation Hotspot',
-    lastUpdated: '08:10:00 IST'
+  // User Profile & Authentication State (Phase 11)
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem('urbanpulse_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
   });
 
-  // Incidents & Intelligence Data
-  const [incidents, setIncidents] = useState([]);
-  const [selectedIncidentId, setSelectedIncidentId] = useState('INC_MUM_20260715_01');
-  const [ledgerData, setLedgerData] = useState(null);
-  const [briefingData, setBriefingData] = useState(null);
-  const [modelsMetrics, setModelsMetrics] = useState(null);
-  const [currentTime, setCurrentTime] = useState('08:10:00 IST');
-  const [simulationTimeline, setSimulationTimeline] = useState(null);
+  // Real Device Geolocation State (Phase 7 - No Hardcoded Defaults)
+  const [deviceLocation, setDeviceLocation] = useState({
+    coords: null, // { lat: number, lon: number }
+    accuracy: null,
+    timestamp: null,
+    status: 'PROMPTING', // 'PROMPTING', 'GRANTED', 'DENIED', 'UNAVAILABLE'
+    label: ''
+  });
 
-  // Commute Route Planner State (Default: Hero Student 001 Journey)
-  const [commuterName, setCommuterName] = useState('Student 001 (Sahil)');
-  const [commuteOrigin, setCommuteOrigin] = useState('Ashokvan (Borivali East)');
-  const [commuteDestination, setCommuteDestination] = useState('Rajiv Gandhi Institute of Technology (RGIT, Versova)');
-  const [commuteMode, setCommuteMode] = useState('MOTORCYCLE'); // 'MOTORCYCLE', 'TRAIN', 'METRO', 'BUS'
-  const [customCommuteResult, setCustomCommuteResult] = useState(null);
-  const [isEvaluating, setIsEvaluating] = useState(false);
-  const [availableLocations, setAvailableLocations] = useState([]);
-  const [showCompareModal, setShowCompareModal] = useState(false);
+  // Commute Route Search State (Phase 8 & Phase 10)
+  const [originInput, setOriginInput] = useState('');
+  const [destInput, setDestInput] = useState('');
+  const [travelMode, setTravelMode] = useState('DRIVE'); // 'DRIVE', 'MOTORCYCLE', 'TRANSIT', 'WALK'
+  const [isSearchingRoute, setIsSearchingRoute] = useState(false);
+  const [commuteResult, setCommuteResult] = useState(null); // null before destination submitted (Phase 8.C)
+  const [routeError, setRouteError] = useState(null);
 
-  // Auth & Session Handlers
-  const handleLoginSuccess = (user) => {
-    setCurrentUser(user);
-    if (user.full_name) setCommuterName(user.full_name);
-    if (user.default_origin) setCommuteOrigin(user.default_origin);
-    if (user.default_destination) setCommuteDestination(user.default_destination);
-    if (user.preferred_mode) setCommuteMode(user.preferred_mode);
-    try {
-      localStorage.setItem('urbanpulse_user', JSON.stringify(user));
-    } catch (e) {}
-    evaluateUserCommute(
-      user.default_origin || commuteOrigin,
-      user.default_destination || commuteDestination,
-      user.preferred_mode || commuteMode,
-      user.full_name || commuterName
+  // Live Data & Weather State (Phase 4)
+  const [weatherData, setWeatherData] = useState(null);
+  const [cityIncidents, setCityIncidents] = useState([]);
+  const [sourcesHealth, setSourcesHealth] = useState(null);
+  const [selectedIncident, setSelectedIncident] = useState(null);
+
+  // Modals
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showHealthModal, setShowHealthModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [testSmsStatus, setTestSmsStatus] = useState(null);
+  const [isSendingTestSms, setIsSendingTestSms] = useState(false);
+  const [mapProvider, setMapProvider] = useState('google'); // 'google' (Google Maps Roadmap), 'google_hybrid' (Satellite), 'osm' (OpenStreetMap)
+
+  // Map References
+  const mapContainerRef = useRef(null);
+  const cityMapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const cityMapInstanceRef = useRef(null);
+  const commuteTileLayerRef = useRef(null);
+  const cityTileLayerRef = useRef(null);
+  const routePolylineRef = useRef(null);
+  const userMarkerRef = useRef(null);
+  const incidentLayersRef = useRef([]);
+
+  const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyA_C-AFPn-1596_R0cCUggw5ibxBpg5aVU';
+
+  const createTileLayer = (provider, L) => {
+    if (provider === 'google') {
+      return L.tileLayer(`https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&key=${GOOGLE_API_KEY}`, {
+        subdomains: '0123',
+        maxZoom: 20,
+        attribution: '&copy; Google Maps'
+      });
+    } else if (provider === 'google_hybrid') {
+      return L.tileLayer(`https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&key=${GOOGLE_API_KEY}`, {
+        subdomains: '0123',
+        maxZoom: 20,
+        attribution: '&copy; Google Maps Satellite'
+      });
+    } else {
+      return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      });
+    }
+  };
+
+  // =========================================================================
+  // 1. INITIAL BROWSER GEOLOCATION (Phase 7)
+  // =========================================================================
+  const requestDeviceLocation = () => {
+    if (!navigator.geolocation) {
+      setDeviceLocation(prev => ({ ...prev, status: 'UNAVAILABLE' }));
+      return;
+    }
+
+    setDeviceLocation(prev => ({ ...prev, status: 'PROMPTING' }));
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        const coords = { lat: latitude, lon: longitude };
+        const label = `GPS: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+        
+        setDeviceLocation({
+          coords,
+          accuracy: Math.round(accuracy),
+          timestamp: new Date().toLocaleTimeString(),
+          status: 'GRANTED',
+          label
+        });
+
+        // Set as default origin if origin is currently empty
+        if (!originInput || originInput.startsWith('GPS:')) {
+          setOriginInput(label);
+        }
+
+        // Center map if instance exists
+        if (mapInstanceRef.current && window.L) {
+          mapInstanceRef.current.setView([latitude, longitude], 13);
+          updateUserLocationMarker(latitude, longitude, accuracy);
+        }
+      },
+      (err) => {
+        console.warn('Geolocation denied or failed:', err);
+        setDeviceLocation(prev => ({ ...prev, status: 'DENIED' }));
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }
     );
   };
 
-  const handleLogout = () => {
-    setCurrentUser(null);
-    try {
-      localStorage.removeItem('urbanpulse_user');
-    } catch (e) {}
+  useEffect(() => {
+    requestDeviceLocation();
+  }, []);
+
+  // Fetch weather, active incidents, and source health
+  const refreshLiveFeeds = () => {
+    fetch(`${API_BASE}/api/weather`)
+      .then(res => res.json())
+      .then(data => setWeatherData(data))
+      .catch(console.error);
+
+    fetch(`${API_BASE}/api/incidents`)
+      .then(res => res.json())
+      .then(data => setCityIncidents(data.incidents || []))
+      .catch(console.error);
+
+    fetch(`${API_BASE}/api/sources/health`)
+      .then(res => res.json())
+      .then(data => setSourcesHealth(data))
+      .catch(console.error);
   };
 
-  // Restore session from localStorage or load seed user
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('urbanpulse_user');
-      if (saved) {
-        const u = JSON.parse(saved);
-        if (u && u.user_code) {
-          setCurrentUser(u);
-          if (u.full_name) setCommuterName(u.full_name);
-          if (u.default_origin) setCommuteOrigin(u.default_origin);
-          if (u.default_destination) setCommuteDestination(u.default_destination);
-          if (u.preferred_mode) setCommuteMode(u.preferred_mode);
-          return;
-        }
+    refreshLiveFeeds();
+    const interval = setInterval(refreshLiveFeeds, 60000); // 1 minute refresh
+    return () => clearInterval(interval);
+  }, []);
+
+  // =========================================================================
+  // 2. LEAFLET MAP INITIALIZATION & UPDATES (Commute View)
+  // =========================================================================
+  const updateUserLocationMarker = (lat, lon, accuracy) => {
+    const L = window.L;
+    if (!L || !mapInstanceRef.current) return;
+
+    if (userMarkerRef.current) {
+      mapInstanceRef.current.removeLayer(userMarkerRef.current);
+    }
+
+    const markerGroup = L.layerGroup();
+    // Accuracy circle
+    L.circle([lat, lon], {
+      radius: Math.min(accuracy || 50, 200),
+      color: '#0284c7',
+      fillColor: '#0284c7',
+      fillOpacity: 0.15,
+      weight: 1
+    }).addTo(markerGroup);
+
+    // Current location dot
+    L.circleMarker([lat, lon], {
+      radius: 8,
+      fillColor: '#0284c7',
+      color: '#ffffff',
+      weight: 3,
+      fillOpacity: 1
+    }).bindPopup('<b>Current Device Location</b><br>Accurate to within ' + (accuracy || 10) + 'm').addTo(markerGroup);
+
+    markerGroup.addTo(mapInstanceRef.current);
+    userMarkerRef.current = markerGroup;
+  };
+
+  useEffect(() => {
+    if (activeTab !== 'commute') return;
+    const L = window.L;
+    if (!L || !mapContainerRef.current) return;
+
+    if (!mapInstanceRef.current) {
+      const initialCenter = deviceLocation.coords 
+        ? [deviceLocation.coords.lat, deviceLocation.coords.lon]
+        : [19.0760, 72.8777]; // Default Mumbai centroid if GPS pending
+
+      const map = L.map(mapContainerRef.current, {
+        center: initialCenter,
+        zoom: 12,
+        zoomControl: true
+      });
+
+      // Initialize with selected provider (Google Maps by default)
+      const tile = createTileLayer(mapProvider, L).addTo(map);
+      commuteTileLayerRef.current = tile;
+
+      mapInstanceRef.current = map;
+
+      if (deviceLocation.coords) {
+        updateUserLocationMarker(deviceLocation.coords.lat, deviceLocation.coords.lon, deviceLocation.accuracy);
       }
-    } catch (e) {}
-
-    // Auto-load default hero student from backend
-    fetch(`${API_BASE}/api/auth/user/STUDENT_001`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.user) {
-          setCurrentUser(d.user);
-          if (d.user.full_name) setCommuterName(d.user.full_name);
-          try {
-            localStorage.setItem('urbanpulse_user', JSON.stringify(d.user));
-          } catch (e) {}
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  // Supabase Live Status
-  const [supabaseStatus, setSupabaseStatus] = useState({ connected: false, mode: 'CHECKING...' });
-  const [isSyncingSupabase, setIsSyncingSupabase] = useState(false);
-
-  // Google Maps API Key State & Map Provider ('google' or 'leaflet')
-  const [googleApiKey, setGoogleApiKey] = useState(
-    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || localStorage.getItem('google_maps_api_key') || ''
-  );
-  const [mapProvider, setMapProvider] = useState(
-    (import.meta.env.VITE_GOOGLE_MAPS_API_KEY || localStorage.getItem('google_maps_api_key')) ? 'google' : 'leaflet'
-  );
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [tempApiKeyInput, setTempApiKeyInput] = useState('');
-
-  // Real-Time Streaming Ticker State
-  const [liveStreamEvents, setLiveStreamEvents] = useState([]);
-  const [isStreamPaused, setIsStreamPaused] = useState(false);
-  const [streamStatus, setStreamStatus] = useState('CONNECTING');
-  const [eventCounter, setEventCounter] = useState(0);
-  const [latestTickEvent, setLatestTickEvent] = useState(null);
-
-  // Map Layer Toggles & Style
-  const [mapLayers, setMapLayers] = useState({
-    railTracks: true,
-    metroViaduct: true,
-    floodZones: true,
-    evaluatedRoute: true,
-    trafficLayer: true,
-    userScanRadar: true
-  });
-  const [mapTileStyle, setMapTileStyle] = useState('osm'); // 'osm' or 'dark'
-
-  // Replay Lab State (Act Three)
-  const [replayLogs, setReplayLogs] = useState([]);
-  const [offlineSensors, setOfflineSensors] = useState([]);
-  const [isReplaying, setIsReplaying] = useState(false);
-  const [replayChallengeActive, setReplayChallengeActive] = useState(null);
-
-  // Second Incident State (Act Six)
-  const [isSecondIncidentTriggered, setIsSecondIncidentTriggered] = useState(false);
-
-  // Map & Graph Refs
-  const mapContainerRef = useRef(null);
-  const googleMapContainerRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-  const googleMapInstanceRef = useRef(null);
-  const googleTrafficLayerRef = useRef(null);
-  const googleMarkersRef = useRef([]);
-  const googlePolylinesRef = useRef([]);
-  const layerGroupsRef = useRef({});
-  const tileLayerRef = useRef(null);
-  const graphContainerRef = useRef(null);
-  const graphInstanceRef = useRef(null);
-
-  const handleLocateBeacon = () => {
-    if (mapProvider === 'google' && googleMapInstanceRef.current && window.google) {
-      googleMapInstanceRef.current.panTo({ lat: userLocation.lat, lng: userLocation.lon });
-      googleMapInstanceRef.current.setZoom(14);
-    } else if (mapInstanceRef.current) {
-      mapInstanceRef.current.flyTo([userLocation.lat, userLocation.lon], 14, { duration: 1.2 });
     }
-  };
 
-  // Clock
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      setCurrentTime(now.toTimeString().split(' ')[0] + ' IST');
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    mapInstanceRef.current.invalidateSize();
+  }, [activeTab, deviceLocation.coords]);
 
-  // Initial Data Fetches
+  // Dynamic Map Layer Switcher (Google Maps Roadmap, Satellite, or OpenStreetMap)
   useEffect(() => {
-    fetchIncidents();
-    fetchLocations();
-    fetchModelsMetrics();
-    fetchSupabaseStatus();
-    fetchSimulationTimeline();
-    fetchConfidenceLedger(selectedIncidentId);
-    fetchOperatorBriefing(selectedIncidentId);
-    evaluateUserCommute('Ashokvan (Borivali East)', 'Rajiv Gandhi Institute of Technology (RGIT, Versova)', 'MOTORCYCLE', 'Student 001 (Sahil)');
-  }, []);
+    const L = window.L;
+    if (!L) return;
 
-  useEffect(() => {
-    fetchConfidenceLedger(selectedIncidentId);
-    fetchOperatorBriefing(selectedIncidentId);
-    if (activeTab === 'graph') {
-      renderIncidentGraph(selectedIncidentId);
+    if (mapInstanceRef.current && commuteTileLayerRef.current) {
+      mapInstanceRef.current.removeLayer(commuteTileLayerRef.current);
+      commuteTileLayerRef.current = createTileLayer(mapProvider, L).addTo(mapInstanceRef.current);
     }
-  }, [selectedIncidentId, activeTab]);
 
-  // Handle Map Initialization / Switching
+    if (cityMapInstanceRef.current && cityTileLayerRef.current) {
+      cityMapInstanceRef.current.removeLayer(cityTileLayerRef.current);
+      cityTileLayerRef.current = createTileLayer(mapProvider, L).addTo(cityMapInstanceRef.current);
+    }
+  }, [mapProvider]);
+
+  // Render route polyline and route-specific incidents onto commute map
   useEffect(() => {
-    if (activeTab === 'map') {
-      if (mapProvider === 'google' && googleApiKey) {
-        initGoogleMap();
+    const L = window.L;
+    if (!L || !mapInstanceRef.current) return;
+
+    // Clear previous route
+    if (routePolylineRef.current) {
+      mapInstanceRef.current.removeLayer(routePolylineRef.current);
+      routePolylineRef.current = null;
+    }
+
+    // Clear previous route incident markers
+    incidentLayersRef.current.forEach(layer => mapInstanceRef.current.removeLayer(layer));
+    incidentLayersRef.current = [];
+
+    // Draw route only if route calculation has returned (Phase 8.C)
+    if (commuteResult && commuteResult.map_route) {
+      const coords = commuteResult.map_route.primary_polyline || commuteResult.map_route.polyline_coords || [];
+      if (coords.length > 0) {
+        const polyline = L.polyline(coords, {
+          color: '#0284c7',
+          weight: 5,
+          opacity: 0.9,
+          lineJoin: 'round'
+        }).addTo(mapInstanceRef.current);
+
+        routePolylineRef.current = polyline;
+        mapInstanceRef.current.fitBounds(polyline.getBounds(), { padding: [40, 40] });
+
+        // Add Route-Specific Corridor Incidents (Phase 10)
+        const corridorIncidents = commuteResult.intersecting_incidents || [];
+        corridorIncidents.forEach(inc => {
+          const lat = inc.latitude || inc.centroid_lat;
+          const lon = inc.longitude || inc.centroid_lon;
+          if (!lat || !lon) return;
+
+          const marker = L.circleMarker([lat, lon], {
+            radius: 9,
+            fillColor: inc.severity_level && inc.severity_level.includes('4') ? '#e11d48' : '#d97706',
+            color: '#ffffff',
+            weight: 2,
+            fillOpacity: 0.9
+          }).bindPopup(`
+            <div style="font-family:system-ui;font-size:12px;">
+              <span style="background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:99px;font-weight:700;font-size:10px;">
+                ⚠️ ON COMMUTE ROUTE (${inc.distance_from_route_meters}m from corridor)
+              </span>
+              <h4 style="margin:6px 0 2px 0;font-size:13px;color:#0f172a;">${inc.title}</h4>
+              <p style="margin:0;color:#475569;">${inc.description || inc.known_cause || ''}</p>
+            </div>
+          `).addTo(mapInstanceRef.current);
+
+          incidentLayersRef.current.push(marker);
+        });
+      }
+    }
+  }, [commuteResult]);
+
+  // =========================================================================
+  // 3. LEAFLET MAP INITIALIZATION (Citywide Incidents View)
+  // =========================================================================
+  useEffect(() => {
+    if (activeTab !== 'incidents') return;
+    const L = window.L;
+    if (!L || !cityMapContainerRef.current) return;
+
+    if (!cityMapInstanceRef.current) {
+      const map = L.map(cityMapContainerRef.current, {
+        center: [19.1200, 72.8600],
+        zoom: 11,
+        zoomControl: true
+      });
+
+      const tile = createTileLayer(mapProvider, L).addTo(map);
+      cityTileLayerRef.current = tile;
+
+      cityMapInstanceRef.current = map;
+    }
+
+    const cityMap = cityMapInstanceRef.current;
+    cityMap.invalidateSize();
+
+    // Render citywide incidents
+    cityIncidents.forEach(inc => {
+      const lat = inc.latitude || inc.centroid_lat;
+      const lon = inc.longitude || inc.centroid_lon;
+      if (!lat || !lon) return;
+
+      const isCritical = inc.severity_level && inc.severity_level.includes('4');
+      const isCitizen = inc.provenance === 'CITIZEN_REPORT';
+
+      const color = isCritical ? '#e11d48' : (isCitizen ? '#0891b2' : '#d97706');
+
+      L.circleMarker([lat, lon], {
+        radius: 8,
+        fillColor: color,
+        color: '#ffffff',
+        weight: 2,
+        fillOpacity: 0.85
+      }).bindPopup(`
+        <div style="font-family:system-ui;font-size:12px;min-width:180px;">
+          <div style="display:flex;gap:4px;margin-bottom:4px;">
+            <span style="font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;background:#f1f5f9;color:#334155;">
+              ${inc.provenance || 'MUNICIPAL_FEED'}
+            </span>
+            <span style="font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;background:#ecfdf5;color:#059669;">
+              ${inc.verification_status || 'VERIFIED'}
+            </span>
+          </div>
+          <h4 style="margin:2px 0;font-size:13px;color:#0f172a;">${inc.title}</h4>
+          <p style="margin:0 0 4px 0;color:#475569;font-size:11px;">${inc.description || inc.known_cause || ''}</p>
+          <div style="font-size:10px;color:#94a3b8;">Coords: ${lat.toFixed(4)}, ${lon.toFixed(4)}</div>
+        </div>
+      `).addTo(cityMap);
+    });
+  }, [activeTab, cityIncidents]);
+
+  // =========================================================================
+  // 4. COMMUTE ROUTE CALCULATION (Strict Google Maps & Corridor Filter)
+  // =========================================================================
+  const handleFindRoute = async (e) => {
+    if (e) e.preventDefault();
+    if (!destInput.trim()) {
+      setRouteError('Please enter a destination to calculate your route.');
+      return;
+    }
+
+    setRouteError(null);
+    setIsSearchingRoute(true);
+
+    // Use device GPS coordinates directly if origin is current location or starts with GPS
+    let effectiveOrigin = originInput.trim();
+    if (!effectiveOrigin || effectiveOrigin.startsWith('GPS:') || effectiveOrigin.toLowerCase().includes('current')) {
+      if (deviceLocation.coords) {
+        effectiveOrigin = `${deviceLocation.coords.lat}, ${deviceLocation.coords.lon}`;
       } else {
-        setTimeout(() => initOrUpdateLeafletMap(), 150);
+        effectiveOrigin = 'Andheri West';
       }
     }
-  }, [activeTab, mapProvider, mapTileStyle, googleApiKey]);
 
-  // Re-populate map vectors when custom commute result or userLocation updates
-  useEffect(() => {
-    if (activeTab === 'map') {
-      if (mapProvider === 'google' && googleMapInstanceRef.current) {
-        renderGoogleMapFeatures();
-      } else if (mapInstanceRef.current) {
-        fetch(`${API_BASE}/api/map/layers`)
-          .then(res => res.json())
-          .then(data => populateMapVectors(data))
-          .catch(console.error);
-      }
-    }
-  }, [customCommuteResult, mapLayers, incidents, userLocation]);
-
-  // =========================================================================
-  // REAL-TIME STREAMING: WebSockets with SSE Fallback
-  // =========================================================================
-  useEffect(() => {
-    if (isStreamPaused) return;
-
-    let ws = null;
-    let eventSource = null;
-    let isSubscribed = true;
-
-    const connectWebSocket = () => {
-      try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws/telemetry`;
-        ws = new WebSocket(wsUrl);
-
-        ws.onopen = () => {
-          if (isSubscribed) setStreamStatus('WEBSOCKET_ACTIVE');
-        };
-
-        ws.onmessage = (event) => {
-          if (!isSubscribed) return;
-          try {
-            const data = JSON.parse(event.data);
-            handleIncomingLiveTelemetry(data);
-          } catch (e) {
-            console.error('WS parse error:', e);
-          }
-        };
-
-        ws.onerror = () => {
-          if (isSubscribed) fallbackToSSE();
-        };
-
-        ws.onclose = () => {
-          if (isSubscribed && !isStreamPaused) {
-            setTimeout(connectWebSocket, 4000);
-          }
-        };
-      } catch (err) {
-        fallbackToSSE();
-      }
-    };
-
-    const fallbackToSSE = () => {
-      try {
-        eventSource = new EventSource(`${API_BASE}/api/stream/events`);
-        setStreamStatus('SSE_STREAMING');
-
-        eventSource.onmessage = (event) => {
-          if (!isSubscribed) return;
-          try {
-            const data = JSON.parse(event.data);
-            handleIncomingLiveTelemetry(data);
-          } catch (e) {
-            console.error('SSE parse error:', e);
-          }
-        };
-
-        eventSource.onerror = () => {
-          if (isSubscribed) setStreamStatus('RECONNECTING');
-        };
-      } catch (err) {
-        console.error('SSE setup error:', err);
-      }
-    };
-
-    connectWebSocket();
-
-    return () => {
-      isSubscribed = false;
-      if (ws) ws.close();
-      if (eventSource) eventSource.close();
-    };
-  }, [isStreamPaused]);
-
-  const handleIncomingLiveTelemetry = (eventItem) => {
-    setLatestTickEvent(eventItem);
-    setEventCounter(prev => prev + 1);
-    setLiveStreamEvents(prev => [eventItem, ...prev.slice(0, 14)]);
-  };
-
-  // =========================================================================
-  // API CALL HELPERS
-  // =========================================================================
-  const fetchIncidents = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/incidents`);
-      const data = await res.json();
-      if (data.incidents) setIncidents(data.incidents);
-    } catch (err) {
-      console.error('Error fetching incidents:', err);
-    }
-  };
-
-  const fetchLocations = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/commute/locations`);
-      const data = await res.json();
-      if (data.locations) setAvailableLocations(data.locations);
-    } catch (err) {
-      console.error('Error fetching commute locations:', err);
-    }
-  };
-
-  const fetchSupabaseStatus = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/supabase/status`);
-      const data = await res.json();
-      setSupabaseStatus(data);
-    } catch (err) {
-      setSupabaseStatus({ connected: false, mode: 'OFFLINE_CACHE' });
-    }
-  };
-
-  const syncSupabase = async () => {
-    setIsSyncingSupabase(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/supabase/sync`, { method: 'POST' });
-      const data = await res.json();
-      fetchSupabaseStatus();
-      alert(`Supabase Sync: ${data.synced ? 'Successfully synced' : 'Cached locally'}: ${data.count} incidents.`);
-    } catch (err) {
-      console.error('Sync error:', err);
-    } finally {
-      setIsSyncingSupabase(false);
-    }
-  };
-
-  const fetchSimulationTimeline = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/simulation/timeline`);
-      const data = await res.json();
-      setSimulationTimeline(data);
-    } catch (err) {
-      console.error('Error fetching simulation timeline:', err);
-    }
-  };
-
-  const evaluateUserCommute = async (
-    origin = commuteOrigin,
-    dest = commuteDestination,
-    mode = commuteMode,
-    name = commuterName,
-    corridorThresholdM = 350.0
-  ) => {
-    setIsEvaluating(true);
     try {
       const res = await fetch(`${API_BASE}/api/commute/evaluate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          origin: origin || 'Ashokvan (Borivali East)',
-          destination: dest || 'Rajiv Gandhi Institute of Technology (RGIT, Versova)',
-          preferred_mode: mode,
-          name: name || 'Student 001 (Sahil)',
-          corridor_threshold_m: corridorThresholdM || 350.0
+          origin: effectiveOrigin,
+          destination: destInput.trim(),
+          preferred_mode: travelMode,
+          name: currentUser ? currentUser.full_name : 'Commuter',
+          corridor_threshold_m: 350.0
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success !== false && data.status !== 'LOCATION_RESOLUTION_FAILED') {
+        setCommuteResult(data);
+        setRouteError(null);
+      } else {
+        setRouteError(data.error_message || data.detail || 'Could not find a valid route between these locations.');
+      }
+    } catch (err) {
+      setRouteError('Network error connecting to routing service.');
+    } finally {
+      setIsSearchingRoute(false);
+    }
+  };
+
+  // Save current route as user's default commute
+  const handleSaveDefaultCommute = async () => {
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/profile/${currentUser.id || currentUser.user_code || currentUser.email}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          default_origin: originInput,
+          default_destination: destInput,
+          preferred_mode: travelMode
+        })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setCurrentUser(updated.user);
+        localStorage.setItem('urbanpulse_user', JSON.stringify(updated.user));
+        alert('Saved as default commute for scheduled daily SMS alerts!');
+      }
+    } catch (e) {
+      alert('Could not save commute settings.');
+    }
+  };
+
+  // Fast2SMS Test Send (Phase 13.E)
+  const handleSendTestSms = async (phone) => {
+    setIsSendingTestSms(true);
+    setTestSmsStatus(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/alerts/test-sms`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: phone,
+          message: 'UrbanPulse Test: Automated morning commute notification system active.'
         })
       });
       const data = await res.json();
-      setCustomCommuteResult(data);
+      setTestSmsStatus(data);
     } catch (err) {
-      console.error('Error evaluating commute:', err);
+      setTestSmsStatus({ success: false, error: 'Network error contacting SMS service' });
     } finally {
-      setIsEvaluating(false);
+      setIsSendingTestSms(false);
     }
   };
-
-  const fetchConfidenceLedger = async (incId) => {
-    try {
-      const res = await fetch(`${API_BASE}/api/incident/${incId}/ledger`);
-      const data = await res.json();
-      setLedgerData(data);
-    } catch (err) {
-      console.error('Error fetching confidence ledger:', err);
-    }
-  };
-
-  const fetchOperatorBriefing = async (incId) => {
-    try {
-      const res = await fetch(`${API_BASE}/api/incident/${incId}/briefing`);
-      const data = await res.json();
-      setBriefingData(data);
-    } catch (err) {
-      console.error('Error fetching operator briefing:', err);
-    }
-  };
-
-  const fetchModelsMetrics = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/models/metrics`);
-      const data = await res.json();
-      setModelsMetrics(data);
-    } catch (err) {
-      console.error('Error fetching model metrics:', err);
-    }
-  };
-
-  // Replay Lab Handler (Act Three)
-  const triggerReplayAction = async (actionType, payload = {}) => {
-    setIsReplaying(true);
-    setReplayChallengeActive(actionType);
-    try {
-      const res = await fetch(`${API_BASE}/api/replay/action`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action_type: actionType, payload })
-      });
-      const data = await res.json();
-      if (data.replay_log) setReplayLogs(data.replay_log);
-      if (data.active_offline_sensors) setOfflineSensors(data.active_offline_sensors);
-      if (data.updated_ledger) setLedgerData(data.updated_ledger);
-      fetchIncidents();
-      fetchConfidenceLedger(selectedIncidentId);
-      if (activeTab === 'graph') {
-        renderIncidentGraph(selectedIncidentId);
-      }
-    } catch (err) {
-      console.error('Error executing replay action:', err);
-    } finally {
-      setTimeout(() => setIsReplaying(false), 300);
-    }
-  };
-
-  // =========================================================================
-  // GOOGLE MAPS API INTEGRATION WITH LIVE TRAFFIC LAYER
-  // =========================================================================
-  const loadGoogleMapsScript = (apiKey, callback) => {
-    if (window.google && window.google.maps) {
-      callback();
-      return;
-    }
-    const scriptId = 'google-maps-script-tag';
-    let script = document.getElementById(scriptId);
-    if (!script) {
-      script = document.createElement('script');
-      script.id = scriptId;
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry`;
-      script.async = true;
-      script.defer = true;
-      script.onload = () => callback();
-      script.onerror = () => {
-        console.warn('Google Maps script failed to load. Switching to Leaflet free map.');
-        setMapProvider('leaflet');
-      };
-      document.head.appendChild(script);
-    } else {
-      script.onload = () => callback();
-    }
-  };
-
-  const initGoogleMap = () => {
-    if (!googleApiKey) return;
-    loadGoogleMapsScript(googleApiKey, () => {
-      if (!googleMapContainerRef.current || !window.google) return;
-
-      const map = new window.google.maps.Map(googleMapContainerRef.current, {
-        center: { lat: 19.1850, lng: 72.8450 },
-        zoom: 12,
-        mapTypeId: 'roadmap',
-        styles: [
-          { elementType: 'geometry', stylers: [{ color: '#1d2c4d' }] },
-          { elementType: 'labels.text.fill', stylers: [{ color: '#8ec3b9' }] },
-          { elementType: 'labels.text.stroke', stylers: [{ color: '#1a3646' }] },
-          { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#304a7d' }] },
-          { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e1626' }] }
-        ]
-      });
-
-      googleMapInstanceRef.current = map;
-
-      // Google Traffic Layer
-      if (mapLayers.trafficLayer) {
-        const trafficLayer = new window.google.maps.TrafficLayer();
-        trafficLayer.setMap(map);
-        googleTrafficLayerRef.current = trafficLayer;
-      }
-
-      renderGoogleMapFeatures();
-    });
-  };
-
-  const renderGoogleMapFeatures = () => {
-    const map = googleMapInstanceRef.current;
-    if (!map || !window.google) return;
-
-    // Clear old markers & polylines
-    googleMarkersRef.current.forEach(m => m.setMap(null));
-    googleMarkersRef.current = [];
-    googlePolylinesRef.current.forEach(p => p.setMap(null));
-    googlePolylinesRef.current = [];
-
-    // Map of route-relevant incidents for instant corridor lookup
-    const routeRelevantMap = new Map();
-    (customCommuteResult?.intersecting_incidents || []).forEach(inc => {
-      routeRelevantMap.set(inc.incident_id, inc);
-    });
-
-    // Render incidents across Mumbai (Objective 4: Coordinate-Based Visualization)
-    incidents.forEach(inc => {
-      const lat = inc.latitude || inc.centroid_lat;
-      const lon = inc.longitude || inc.centroid_lon;
-      if (lat == null || lon == null) return;
-
-      const matchedRouteInc = routeRelevantMap.get(inc.incident_id);
-      const isRouteRelevant = Boolean(matchedRouteInc);
-      const isCritical = inc.severity_level && inc.severity_level.includes('4');
-      const markerColor = isRouteRelevant 
-        ? '#ef4444' 
-        : (isCritical ? '#f97316' : '#64748b');
-
-      const marker = new window.google.maps.Marker({
-        position: { lat, lng: lon },
-        map: map,
-        title: inc.title,
-        icon: {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          scale: isRouteRelevant ? 11 : 7,
-          fillColor: markerColor,
-          fillOpacity: 1,
-          strokeColor: isRouteRelevant ? '#ffffff' : '#e2e8f0',
-          strokeWeight: isRouteRelevant ? 3 : 1.5
-        }
-      });
-
-      const corridorBadge = isRouteRelevant
-        ? `<div style="background:#fee2e2;color:#991b1b;padding:3px 7px;border-radius:4px;font-weight:700;margin-bottom:5px;font-size:10px;">⚠️ ON COMMUTE ROUTE (${matchedRouteInc.distance_from_route_meters || 0}m from centerline)</div>`
-        : `<div style="background:#f1f5f9;color:#475569;padding:3px 7px;border-radius:4px;margin-bottom:5px;font-size:10px;">ℹ️ CITYWIDE INCIDENT (Outside route corridor)</div>`;
-
-      const infoWindow = new window.google.maps.InfoWindow({
-        content: `
-          <div style="color:#0f172a;padding:8px;max-width:260px;font-family:system-ui,-apple-system,sans-serif;font-size:12px;line-height:1.4;">
-            ${corridorBadge}
-            <b style="color:${isRouteRelevant ? '#dc2626' : '#1e293b'};font-size:13px;">${inc.title}</b><br/>
-            <div style="margin-top:4px;font-size:11px;color:#334155;">
-              <b>Type:</b> ${inc.scenario_type}<br/>
-              <b>Severity:</b> ${inc.severity_level}<br/>
-              <b>Coordinates:</b> ${Number(lat).toFixed(4)}, ${Number(lon).toFixed(4)}<br/>
-              <b>Source:</b> ${inc.source || 'CAD 112'} (Reliability: ${((inc.source_reliability || 0.94) * 100).toFixed(0)}%)<br/>
-              <b>Status:</b> ${inc.status || 'ACTIVE'} ${inc.is_simulated ? '• [SIMULATED SCENARIO]' : ''}<br/>
-              <b>Impact:</b> ${inc.known_cause || inc.description || 'Active disruption'}
-            </div>
-          </div>
-        `
-      });
-
-      marker.addListener('click', () => {
-        infoWindow.open(map, marker);
-        setSelectedIncidentId(inc.incident_id);
-      });
-
-      googleMarkersRef.current.push(marker);
-
-      // Circle buffer around incident
-      const circle = new window.google.maps.Circle({
-        strokeColor: markerColor,
-        strokeOpacity: isRouteRelevant ? 0.9 : 0.4,
-        strokeWeight: isRouteRelevant ? 2 : 1,
-        fillColor: markerColor,
-        fillOpacity: isRouteRelevant ? 0.22 : 0.08,
-        map: map,
-        center: { lat, lng: lon },
-        radius: (inc.radius_km || 1.2) * 1000
-      });
-      googleMarkersRef.current.push(circle);
-    });
-
-    // Render Authoritative Google Maps Evaluated Route (Objective 2 & 4)
-    const activeRoute = customCommuteResult?.map_route;
-    if (activeRoute) {
-      if (activeRoute.origin) {
-        const originMarker = new window.google.maps.Marker({
-          position: { lat: activeRoute.origin[0], lng: activeRoute.origin[1] },
-          map: map,
-          label: 'A',
-          title: customCommuteResult?.origin || 'Origin'
-        });
-        googleMarkersRef.current.push(originMarker);
-      }
-      if (activeRoute.destination) {
-        const destMarker = new window.google.maps.Marker({
-          position: { lat: activeRoute.destination[0], lng: activeRoute.destination[1] },
-          map: map,
-          label: 'B',
-          title: customCommuteResult?.destination || 'Destination'
-        });
-        googleMarkersRef.current.push(destMarker);
-      }
-
-      // 1. Authoritative Primary Route Polyline from Google Routes API v2
-      if (activeRoute.primary_polyline && activeRoute.primary_polyline.length > 1) {
-        const path = activeRoute.primary_polyline.map(c => ({ lat: c[0], lng: c[1] }));
-        const isDisrupted = (customCommuteResult?.intersecting_incidents_count || 0) > 0;
-        const poly = new window.google.maps.Polyline({
-          path,
-          geodesic: true,
-          strokeColor: isDisrupted ? '#f43f5e' : '#38bdf8',
-          strokeOpacity: 0.95,
-          strokeWeight: 6
-        });
-        poly.setMap(map);
-        googlePolylinesRef.current.push(poly);
-      }
-
-      // 2. Alternative Routes returned by Google Routes API
-      if (activeRoute.alternative_polylines && activeRoute.alternative_polylines.length > 0) {
-        activeRoute.alternative_polylines.forEach((altPoly, aIdx) => {
-          if (altPoly && altPoly.length > 1) {
-            const altPath = altPoly.map(c => ({ lat: c[0], lng: c[1] }));
-            const polyAlt = new window.google.maps.Polyline({
-              path: altPath,
-              geodesic: true,
-              strokeColor: '#94a3b8',
-              strokeOpacity: 0.65,
-              strokeWeight: 4
-            });
-            polyAlt.setMap(map);
-            googlePolylinesRef.current.push(polyAlt);
-          }
-        });
-      }
-
-      // Backwards-compatible legs fallback if primary_polyline is missing
-      if (!activeRoute.primary_polyline || activeRoute.primary_polyline.length <= 1) {
-        if (activeRoute.disrupted_leg && activeRoute.disrupted_leg.length > 0) {
-          const path = activeRoute.disrupted_leg.map(c => ({ lat: c[0], lng: c[1] }));
-          const poly = new window.google.maps.Polyline({
-            path,
-            geodesic: true,
-            strokeColor: '#f43f5e',
-            strokeOpacity: 0.9,
-            strokeWeight: 5
-          });
-          poly.setMap(map);
-          googlePolylinesRef.current.push(poly);
-        }
-        if (activeRoute.recommended_leg && activeRoute.recommended_leg.length > 0) {
-          const path = activeRoute.recommended_leg.map(c => ({ lat: c[0], lng: c[1] }));
-          const poly = new window.google.maps.Polyline({
-            path,
-            geodesic: true,
-            strokeColor: '#06d6a0',
-            strokeOpacity: 1.0,
-            strokeWeight: 5
-          });
-          poly.setMap(map);
-          googlePolylinesRef.current.push(poly);
-        }
-      }
-    }
-
-    // Render Live User Scanning Beacon on Google Maps
-    if (mapLayers.userScanRadar && userLocation?.lat && userLocation?.lon) {
-      const userMarker = new window.google.maps.Marker({
-        position: { lat: userLocation.lat, lng: userLocation.lon },
-        map: map,
-        title: `Your Live Position: ${userLocation.locationName || 'Mumbai Corridor'}`,
-        icon: {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 10,
-          fillColor: '#0284c7',
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 3
-        }
-      });
-      googleMarkersRef.current.push(userMarker);
-
-      const userScanCircle = new window.google.maps.Circle({
-        strokeColor: '#38bdf8',
-        strokeOpacity: 0.85,
-        strokeWeight: 1.5,
-        fillColor: '#38bdf8',
-        fillOpacity: 0.12,
-        map: map,
-        center: { lat: userLocation.lat, lng: userLocation.lon },
-        radius: 1200
-      });
-      googleMarkersRef.current.push(userScanCircle);
-    }
-  };
-
-  const handleSaveApiKey = () => {
-    const key = tempApiKeyInput.trim();
-    if (key) {
-      localStorage.setItem('google_maps_api_key', key);
-      setGoogleApiKey(key);
-      setMapProvider('google');
-      setShowApiKeyModal(false);
-    }
-  };
-
-  // =========================================================================
-  // LEAFLET MAP LOGIC (Free OpenStreetMap / CartoDB Fallback)
-  // =========================================================================
-  const initOrUpdateLeafletMap = () => {
-    if (!mapContainerRef.current || !window.L) return;
-
-    const L = window.L;
-
-    if (!mapInstanceRef.current) {
-      const map = L.map(mapContainerRef.current, {
-        center: [19.1850, 72.8450],
-        zoom: 12,
-        zoomControl: true
-      });
-
-      mapInstanceRef.current = map;
-      layerGroupsRef.current = {
-        rail: L.layerGroup().addTo(map),
-        metro: L.layerGroup().addTo(map),
-        flood: L.layerGroup().addTo(map),
-        evaluatedRoute: L.layerGroup().addTo(map),
-        incidents: L.layerGroup().addTo(map),
-        userRadar: L.layerGroup().addTo(map)
-      };
-    }
-
-    const map = mapInstanceRef.current;
-
-    if (tileLayerRef.current) {
-      map.removeLayer(tileLayerRef.current);
-    }
-
-    if (mapTileStyle === 'osm') {
-      tileLayerRef.current = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19
-      }).addTo(map);
-    } else {
-      tileLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; CartoDB & OpenStreetMap',
-        maxZoom: 19
-      }).addTo(map);
-    }
-
-    fetch(`${API_BASE}/api/map/layers`)
-      .then(res => res.json())
-      .then(data => populateMapVectors(data))
-      .catch(console.error);
-
-    map.invalidateSize();
-  };
-
-  const populateMapVectors = (layerData) => {
-    const L = window.L;
-    if (!L || !layerGroupsRef.current.rail) return;
-
-    layerGroupsRef.current.rail.clearLayers();
-    layerGroupsRef.current.metro.clearLayers();
-    layerGroupsRef.current.flood.clearLayers();
-    layerGroupsRef.current.evaluatedRoute.clearLayers();
-    layerGroupsRef.current.incidents.clearLayers();
-    if (layerGroupsRef.current.userRadar) layerGroupsRef.current.userRadar.clearLayers();
-
-    // 1. RAIL TRACKS
-    if (mapLayers.railTracks && layerData.rail_tracks) {
-      layerData.rail_tracks.forEach(track => {
-        const poly = L.polyline(track.coords, {
-          color: track.color || '#ef4444',
-          weight: 4,
-          opacity: 0.85,
-          dashArray: '6, 6'
-        }).bindPopup(`<strong>Western Railway Main Line</strong><br>${track.name}`);
-        layerGroupsRef.current.rail.addLayer(poly);
-      });
-    }
-
-    // 2. METRO VIADUCT
-    if (mapLayers.metroViaduct && layerData.metro_viaduct) {
-      layerData.metro_viaduct.forEach(metro => {
-        const poly = L.polyline(metro.coords, {
-          color: metro.color || '#10b981',
-          weight: 4,
-          opacity: 0.95
-        }).bindPopup(`<strong>${metro.name}</strong><br>Elevated Viaduct (Flood Immune)`);
-        layerGroupsRef.current.metro.addLayer(poly);
-      });
-    }
-
-    // Map of route-relevant incidents for instant corridor lookup
-    const routeRelevantMap = new Map();
-    (customCommuteResult?.intersecting_incidents || []).forEach(inc => {
-      routeRelevantMap.set(inc.incident_id, inc);
-    });
-
-    // 3. ALL MUMBAI LIVE INCIDENTS (Objective 1 & 4)
-    incidents.forEach(inc => {
-      const lat = inc.latitude || inc.centroid_lat;
-      const lon = inc.longitude || inc.centroid_lon;
-      if (lat == null || lon == null) return;
-
-      const matchedRouteInc = routeRelevantMap.get(inc.incident_id);
-      const isRouteRelevant = Boolean(matchedRouteInc);
-      const isCritical = inc.severity_level && inc.severity_level.includes('4');
-      const incColor = isRouteRelevant ? '#ef4444' : (isCritical ? '#f97316' : '#64748b');
-
-      const circle = L.circle([lat, lon], {
-        radius: (inc.radius_km || 1.2) * 1000,
-        color: incColor,
-        fillColor: incColor,
-        fillOpacity: isRouteRelevant ? 0.25 : 0.08,
-        weight: isRouteRelevant ? 2 : 1
-      }).bindPopup(`
-        <div style="font-family:sans-serif;font-size:12px;line-height:1.4;">
-          ${isRouteRelevant 
-            ? `<div style="background:#fee2e2;color:#991b1b;padding:3px 6px;border-radius:4px;font-weight:700;margin-bottom:4px;font-size:10px;">⚠️ ON COMMUTE ROUTE (${matchedRouteInc.distance_from_route_meters}m from centerline)</div>` 
-            : `<div style="background:#f1f5f9;color:#475569;padding:3px 6px;border-radius:4px;margin-bottom:4px;font-size:10px;">ℹ️ CITYWIDE INCIDENT (Outside corridor)</div>`
-          }
-          <strong style="color:${isRouteRelevant ? '#dc2626' : '#0f172a'}">🚨 ${inc.title}</strong><br/>
-          <b>Type:</b> ${inc.scenario_type}<br/>
-          <b>Severity:</b> ${inc.severity_level}<br/>
-          <b>Coordinates:</b> ${Number(lat).toFixed(4)}, ${Number(lon).toFixed(4)}<br/>
-          <b>Source:</b> ${inc.source || 'CAD 112'} • Reliability: ${((inc.source_reliability || 0.94) * 100).toFixed(0)}%<br/>
-          <b>Cause:</b> ${inc.known_cause || inc.description || 'Active disruption'}
-        </div>
-      `);
-
-      const marker = L.circleMarker([lat, lon], {
-        radius: isRouteRelevant ? 11 : 6,
-        color: isRouteRelevant ? '#ffffff' : '#cbd5e1',
-        fillColor: incColor,
-        fillOpacity: 1,
-        weight: isRouteRelevant ? 3 : 1.5
-      }).bindPopup(`
-        <strong>${isRouteRelevant ? '⚠️ On Commute Route: ' : ''}${inc.title}</strong><br/>
-        ${isRouteRelevant ? `<span style="color:#ef4444;font-size:11px;">${matchedRouteInc.distance_from_route_meters}m from Google route</span><br/>` : ''}
-        <small>Click to inspect full evidence</small>
-      `);
-
-      marker.on('click', () => setSelectedIncidentId(inc.incident_id));
-
-      layerGroupsRef.current.incidents.addLayer(circle);
-      layerGroupsRef.current.incidents.addLayer(marker);
-    });
-
-    // 4. EVALUATED ROUTE OVERLAYS (Objective 2 & 4: Authoritative Google Polyline)
-    const activeRoute = customCommuteResult?.map_route;
-    if (activeRoute && mapLayers.evaluatedRoute) {
-      // Authoritative Google Maps Primary Polyline
-      if (activeRoute.primary_polyline && activeRoute.primary_polyline.length > 1) {
-        const isDisrupted = (customCommuteResult?.intersecting_incidents_count || 0) > 0;
-        const mainPoly = L.polyline(activeRoute.primary_polyline, {
-          color: isDisrupted ? '#f43f5e' : '#38bdf8',
-          weight: 6,
-          opacity: 0.95
-        }).bindPopup(`
-          <strong>🗺️ Authoritative Route (${customCommuteResult?.routing_provider || 'Google Maps'})</strong><br/>
-          Distance: <b>${customCommuteResult?.distance_km} km</b> • Duration: <b>${customCommuteResult?.current_eta_min} mins</b><br/>
-          Corridor Buffer: <b>${activeRoute.corridor_threshold_m || 350}m</b>
-        `);
-        layerGroupsRef.current.evaluatedRoute.addLayer(mainPoly);
-      }
-
-      // Alternative Routes if present
-      if (activeRoute.alternative_polylines && activeRoute.alternative_polylines.length > 0) {
-        activeRoute.alternative_polylines.forEach((altPoly, aIdx) => {
-          if (altPoly && altPoly.length > 1) {
-            const altLine = L.polyline(altPoly, {
-              color: '#94a3b8',
-              weight: 4,
-              opacity: 0.65,
-              dashArray: '5, 5'
-            }).bindPopup(`<strong>Alternative Option ${aIdx + 1}</strong>`);
-            layerGroupsRef.current.evaluatedRoute.addLayer(altLine);
-          }
-        });
-      }
-
-      // Backwards-compatible legacy legs
-      if (!activeRoute.primary_polyline || activeRoute.primary_polyline.length <= 1) {
-        if (activeRoute.clear_leg && activeRoute.clear_leg.length > 0) {
-          const leg1 = L.polyline(activeRoute.clear_leg, {
-            color: '#10b981',
-            weight: 6,
-            opacity: 0.95
-          }).bindPopup(`<strong>🟢 Clear Section:</strong> Normal Flow`);
-          layerGroupsRef.current.evaluatedRoute.addLayer(leg1);
-        }
-
-        if (activeRoute.disrupted_leg && activeRoute.disrupted_leg.length > 0) {
-          const leg2 = L.polyline(activeRoute.disrupted_leg, {
-            color: '#f43f5e',
-            weight: 6,
-            opacity: 0.9,
-            dashArray: '8, 8',
-            className: 'pulsing-flood-route'
-          }).bindPopup(`<strong>🔴 Disrupted Segment:</strong> +${customCommuteResult?.delay_min || 20}m Delay`);
-          layerGroupsRef.current.evaluatedRoute.addLayer(leg2);
-        }
-
-        if (activeRoute.recommended_leg && activeRoute.recommended_leg.length > 0) {
-          const legRec = L.polyline(activeRoute.recommended_leg, {
-            color: '#06d6a0',
-            weight: 6,
-            opacity: 1
-          }).bindPopup(`<strong>⭐ Recommended Reroute:</strong> ${customCommuteResult?.recommended_mode}<br/>Saves ${customCommuteResult?.net_time_saved_min || 17} mins!`);
-          layerGroupsRef.current.evaluatedRoute.addLayer(legRec);
-        }
-      }
-
-      if (activeRoute.origin) {
-        const originMarker = L.circleMarker(activeRoute.origin, {
-          radius: 9,
-          color: '#10b981',
-          fillColor: '#ffffff',
-          fillOpacity: 1,
-          weight: 3
-        }).bindPopup(`<strong>📍 Origin:</strong> ${customCommuteResult?.origin}`);
-        layerGroupsRef.current.evaluatedRoute.addLayer(originMarker);
-      }
-
-      if (activeRoute.destination) {
-        const destMarker = L.circleMarker(activeRoute.destination, {
-          radius: 9,
-          color: '#06d6a0',
-          fillColor: '#ffffff',
-          fillOpacity: 1,
-          weight: 3
-        }).bindPopup(`<strong>🏁 Destination:</strong> ${customCommuteResult?.destination}`);
-        layerGroupsRef.current.evaluatedRoute.addLayer(destMarker);
-      }
-    }
-
-    // 5. LIVE USER LOCATION SCANNING RADAR BEACON (VISIBLE ON MAP)
-    if (mapLayers.userScanRadar && userLocation?.lat && userLocation?.lon && layerGroupsRef.current.userRadar) {
-      // Concentric Radar Scan Rings (1.2 km Immediate Perimeter & 3.5 km Advisory Perimeter)
-      const scanCircle1 = L.circle([userLocation.lat, userLocation.lon], {
-        radius: 1200,
-        color: '#38bdf8',
-        fillColor: '#38bdf8',
-        fillOpacity: 0.12,
-        weight: 1.5,
-        dashArray: '4, 4'
-      });
-      const scanCircle2 = L.circle([userLocation.lat, userLocation.lon], {
-        radius: 3500,
-        color: '#0284c7',
-        fillColor: '#0284c7',
-        fillOpacity: 0.04,
-        weight: 1,
-        dashArray: '6, 6'
-      });
-
-      // Animated Pulsating Radar Marker
-      const userPulseIcon = L.divIcon({
-        className: 'user-pulse-marker-wrapper',
-        html: `
-          <div class="user-pulse-marker">
-            <div class="radar-scan-ring-1"></div>
-            <div class="radar-scan-ring-2"></div>
-            <div class="user-beacon-core">
-              <span class="user-beacon-dot"></span>
-            </div>
-            <div class="user-beacon-tag">YOU (LIVE GPS)</div>
-          </div>
-        `,
-        iconSize: [40, 40],
-        iconAnchor: [20, 20]
-      });
-
-      const userMarker = L.marker([userLocation.lat, userLocation.lon], { icon: userPulseIcon })
-        .bindPopup(`
-          <div style="font-family:sans-serif;font-size:12px;padding:4px;color:#0f172a;">
-            <strong style="color:#0284c7">📍 Your Live Position</strong><br/>
-            <b>Coordinates:</b> ${userLocation.lat.toFixed(5)}° N, ${userLocation.lon.toFixed(5)}° E<br/>
-            <b>Nearest Landmark:</b> ${userLocation.locationName || 'Mumbai Metropolitan Region'}<br/>
-            <b>Speed:</b> ${userLocation.speed || 0} km/h • <b>Accuracy:</b> ±${userLocation.accuracy || 8}m
-          </div>
-        `);
-
-      layerGroupsRef.current.userRadar.addLayer(scanCircle1);
-      layerGroupsRef.current.userRadar.addLayer(scanCircle2);
-      layerGroupsRef.current.userRadar.addLayer(userMarker);
-
-      // Connect threat vectors (dashed lines) to closest active incidents within 4.0 km
-      incidents.forEach(inc => {
-        const dLat = inc.centroid_lat - userLocation.lat;
-        const dLon = inc.centroid_lon - userLocation.lon;
-        const approxDistKm = Math.sqrt(dLat * dLat + dLon * dLon) * 111;
-        if (approxDistKm <= 4.0) {
-          const threatLine = L.polyline([[userLocation.lat, userLocation.lon], [inc.centroid_lat, inc.centroid_lon]], {
-            color: inc.severity_level.includes('4') ? '#ef4444' : '#f59e0b',
-            weight: 2,
-            dashArray: '5, 8',
-            opacity: 0.75
-          }).bindPopup(`<strong>Hazard Threat Vector:</strong> ${inc.title} (~${approxDistKm.toFixed(1)} km away)`);
-          layerGroupsRef.current.userRadar.addLayer(threatLine);
-        }
-      });
-    }
-  };
-
-  // =========================================================================
-  // ACT TWO: THE URBAN RIPPLE GRAPH (VIS.JS)
-  // =========================================================================
-  const renderIncidentGraph = (incId) => {
-    if (!graphContainerRef.current || !window.vis) return;
-
-    fetch(`${API_BASE}/api/incident/${incId}/graph`)
-      .then(res => res.json())
-      .then(graphData => {
-        const vis = window.vis;
-        const nodes = new vis.DataSet(graphData.nodes || []);
-        const edges = new vis.DataSet(graphData.edges || []);
-
-        const options = {
-          physics: {
-            enabled: true,
-            hierarchicalRepulsion: { nodeDistance: 150 },
-            stabilization: { iterations: 100 }
-          },
-          nodes: {
-            shape: 'box',
-            margin: 12,
-            font: { face: 'Inter, sans-serif', color: '#ffffff', size: 13, bold: 'bold' },
-            borderWidth: 2,
-            shadow: { enabled: true, color: 'rgba(0,0,0,0.5)', size: 8 }
-          },
-          edges: {
-            arrows: 'to',
-            font: { size: 11, face: 'JetBrains Mono', color: '#94a3b8', align: 'top' },
-            smooth: { type: 'cubicBezier' }
-          }
-        };
-
-        if (graphInstanceRef.current) {
-          graphInstanceRef.current.destroy();
-        }
-        graphInstanceRef.current = new vis.Network(graphContainerRef.current, { nodes, edges }, options);
-      })
-      .catch(console.error);
-  };
-
-  // Compute 4 Top Indicators for Quad
-  const activeIncidentsCount = incidents.length || 12;
-  const highSeverityCount = incidents.filter(i => i.severity_level && (i.severity_level.includes('4') || i.severity_level.includes('3'))).length || 6;
-  const affectedRoutesCount = 5;
-  const dataQualityWarningsCount = (offlineSensors.length + (ledgerData?.counts?.duplicates_excluded || 0) + (ledgerData?.counts?.contradictory || 0)) || 2;
 
   return (
-    <div className="ca-app-wrapper">
-      {/* =====================================================================
-          TOP WINDOW BAR: Exact Match to Screenshot Header
-         ===================================================================== */}
-      <header className="ca-window-header">
-        <div className="header-left">
-          {/* macOS Window Control Dots */}
-          <div className="mac-window-dots">
-            <span className="dot dot-red"></span>
-            <span className="dot dot-yellow"></span>
-            <span className="dot dot-green"></span>
+    <div className="macos-app-container">
+      {/* 1. CLEAN TOP NAVIGATION BAR (At most 3 primary tabs: Phase 2.C) */}
+      <header className="macos-navbar">
+        <div className="macos-brand">
+          <div className="macos-brand-logo">
+            <ShieldCheck size={18} />
           </div>
-
-          {/* 3-Lines Side Drop Button (Hamburger Menu) to Collapse/Open Sidebar */}
-          <button 
-            className="hamburger-toggle-btn" 
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            title={isSidebarOpen ? "Collapse navigation sidebar" : "Open navigation sidebar"}
-            aria-label="Toggle navigation sidebar"
-          >
-            <Menu size={18} />
-          </button>
-
-          {/* Brand Logo & Title */}
-          <div className="header-brand" onClick={() => setActiveTab('landing')} style={{ cursor: 'pointer' }}>
-            <div className="brand-pin-icon">
-              <MapPin size={18} />
-            </div>
-            <div className="brand-text-col">
-              <span className="brand-title">UrbanPulse</span>
-              <span className="brand-sub">CodeAstra Multimodal Urban Incident Intelligence</span>
-            </div>
-          </div>
+          <span className="macos-brand-title">UrbanPulse AI</span>
+          <span className="macos-brand-badge">Mumbai Intelligence</span>
         </div>
 
-        {/* Header Right Badges & Controls */}
-        <div className="header-right">
-          {/* Corridor Dropdown Pill */}
-          <div className="corridor-select-pill">
-            <span>Greater Mumbai Corridor Network</span>
-            <ChevronDown size={13} />
-          </div>
-
-          {/* Supabase Status Pill */}
+        {/* 3-SEGMENT PRIMARY TAB SELECTOR */}
+        <div className="macos-segmented-tabs">
           <button 
-            className="header-pill-btn" 
-            onClick={syncSupabase} 
-            title="Click to sync active incidents with Supabase database"
+            className={`macos-tab-btn ${activeTab === 'commute' ? 'active' : ''}`}
+            onClick={() => setActiveTab('commute')}
           >
-            <Database size={13} className={supabaseStatus.connected ? "text-green" : "text-amber"} />
-            <span>{supabaseStatus.connected ? "Supabase Live" : "Supabase Local Cache"}</span>
-            <span className="pill-action-tag">{isSyncingSupabase ? "Syncing..." : "Sync"}</span>
+            <Navigation size={14} />
+            <span>Commute</span>
           </button>
 
-          {/* Google Maps / Traffic Status Pill */}
           <button 
-            className="header-pill-btn"
-            onClick={() => setShowApiKeyModal(true)}
-            title="Configure Google Maps API Key or switch map engine"
+            className={`macos-tab-btn ${activeTab === 'incidents' ? 'active' : ''}`}
+            onClick={() => setActiveTab('incidents')}
           >
-            <span className="status-dot green"></span>
-            <span>{mapProvider === 'google' ? 'Google Maps - Traffic On' : 'Leaflet / OSM Mode'}</span>
+            <AlertTriangle size={14} />
+            <span>City Incidents ({cityIncidents.length})</span>
           </button>
 
-          {/* Red SIMULATED DATA Tag */}
-          <span className="simulated-data-tag">SIMULATED DATA</span>
-
-          {/* System Time Pill */}
-          <div className="system-time-pill">
-            <span className="st-label">SYSTEM TIME</span>
-            <span className="st-val">{currentTime}</span>
-          </div>
-
-          {/* Live User GPS Radar Pill */}
           <button 
-            className={`live-gps-pill ${activeTab === 'proximity' ? 'active' : ''}`}
-            onClick={() => setActiveTab('proximity')}
-            title="Click to view live user GPS proximity radar and nearby threats"
+            className={`macos-tab-btn ${activeTab === 'profile' ? 'active' : ''}`}
+            onClick={() => setActiveTab('profile')}
           >
-            <span className="radar-ping-dot"></span>
-            <span>{userLocation?.lat?.toFixed(4)}°N, {userLocation?.lon?.toFixed(4)}°E</span>
+            <User size={14} />
+            <span>Profile & Alerts</span>
           </button>
+        </div>
 
-          {/* Commuter Account Profile Chip */}
-          <div 
-            className="user-nav-chip"
-            onClick={() => setActiveTab('auth')}
-            title="Click to view commuter pass or switch accounts"
-          >
-            <div className="user-chip-avatar">
-              {currentUser ? (currentUser.full_name?.charAt(0) || 'U') : <User size={13} />}
+        <div className="macos-nav-right">
+          {/* LIVE WEATHER CHIP (Open-Meteo Real Data: Phase 4.A) */}
+          {weatherData && (
+            <div className="macos-chip" title="Live weather from Open-Meteo API">
+              <Cloud size={13} className="text-blue" />
+              <span>{weatherData.temperature_c}°C</span>
+              <span style={{ color: '#94a3b8' }}>•</span>
+              <span>{weatherData.condition}</span>
             </div>
-            <span className="user-chip-name">{currentUser ? currentUser.full_name : 'Sign In'}</span>
-          </div>
+          )}
+
+          {/* SYSTEM HEALTH MODAL TRIGGER */}
+          <button 
+            className="macos-btn-secondary" 
+            style={{ padding: '5px 10px', fontSize: '12px' }}
+            onClick={() => setShowHealthModal(true)}
+          >
+            <span className="macos-chip-dot" />
+            <span>Sources</span>
+          </button>
         </div>
       </header>
 
-      {/* =====================================================================
-          APP BODY LAYOUT: SIDEBAR + MAIN CONTENT
-         ===================================================================== */}
-      <div className="ca-body-layout">
-        {/* ===================================================================
-            LEFT NAVIGATION SIDEBAR (CLOSABLE / OPENABLE VIA 3 LINES BUTTON)
-           =================================================================== */}
-        <aside className={`ca-sidebar ${isSidebarOpen ? 'expanded' : 'collapsed'}`}>
-          <div className="sidebar-nav-list">
-            {/* 1. LANDING PAGE */}
-            <button 
-              className={`sidebar-nav-item ${activeTab === 'landing' ? 'active' : ''}`}
-              onClick={() => setActiveTab('landing')}
-              title="Landing Page & Overview"
-            >
-              <Home size={18} />
-              {isSidebarOpen && <span className="nav-item-label">Landing Page</span>}
-            </button>
-
-            {/* 2. EXECUTIVE DASHBOARD */}
-            <button 
-              className={`sidebar-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-              onClick={() => setActiveTab('dashboard')}
-              title="Executive Operations Dashboard"
-            >
-              <LayoutDashboard size={18} />
-              {isSidebarOpen && <span className="nav-item-label">Dashboard</span>}
-            </button>
-
-            {/* 3. COMMAND CENTRE & MAP */}
-            <button 
-              className={`sidebar-nav-item ${activeTab === 'map' ? 'active' : ''}`}
-              onClick={() => setActiveTab('map')}
-              title="Command Centre & Map"
-            >
-              <Layers size={18} />
-              {isSidebarOpen && <span className="nav-item-label">Command Centre & Map</span>}
-            </button>
-
-            {/* 4. PROXIMITY RADAR & HAZARDS */}
-            <button 
-              className={`sidebar-nav-item ${activeTab === 'proximity' ? 'active' : ''}`}
-              onClick={() => setActiveTab('proximity')}
-              title="Proximity Radar & Hazards"
-            >
-              <Radio size={18} />
-              {isSidebarOpen && (
-                <div className="nav-item-content">
-                  <span className="nav-item-label">Proximity Radar</span>
-                  <span className="nav-item-pill red">Live GPS</span>
-                </div>
-              )}
-            </button>
-
-            {/* 5. URBAN RIPPLE GRAPH */}
-            <button 
-              className={`sidebar-nav-item ${activeTab === 'graph' ? 'active' : ''}`}
-              onClick={() => setActiveTab('graph')}
-              title="Urban Ripple Graph"
-            >
-              <GitBranch size={18} />
-              {isSidebarOpen && <span className="nav-item-label">Urban Ripple Graph</span>}
-            </button>
-
-            {/* 6. AI REPLAY LAB */}
-            <button 
-              className={`sidebar-nav-item ${activeTab === 'replay' ? 'active' : ''}`}
-              onClick={() => setActiveTab('replay')}
-              title="AI Replay Lab"
-            >
-              <RotateCcw size={18} />
-              {isSidebarOpen && <span className="nav-item-label">AI Replay Lab</span>}
-            </button>
-
-            {/* 7. STUDENT COMMUTE ASSISTANT */}
-            <button 
-              className={`sidebar-nav-item ${activeTab === 'commute' ? 'active' : ''}`}
-              onClick={() => setActiveTab('commute')}
-              title="Student Commute Assistant"
-            >
-              <Navigation size={18} />
-              {isSidebarOpen && (
-                <div className="nav-item-content">
-                  <span className="nav-item-label">Student Commute</span>
-                </div>
-              )}
-            </button>
-
-            {/* 8. SECOND INCIDENT */}
-            <button 
-              className={`sidebar-nav-item ${activeTab === 'second_incident' ? 'active' : ''}`}
-              onClick={() => setActiveTab('second_incident')}
-              title="Second Incident"
-            >
-              <Zap size={18} />
-              {isSidebarOpen && <span className="nav-item-label">Second Incident</span>}
-            </button>
-
-            {/* 9. EVALUATION & EVIDENCE */}
-            <button 
-              className={`sidebar-nav-item ${activeTab === 'eval' ? 'active' : ''}`}
-              onClick={() => setActiveTab('eval')}
-              title="Evaluation & Evidence"
-            >
-              <BarChart3 size={18} />
-              {isSidebarOpen && <span className="nav-item-label">Evaluation & Evidence</span>}
-            </button>
-
-            {/* 10. COMMUTER ACCOUNT */}
-            <button 
-              className={`sidebar-nav-item ${activeTab === 'auth' ? 'active' : ''}`}
-              onClick={() => setActiveTab('auth')}
-              title="Commuter Account & Profile"
-            >
-              <User size={18} />
-              {isSidebarOpen && (
-                <div className="nav-item-content">
-                  <span className="nav-item-label">Commuter Account</span>
-                  <span className="nav-item-pill purple">{currentUser ? 'Active' : 'Sign In'}</span>
-                </div>
-              )}
-            </button>
-          </div>
-
-          {/* Sidebar Footer Box */}
-          {isSidebarOpen && (
-            <div className="sidebar-footer-box">
-              <span className="sfb-title">CodeAstra UrbanPulse</span>
-              <span className="sfb-status">
-                <span className="status-dot green"></span> Live Telemetry Active
-              </span>
-            </div>
-          )}
-        </aside>
-
-        {/* ===================================================================
-            MAIN VIEWPORT CONTENT
-           =================================================================== */}
-        <main className="ca-main-content">
-          {/* LANDING PAGE VIEW */}
-          {activeTab === 'landing' && (
-            <LandingView 
-              onNavigate={setActiveTab}
-              userLocation={userLocation}
-              incidentsCount={incidents.length}
-            />
-          )}
-
-          {/* EXECUTIVE DASHBOARD VIEW */}
-          {activeTab === 'dashboard' && (
-            <DashboardView 
-              onNavigate={setActiveTab}
-              incidents={incidents}
-              userLocation={userLocation}
-              activeIncidentsCount={activeIncidentsCount}
-              highSeverityCount={highSeverityCount}
-              affectedRoutesCount={affectedRoutesCount}
-              dataQualityWarningsCount={dataQualityWarningsCount}
-              currentTime={currentTime}
-              onSelectIncident={setSelectedIncidentId}
-            />
-          )}
-
-          {/* USER SIGN IN, REGISTRATION & COMMUTER PROFILE */}
-          {activeTab === 'auth' && (
-            <AuthView 
-              currentUser={currentUser}
-              onLoginSuccess={handleLoginSuccess}
-              onLogout={handleLogout}
-              onNavigateToCommute={() => setActiveTab('commute')}
-              onNavigateToMap={() => setActiveTab('map')}
-              availableLocations={availableLocations}
-              supabaseStatus={supabaseStatus}
-            />
-          )}
-
-          {/* ACT ONE: COMMAND CENTRE & MAP */}
-          {activeTab === 'map' && (
-            <CommandCentreMapView 
-              mapContainerRef={mapContainerRef}
-              googleMapContainerRef={googleMapContainerRef}
-              mapProvider={mapProvider}
-              setMapProvider={setMapProvider}
-              googleApiKey={googleApiKey}
-              setShowApiKeyModal={setShowApiKeyModal}
-              mapLayers={mapLayers}
-              setMapLayers={setMapLayers}
-              userLocation={userLocation}
-              activeIncidentsCount={activeIncidentsCount}
-              highSeverityCount={highSeverityCount}
-              affectedRoutesCount={affectedRoutesCount}
-              dataQualityWarningsCount={dataQualityWarningsCount}
-              isStreamPaused={isStreamPaused}
-              setIsStreamPaused={setIsStreamPaused}
-              simulationTimeline={simulationTimeline}
-              incidents={incidents}
-              selectedIncidentId={selectedIncidentId}
-              setSelectedIncidentId={setSelectedIncidentId}
-              onLocateBeacon={handleLocateBeacon}
-              onNavigate={setActiveTab}
-            />
-          )}
-
-        {/* ===================================================================
-            LIVE USER LOCATION TRACKING & NEARBY HAZARD RADAR SECTION
-           =================================================================== */}
-        {activeTab === 'proximity' && (
-          <ProximityRadarView 
-            userLocation={userLocation}
-            onUpdateUserLocation={setUserLocation}
-            onNavigateToMap={() => setActiveTab('map')}
-            onNavigateToCommute={() => setActiveTab('commute')}
-            currentUser={currentUser}
-            incidents={incidents}
-          />
-        )}
-
-        {/* ===================================================================
-            ACT TWO: THE URBAN RIPPLE GRAPH (0:45–1:30)
-           =================================================================== */}
-        {activeTab === 'graph' && (
-          <UrbanRippleGraphView 
-            graphContainerRef={graphContainerRef}
-            renderIncidentGraph={renderIncidentGraph}
-            selectedIncidentId={selectedIncidentId}
-            onNavigate={setActiveTab}
-          />
-        )}
-
-        {/* ===================================================================
-            ACT THREE: AI CHALLENGES ITS OWN CONCLUSION (1:30–2:15)
-           =================================================================== */}
-        {activeTab === 'replay' && (
-          <ReplayLabView 
-            replayChallengeActive={replayChallengeActive}
-            triggerReplayAction={triggerReplayAction}
-            isReplaying={isReplaying}
-            ledgerData={ledgerData}
-          />
-        )}
-
-        {/* ===================================================================
-            ACTS FOUR & FIVE: PERSONALIZED COMMUTE ASSISTANT (2:15–3:45)
-           =================================================================== */}
+      {/* 2. MAIN APPLICATION VIEWS */}
+      <main className="macos-main-view">
+        {/* =====================================================================
+            VIEW 1: COMMUTE (Primary Experience)
+            ===================================================================== */}
         {activeTab === 'commute' && (
-          <StudentCommuteView
-            customCommuteResult={customCommuteResult}
-            commuteOrigin={commuteOrigin}
-            setCommuteOrigin={setCommuteOrigin}
-            commuteDestination={commuteDestination}
-            setCommuteDestination={setCommuteDestination}
-            commuteMode={commuteMode}
-            setCommuteMode={setCommuteMode}
-            commuterName={commuterName}
-            setCommuterName={setCommuterName}
-            isEvaluating={isEvaluating}
-            evaluateUserCommute={evaluateUserCommute}
-            availableLocations={availableLocations}
-            onNavigateToMap={() => setActiveTab('map')}
-            onNavigateToRadar={() => setActiveTab('proximity')}
-            currentUser={currentUser}
-            showCompareModal={showCompareModal}
-            setShowCompareModal={setShowCompareModal}
-          />
-        )}
+          <div className="commute-layout-grid">
+            {/* LEFT CONTROL PANEL */}
+            <div className="commute-sidebar-col">
+              <div className="macos-card">
+                <div className="macos-card-header">
+                  <span className="macos-card-title">
+                    <Navigation size={16} /> Plan Journey
+                  </span>
+                  {/* GPS STATUS / RECENTER */}
+                  <button 
+                    className="macos-btn-secondary" 
+                    style={{ padding: '4px 8px', fontSize: '11px' }}
+                    onClick={requestDeviceLocation}
+                    title="Refresh Device GPS Location"
+                  >
+                    <LocateFixed size={12} />
+                    <span>{deviceLocation.status === 'GRANTED' ? 'GPS Active' : 'Get Location'}</span>
+                  </button>
+                </div>
 
-        {/* ===================================================================
-            ACT SIX: SECOND INCIDENT SHOWCASE (ELECTRICAL / SIGNAL FAULT)
-           =================================================================== */}
-        {activeTab === 'second_incident' && (
-          <SecondIncidentView 
-            setSelectedIncidentId={setSelectedIncidentId}
-            setIsSecondIncidentTriggered={setIsSecondIncidentTriggered}
-            onNavigate={setActiveTab}
-          />
-        )}
+                {/* GEOLOCATION PERMISSION NOTICE IF DENIED */}
+                {deviceLocation.status === 'DENIED' && (
+                  <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '10px', marginBottom: '12px', fontSize: '12px', color: '#92400e' }}>
+                    <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
+                      <AlertCircle size={13} /> Browser Location Denied
+                    </div>
+                    Enable browser location for automatic origin detection, or manually enter your starting address below.
+                  </div>
+                )}
 
-        {/* ===================================================================
-            ACT SEVEN: EVALUATION & EVIDENCE METRICS
-           =================================================================== */}
-        {activeTab === 'eval' && (
-          <EvaluationView />
-        )}
-        </main>
-      </div>
+                <form onSubmit={handleFindRoute}>
+                  {/* ORIGIN FIELD */}
+                  <div className="macos-form-group">
+                    <label className="macos-label">Origin</label>
+                    <div className="macos-input-box">
+                      <MapPin size={15} style={{ color: '#0284c7' }} />
+                      <input 
+                        type="text" 
+                        className="macos-input" 
+                        placeholder={deviceLocation.status === 'GRANTED' ? 'Current GPS Location' : 'Enter starting location (e.g. Andheri West)'}
+                        value={originInput}
+                        onChange={(e) => setOriginInput(e.target.value)}
+                      />
+                    </div>
+                  </div>
 
-      {/* =====================================================================
-          MODAL: GOOGLE MAPS API KEY CONFIGURATION
-         ===================================================================== */}
-      {showApiKeyModal && (
-        <div className="modal-backdrop" onClick={() => setShowApiKeyModal(false)}>
-          <div className="modal-card" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Google Maps API Key Configuration</h3>
-              <button className="close-btn" onClick={() => setShowApiKeyModal(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <p>Enter your Google Maps API key to activate the live traffic layer, directions, and satellite maps:</p>
-              <div className="input-row">
-                <input 
-                  type="text" 
-                  value={tempApiKeyInput} 
-                  onChange={e => setTempApiKeyInput(e.target.value)} 
-                  placeholder="AIzaSy..." 
-                  className="api-input"
-                />
+                  {/* DESTINATION FIELD */}
+                  <div className="macos-form-group">
+                    <label className="macos-label">Destination</label>
+                    <div className="macos-input-box">
+                      <MapPin size={15} style={{ color: '#ef4444' }} />
+                      <input 
+                        type="text" 
+                        className="macos-input" 
+                        placeholder="Enter destination (e.g. BKC G-Block, Versova)"
+                        value={destInput}
+                        onChange={(e) => setDestInput(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* QUICK DESTINATIONS */}
+                  <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', flexWrap: 'wrap' }}>
+                    {['BKC G-Block', 'RGIT Versova', 'CSMT Fort', 'Andheri West'].map(loc => (
+                      <button 
+                        key={loc} 
+                        type="button" 
+                        className="macos-btn-secondary"
+                        style={{ padding: '3px 8px', fontSize: '11px' }}
+                        onClick={() => setDestInput(loc)}
+                      >
+                        {loc}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* TRAVEL MODE SELECTOR */}
+                  <label className="macos-label">Travel Mode</label>
+                  <div className="macos-mode-selector">
+                    <button 
+                      type="button"
+                      className={`macos-mode-btn ${travelMode === 'DRIVE' ? 'active' : ''}`}
+                      onClick={() => setTravelMode('DRIVE')}
+                    >
+                      <Car size={15} />
+                      <span>Drive</span>
+                    </button>
+                    <button 
+                      type="button"
+                      className={`macos-mode-btn ${travelMode === 'MOTORCYCLE' ? 'active' : ''}`}
+                      onClick={() => setTravelMode('MOTORCYCLE')}
+                    >
+                      <Bike size={15} />
+                      <span>Bike</span>
+                    </button>
+                    <button 
+                      type="button"
+                      className={`macos-mode-btn ${travelMode === 'TRANSIT' ? 'active' : ''}`}
+                      onClick={() => setTravelMode('TRANSIT')}
+                    >
+                      <Train size={15} />
+                      <span>Transit</span>
+                    </button>
+                    <button 
+                      type="button"
+                      className={`macos-mode-btn ${travelMode === 'WALK' ? 'active' : ''}`}
+                      onClick={() => setTravelMode('WALK')}
+                    >
+                      <Footprints size={15} />
+                      <span>Walk</span>
+                    </button>
+                  </div>
+
+                  {/* PRIMARY ACTION */}
+                  <button 
+                    type="submit" 
+                    className="macos-btn-primary"
+                    disabled={isSearchingRoute}
+                  >
+                    {isSearchingRoute ? (
+                      <>
+                        <RefreshCw size={14} className="spin" />
+                        <span>Calculating Google Route...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Navigation size={14} />
+                        <span>Find Route</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                {routeError && (
+                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '10px', marginTop: '12px', fontSize: '12px', color: '#991b1b' }}>
+                    {routeError}
+                  </div>
+                )}
               </div>
-              <div className="key-instructions">
-                <strong>Where to set it permanently:</strong>
-                <p>Open <code>frontend/.env</code> and set: <code>VITE_GOOGLE_MAPS_API_KEY=YOUR_KEY_HERE</code></p>
-                <small>If omitted, CodeAstra automatically falls back to full-featured OpenStreetMap & Leaflet with zero errors.</small>
+
+              {/* ROUTE CORRIDOR EVALUATION RESULTS (Phase 10) */}
+              {commuteResult && (
+                <div className="macos-card" style={{ marginTop: '16px' }}>
+                  <div className="macos-card-header">
+                    <span className="macos-card-title">
+                      <Clock size={16} /> Route Assessment
+                    </span>
+                    <button 
+                      className="macos-btn-secondary" 
+                      style={{ padding: '3px 8px', fontSize: '11px' }}
+                      onClick={handleSaveDefaultCommute}
+                      title="Save this commute for automatic daily SMS notifications"
+                    >
+                      <span>Save Default</span>
+                    </button>
+                  </div>
+
+                  {/* ETA & ROUTE SUMMARY */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
+                    <div style={{ background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>ESTIMATED ETA</div>
+                      <div style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
+                        {commuteResult.current_eta_min} mins
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#059669' }}>
+                        Recommended: {commuteResult.recommended_mode || travelMode}
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>CORRIDOR HAZARDS</div>
+                      <div style={{ fontSize: '18px', fontWeight: 700, color: (commuteResult.intersecting_incidents?.length > 0 ? '#e11d48' : '#059669') }}>
+                        {commuteResult.intersecting_incidents?.length || 0} on route
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#64748b' }}>
+                        Corridor threshold: 350m
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ROUTE SPECIFIC INCIDENTS LIST */}
+                  <div className="route-incidents-section">
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                      Route-Affecting Incidents ({commuteResult.intersecting_incidents?.length || 0})
+                    </div>
+
+                    {(!commuteResult.intersecting_incidents || commuteResult.intersecting_incidents.length === 0) ? (
+                      <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '8px', padding: '12px', fontSize: '12px', color: '#065f46', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <CheckCircle2 size={16} />
+                        <span>No reported disruptions along your route within the 350m corridor.</span>
+                      </div>
+                    ) : (
+                      commuteResult.intersecting_incidents.map((inc, i) => (
+                        <div key={i} className="route-incident-card">
+                          <div className="route-incident-header">
+                            <span className="route-incident-title">{inc.title}</span>
+                            <span className="route-incident-dist">{inc.distance_from_route_meters}m from route</span>
+                          </div>
+                          <div className="route-incident-desc">{inc.description || inc.known_cause}</div>
+                          <div className="route-incident-footer">
+                            <span className="provenance-badge provenance-live">{inc.provenance || 'MUNICIPAL FEED'}</span>
+                            <span>Status: {inc.status}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT MAP DISPLAY */}
+            <div className="commute-map-col">
+              <div className="macos-card macos-map-card">
+                {/* FLOATING STATUS PILL */}
+                <div className="macos-map-floating-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: 'calc(100% - 28px)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="macos-chip-dot" />
+                    <span>
+                      {!commuteResult ? (
+                        deviceLocation.status === 'GRANTED' ? 'Device Location Identified • Enter destination to compute route' : 'Waiting for Destination'
+                      ) : (
+                        `Google Route Displayed • ${commuteResult.current_eta_min} mins`
+                      )}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <select 
+                      className="macos-input"
+                      style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: 600, color: '#0284c7', cursor: 'pointer', outline: 'none' }}
+                      value={mapProvider}
+                      onChange={(e) => setMapProvider(e.target.value)}
+                    >
+                      <option value="google">🗺️ Google Maps</option>
+                      <option value="google_hybrid">🛰️ Satellite</option>
+                      <option value="osm">🌐 OpenStreetMap</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* LEAFLET CANVAS */}
+                <div ref={mapContainerRef} className="macos-map-container" />
               </div>
             </div>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => { setMapProvider('leaflet'); setShowApiKeyModal(false); }}>
-                Use Free Leaflet / OSM
+          </div>
+        )}
+
+        {/* =====================================================================
+            VIEW 2: CITY INCIDENTS (Authorized Feeds & Community Reports)
+            ===================================================================== */}
+        {activeTab === 'incidents' && (
+          <div className="city-incidents-grid">
+            {/* CITYWIDE MAP */}
+            <div className="macos-card macos-map-card" style={{ height: '700px' }}>
+              <div className="macos-map-floating-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: 'calc(100% - 28px)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="macos-chip-dot" />
+                  <span>Citywide Verified Incident Layer ({cityIncidents.length} active)</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <select 
+                    className="macos-input"
+                    style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: 600, color: '#0284c7', cursor: 'pointer', outline: 'none' }}
+                    value={mapProvider}
+                    onChange={(e) => setMapProvider(e.target.value)}
+                  >
+                    <option value="google">🗺️ Google Maps</option>
+                    <option value="google_hybrid">🛰️ Satellite</option>
+                    <option value="osm">🌐 OpenStreetMap</option>
+                  </select>
+                </div>
+              </div>
+              <div ref={cityMapContainerRef} className="macos-map-container" />
+            </div>
+
+            {/* INCIDENT FEED & SUBMIT REPORT */}
+            <div className="city-sidebar-col">
+              <div className="macos-card" style={{ marginBottom: '16px' }}>
+                <div className="macos-card-header">
+                  <span className="macos-card-title">
+                    <AlertTriangle size={16} /> Verified Reports
+                  </span>
+                  <button 
+                    className="macos-btn-primary" 
+                    style={{ width: 'auto', padding: '6px 12px', fontSize: '12px' }}
+                    onClick={() => setShowReportModal(true)}
+                  >
+                    <Plus size={13} />
+                    <span>Report Hazard</span>
+                  </button>
+                </div>
+                <p style="font-size:12px;color:#64748b;margin:0 0 12px 0;">
+                  Authorized municipal disruptions and community reports verified via multi-source correlation.
+                </p>
+
+                {/* INCIDENTS LIST */}
+                <div style={{ maxHeight: '580px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {cityIncidents.map((inc) => (
+                    <div 
+                      key={inc.incident_id} 
+                      className="route-incident-card"
+                      style={{ cursor: 'pointer', borderColor: selectedIncident?.incident_id === inc.incident_id ? '#0284c7' : '#e2e8f0' }}
+                      onClick={() => {
+                        setSelectedIncident(inc);
+                        if (cityMapInstanceRef.current && inc.centroid_lat && inc.centroid_lon) {
+                          cityMapInstanceRef.current.setView([inc.centroid_lat, inc.centroid_lon], 14);
+                        }
+                      }}
+                    >
+                      <div className="route-incident-header">
+                        <span className="route-incident-title">{inc.title}</span>
+                        <span style={{ fontSize: '10px', fontWeight: 600, color: '#059669', background: '#ecfdf5', padding: '2px 6px', borderRadius: '99px' }}>
+                          {inc.verification_status || 'VERIFIED'}
+                        </span>
+                      </div>
+                      <div className="route-incident-desc">{inc.description || inc.known_cause}</div>
+                      <div className="route-incident-footer">
+                        <span className={`provenance-badge ${inc.provenance === 'CITIZEN_REPORT' ? 'provenance-citizen' : 'provenance-live'}`}>
+                          {inc.provenance || 'MUNICIPAL FEED'}
+                        </span>
+                        <span style={{ fontSize: '10px' }}>Severity: {inc.severity_level}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =====================================================================
+            VIEW 3: PROFILE & ALERTS (Supabase Auth & Fast2SMS Settings)
+            ===================================================================== */}
+        {activeTab === 'profile' && (
+          <div className="profile-view-layout">
+            {/* COMMUTER PROFILE CARD */}
+            <div className="macos-card">
+              <div className="macos-card-header">
+                <span className="macos-card-title">
+                  <User size={16} /> Commuter Identity
+                </span>
+                {currentUser && (
+                  <button 
+                    className="macos-btn-secondary" 
+                    style={{ padding: '4px 8px', fontSize: '11px' }}
+                    onClick={() => {
+                      localStorage.removeItem('urbanpulse_user');
+                      setCurrentUser(null);
+                    }}
+                  >
+                    Sign Out
+                  </button>
+                )}
+              </div>
+
+              {!currentUser ? (
+                <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                  <Shield size={32} style={{ color: '#0284c7', margin: '0 auto 10px auto' }} />
+                  <h3 style={{ margin: '0 0 6px 0', fontSize: '16px' }}>Sign In to UrbanPulse</h3>
+                  <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: '#64748b' }}>
+                    Access your saved default commute, personalize hazard thresholds, and manage SMS alerts.
+                  </p>
+                  <button 
+                    className="macos-btn-primary" 
+                    style={{ maxWidth: '240px', margin: '0 auto' }}
+                    onClick={() => setShowAuthModal(true)}
+                  >
+                    Sign In / Register
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+                    <div>
+                      <div className="macos-label">Full Name</div>
+                      <div style={{ fontSize: '14px', fontWeight: 600 }}>{currentUser.full_name}</div>
+                    </div>
+                    <div>
+                      <div className="macos-label">Email Address</div>
+                      <div style={{ fontSize: '14px', fontWeight: 600 }}>{currentUser.email}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+                    <div>
+                      <div className="macos-label">Saved Default Origin</div>
+                      <div style={{ fontSize: '13px', color: '#334155' }}>{currentUser.default_origin || 'Not set'}</div>
+                    </div>
+                    <div>
+                      <div className="macos-label">Saved Default Destination</div>
+                      <div style={{ fontSize: '13px', color: '#334155' }}>{currentUser.default_destination || 'Not set'}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* FAST2SMS DAILY COMMUTE ALERTS (Phase 13) */}
+            <div className="macos-card">
+              <div className="macos-card-header">
+                <span className="macos-card-title">
+                  <Send size={16} /> Fast2SMS Morning Commute Notifications
+                </span>
+                <span className="provenance-badge provenance-live">Fast2SMS Gateway</span>
+              </div>
+
+              <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.5, margin: '0 0 16px 0' }}>
+                Receive an automated, persistent SMS summary of corridor hazards every morning before you depart.
+                Evaluated independently on our server even when the browser is closed.
+              </p>
+
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Daily Hazard Summary SMS</div>
+                    <div style={{ fontSize: '12px', color: '#64748b' }}>Dispatches concise alert at preferred departure time</div>
+                  </div>
+                  <label className="macos-switch">
+                    <input 
+                      type="checkbox" 
+                      checked={Boolean(currentUser?.sms_consent)} 
+                      onChange={(e) => {
+                        if (!currentUser) {
+                          setShowAuthModal(true);
+                          return;
+                        }
+                        const updated = { ...currentUser, sms_consent: e.target.checked, sms_notifications_enabled: e.target.checked };
+                        setCurrentUser(updated);
+                        localStorage.setItem('urbanpulse_user', JSON.stringify(updated));
+                      }}
+                    />
+                    <span className="macos-slider" />
+                  </label>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div>
+                    <label className="macos-label">Recipient Mobile (+91 Indian Number)</label>
+                    <div className="macos-input-box">
+                      <input 
+                        type="tel" 
+                        className="macos-input" 
+                        placeholder="e.g. 98201 54321" 
+                        defaultValue={currentUser?.phone || ''}
+                        onBlur={(e) => {
+                          if (currentUser) {
+                            const updated = { ...currentUser, phone: e.target.value };
+                            setCurrentUser(updated);
+                            localStorage.setItem('urbanpulse_user', JSON.stringify(updated));
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="macos-label">Scheduled Alert Time (IST)</label>
+                    <div className="macos-input-box">
+                      <Clock size={14} style={{ color: '#64748b' }} />
+                      <input 
+                        type="time" 
+                        className="macos-input" 
+                        defaultValue={currentUser?.scheduled_sms_time || '08:00'}
+                        onBlur={(e) => {
+                          if (currentUser) {
+                            const updated = { ...currentUser, scheduled_sms_time: e.target.value };
+                            setCurrentUser(updated);
+                            localStorage.setItem('urbanpulse_user', JSON.stringify(updated));
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* TEST SMS DISPATCH BUTTON (Phase 13.E) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <button 
+                  className="macos-btn-secondary"
+                  disabled={isSendingTestSms}
+                  onClick={() => {
+                    const phone = currentUser?.phone || prompt('Enter 10-digit Indian mobile number for test SMS:');
+                    if (phone) handleSendTestSms(phone);
+                  }}
+                >
+                  <Send size={13} />
+                  <span>{isSendingTestSms ? 'Dispatching Test...' : 'Send Test SMS Alert'}</span>
+                </button>
+
+                {testSmsStatus && (
+                  <span style={{ fontSize: '12px', color: testSmsStatus.success ? '#059669' : '#e11d48' }}>
+                    {testSmsStatus.success ? `✓ Request accepted (${testSmsStatus.status})` : `✗ ${testSmsStatus.error}`}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* COST & FREE-TIER DISCLOSURE BANNER */}
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px', fontSize: '12px', color: '#64748b' }}>
+              <div style={{ fontWeight: 600, color: '#0f172a', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Info size={14} /> Service Costs & Provider Safeguards
+              </div>
+              UrbanPulse uses Open-Meteo's open-access API for live weather, Google Routes API v2 within Google Cloud's monthly free credit tier, and Supabase Free Tier for storage. Fast2SMS is a paid per-message service for Indian mobile numbers; live sending is protected with idempotent rate limits and kept in mock/safety mode until configured by the account owner.
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* 3. DISCRETE SYSTEM HEALTH BAR (Footer) */}
+      <footer className="macos-footer">
+        <div>
+          UrbanPulse AI • Multimodal Urban Incident Intelligence • Mumbai Metropolitan Region
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <span>Sources: {sourcesHealth?.online_sources_count || 4}/{sourcesHealth?.total_monitored_sources || 8} Active</span>
+          <span>Google Routes API v2: Online</span>
+          <span>Weather: Open-Meteo Live</span>
+        </div>
+      </footer>
+
+      {/* 4. MODALS (Citizen Report, Health & Diagnostics, Auth) */}
+      {/* CITIZEN REPORT MODAL */}
+      {showReportModal && (
+        <div className="macos-modal-backdrop" onClick={() => setShowReportModal(false)}>
+          <div className="macos-modal-card" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px' }}>Submit Citizen Incident Report</h3>
+              <button className="macos-btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setShowReportModal(false)}>
+                <X size={14} />
               </button>
-              <button className="btn-primary" onClick={handleSaveApiKey}>
-                Save & Enable Google Maps
+            </div>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const fd = new FormData(e.target);
+              try {
+                const res = await fetch(`${API_BASE}/api/incidents/report`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    category: fd.get('category'),
+                    title: fd.get('title'),
+                    description: fd.get('description'),
+                    latitude: parseFloat(fd.get('latitude')),
+                    longitude: parseFloat(fd.get('longitude')),
+                    user_name: currentUser?.full_name || 'Citizen'
+                  })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                  alert('Incident report submitted! It will appear in verified city intelligence feeds.');
+                  setShowReportModal(false);
+                  refreshLiveFeeds();
+                } else {
+                  alert(data.detail || 'Could not submit report');
+                }
+              } catch (err) {
+                alert('Network error submitting report');
+              }
+            }}>
+              <div className="macos-form-group">
+                <label className="macos-label">Hazard Category</label>
+                <select name="category" className="macos-input" style={{ background: '#f8fafc', padding: '8px', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                  <option value="WATERLOGGING">Waterlogging / Flooding</option>
+                  <option value="ROAD_CLOSURE">Road Closure / Blockage</option>
+                  <option value="ACCIDENT">Traffic Accident</option>
+                  <option value="TREE_FALL">Tree Fall / Obstruction</option>
+                </select>
+              </div>
+
+              <div className="macos-form-group">
+                <label className="macos-label">Incident Headline</label>
+                <input name="title" className="macos-input" placeholder="e.g. Severe waterlogging at Malad Subway" required style={{ background: '#f8fafc', padding: '8px', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
+              </div>
+
+              <div className="macos-form-group">
+                <label className="macos-label">Detailed Observation</label>
+                <textarea name="description" className="macos-input" rows={3} placeholder="Describe water depth, lane blockages, or traffic impact..." required style={{ background: '#f8fafc', padding: '8px', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }} className="macos-form-group">
+                <div>
+                  <label className="macos-label">Latitude</label>
+                  <input name="latitude" type="number" step="any" defaultValue={deviceLocation.coords?.lat || 19.1196} className="macos-input" required style={{ background: '#f8fafc', padding: '8px', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
+                </div>
+                <div>
+                  <label className="macos-label">Longitude</label>
+                  <input name="longitude" type="number" step="any" defaultValue={deviceLocation.coords?.lon || 72.8433} className="macos-input" required style={{ background: '#f8fafc', padding: '8px', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
+                </div>
+              </div>
+
+              <button type="submit" className="macos-btn-primary" style={{ marginTop: '10px' }}>
+                Submit Report
               </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* SOURCE HEALTH & RESILIENCE MODAL (Phase 6) */}
+      {showHealthModal && (
+        <div className="macos-modal-backdrop" onClick={() => setShowHealthModal(false)}>
+          <div className="macos-modal-card" style={{ maxWidth: '640px' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px' }}>Data Sources & Evidence Resilience</h3>
+              <button className="macos-btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setShowHealthModal(false)}>
+                <X size={14} />
+              </button>
+            </div>
+
+            <div style={{ maxHeight: '420px', overflowY: 'auto' }}>
+              {sourcesHealth?.sources?.map((src) => (
+                <div key={src.source_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid #f1f5f9' }}>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>{src.name}</div>
+                    <div style={{ fontSize: '11px', color: '#64748b' }}>{src.operational_note}</div>
+                    <div style={{ fontSize: '10px', color: '#94a3b8' }}>Tier: {src.free_tier_status}</div>
+                  </div>
+                  <span style={{ 
+                    fontSize: '11px', 
+                    fontWeight: 600, 
+                    padding: '2px 8px', 
+                    borderRadius: '99px',
+                    background: src.status === 'ONLINE' ? '#ecfdf5' : (src.status === 'STANDBY' ? '#f1f5f9' : '#fffbeb'),
+                    color: src.status === 'ONLINE' ? '#059669' : (src.status === 'STANDBY' ? '#475569' : '#d97706')
+                  }}>
+                    {src.status}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* =====================================================================
-          MODAL: COMPARE MY OPTIONS BREAKDOWN
-         ===================================================================== */}
-      {showCompareModal && (
-        <div className="modal-backdrop" onClick={() => setShowCompareModal(false)}>
-          <div className="modal-card modal-large" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Explainable Route Scoring & Alternatives Ranking</h3>
-              <button className="close-btn" onClick={() => setShowCompareModal(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <p>UrbanPulse evaluated journey time, corridor flood exposure, track signals, and user preferences:</p>
-              
-              <table className="compare-table">
-                <thead>
-                  <tr>
-                    <th>Option</th>
-                    <th>Est. Time</th>
-                    <th>Incident Exposure</th>
-                    <th>Assessment & Reliability</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {customCommuteResult?.travel_options?.map((opt, i) => (
-                    <tr key={i} className={opt.recommended ? 'row-recommended' : ''}>
-                      <td><strong>{opt.mode}</strong></td>
-                      <td>{opt.estimated_journey_time} mins ({opt.delay_min > 0 ? `+${opt.delay_min}m` : 'Normal'})</td>
-                      <td><span className={`exposure-pill ${opt.incident_exposure.toLowerCase().includes('high') ? 'exp-high' : 'exp-low'}`}>{opt.incident_exposure}</span></td>
-                      <td>{opt.recommendation}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <div className="why-recommendation-box">
-                <h4>Why did we recommend Metro?</h4>
-                <p>Metro Line 2A viaduct is elevated 14 meters above street level, completely bypassing the 68cm water accumulation at Malad Subway and the 145mm track submergence affecting Western Railway locals.</p>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn-primary" onClick={() => setShowCompareModal(false)}>
-                Back to Commute Planner
+      {/* SIGN IN / REGISTER MODAL */}
+      {showAuthModal && (
+        <div className="macos-modal-backdrop" onClick={() => setShowAuthModal(false)}>
+          <div className="macos-modal-card" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px' }}>Sign In / Register</h3>
+              <button className="macos-btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setShowAuthModal(false)}>
+                <X size={14} />
               </button>
             </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const fd = new FormData(e.target);
+              const email = fd.get('email');
+              const password = fd.get('password');
+              const name = fd.get('name');
+
+              try {
+                // Try login or register
+                let res = await fetch(`${API_BASE}/api/auth/login`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ identifier: email, password })
+                });
+
+                if (!res.ok && name) {
+                  // Register new
+                  res = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      full_name: name,
+                      email,
+                      password,
+                      phone: fd.get('phone') || '+91 98201 54321',
+                      default_origin: originInput || 'Andheri West',
+                      default_destination: destInput || 'BKC'
+                    })
+                  });
+                }
+
+                const data = await res.json();
+                if (res.ok) {
+                  setCurrentUser(data.user);
+                  localStorage.setItem('urbanpulse_user', JSON.stringify(data.user));
+                  setShowAuthModal(false);
+                } else {
+                  alert(data.detail || 'Authentication failed');
+                }
+              } catch (err) {
+                alert('Network error connecting to auth service');
+              }
+            }}>
+              <div className="macos-form-group">
+                <label className="macos-label">Full Name (New Users)</label>
+                <input name="name" className="macos-input" placeholder="Your name" style={{ background: '#f8fafc', padding: '8px', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
+              </div>
+              <div className="macos-form-group">
+                <label className="macos-label">Email Address</label>
+                <input name="email" type="email" required className="macos-input" placeholder="you@domain.com" style={{ background: '#f8fafc', padding: '8px', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
+              </div>
+              <div className="macos-form-group">
+                <label className="macos-label">Password</label>
+                <input name="password" type="password" required className="macos-input" placeholder="••••••••" style={{ background: '#f8fafc', padding: '8px', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
+              </div>
+              <div className="macos-form-group">
+                <label className="macos-label">Mobile Number (+91)</label>
+                <input name="phone" className="macos-input" placeholder="98201 54321" style={{ background: '#f8fafc', padding: '8px', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
+              </div>
+              <button type="submit" className="macos-btn-primary" style={{ marginTop: '12px' }}>
+                Continue
+              </button>
+            </form>
           </div>
         </div>
       )}

@@ -4,123 +4,103 @@
     "user_code": "STUDENT_001",
     "full_name": "Sahil (Student 001)",
     "email": "sahil.student@rgit.edu.in",
-    "phone": "+91 98201 54321",
-    "password_hash": "1a667338c2898f0c1980ff5a19f836c8e09ac039db1308044d177067f46b7301",
     "role": "STUDENT",
-    "organization": "Rajiv Gandhi Institute of Technology (RGIT, Versova)",
-    "employee_or_student_id": "RGIT-BE-EXTC-2024",
     "default_origin": "Ashokvan (Borivali East)",
     "default_destination": "Rajiv Gandhi Institute of Technology (RGIT, Versova)",
-    "corridor_landmark": "Via Western Express Highway & JVLR",
     "preferred_mode": "MOTORCYCLE",
-    "secondary_mode": "METRO",
-    "departure_time": "08:00:00",
     "target_arrival_time": "09:00:00",
-    "alert_preferences": {
-      "flood_sensitivity": "HIGH",
-      "delay_sensitivity_min": 10,
-      "notify_in_app": true,
-      "notify_sms_whatsapp": true,
-      "notify_emergency_sos": true
-    },
-    "emergency_contact": {
-      "name": "Pradip Shinde (Parent)",
-      "phone": "+91 98200 11223"
-    },
     "created_at": "2026-10-12T13:56:01.374724+00:00",
-    "is_demo_persona": true
+    "updated_at": "2026-10-12T13:56:01.374724+00:00",
+    "phone": null,
+    "scheduled_sms_time": "08:00",
+    "sms_consent": false,
+    "sms_notifications_enabled": false,
+    "alert_preferences": {
+      "notify_sms": false,
+      "notify_in_app": true
+    }
   },
   {
-    "id": "c1a2b3c4-1111-2222-3333-444455556666",
+    "id": "fbfaf006-9f57-4a8d-a63f-58b3fc7a6021",
     "user_code": "CORP_002",
     "full_name": "Pooja Mehta (Corporate IT)",
     "email": "pooja.mehta@tcs.com",
-    "phone": "+91 98204 88776",
-    "password_hash": "1a667338c2898f0c1980ff5a19f836c8e09ac039db1308044d177067f46b7301",
     "role": "CORPORATE",
-    "organization": "Tata Consultancy Services (BKC G-Block)",
-    "employee_or_student_id": "TCS-MUM-89211",
     "default_origin": "Kandivali West (Link Road)",
     "default_destination": "Bandra Kurla Complex (BKC G-Block)",
-    "corridor_landmark": "Via Western Railway Local & BKC Connector",
     "preferred_mode": "TRAIN",
-    "secondary_mode": "METRO",
-    "departure_time": "08:15:00",
     "target_arrival_time": "09:15:00",
+    "created_at": "2026-10-12T16:32:13.858104+00:00",
+    "updated_at": "2026-10-12T16:32:13.858104+00:00",
+    "phone": null,
+    "scheduled_sms_time": "08:00",
+    "sms_consent": false,
+    "sms_notifications_enabled": false,
     "alert_preferences": {
-      "flood_sensitivity": "MODERATE",
-      "delay_sensitivity_min": 15,
-      "notify_in_app": true,
-      "notify_sms_whatsapp": true,
-      "notify_emergency_sos": false
-    },
-    "emergency_contact": {
-      "name": "Karan Mehta (Spouse)",
-      "phone": "+91 98209 99887"
-    },
-    "created_at": "2026-10-12T14:00:00.000000+00:00",
-    "is_demo_persona": true
+      "notify_sms": false,
+      "notify_in_app": true
+    }
   },
   {
-    "id": "e9f8d7c6-7777-8888-9999-000011112222",
+    "id": "34760f4c-5988-4ac2-859d-078741e2f5a9",
     "user_code": "EMERGENCY_003",
     "full_name": "Dr. Vikram Rao (KEM Trauma)",
     "email": "vikram.rao@kemhospital.org",
-    "phone": "+91 98210 33445",
-    "password_hash": "1a667338c2898f0c1980ff5a19f836c8e09ac039db1308044d177067f46b7301",
     "role": "EMERGENCY",
-    "organization": "KEM Hospital Trauma Care (Parel)",
-    "employee_or_student_id": "KEM-SURG-045",
     "default_origin": "Andheri West (Lokhandwala)",
     "default_destination": "KEM Hospital (Parel)",
-    "corridor_landmark": "Emergency Priority Corridor via WEH & Sea Link",
     "preferred_mode": "PERSONAL_VEHICLE",
-    "secondary_mode": "METRO",
-    "departure_time": "07:30:00",
     "target_arrival_time": "08:15:00",
+    "created_at": "2026-10-12T16:32:25.617594+00:00",
+    "updated_at": "2026-10-12T16:32:25.617594+00:00",
+    "phone": null,
+    "scheduled_sms_time": "08:00",
+    "sms_consent": false,
+    "sms_notifications_enabled": false,
     "alert_preferences": {
-      "flood_sensitivity": "HIGH",
-      "delay_sensitivity_min": 5,
-      "notify_in_app": true,
-      "notify_sms_whatsapp": true,
-      "notify_emergency_sos": true
-    },
-    "emergency_contact": {
-      "name": "Dr. Neha Rao (Hospital Staff)",
-      "phone": "+91 98210 55667"
-    },
-    "created_at": "2026-10-12T14:05:00.000000+00:00",
-    "is_demo_persona": true
+      "notify_sms": false,
+      "notify_in_app": true
+    }
   },
   {
-    "id": "795a5a61-fc2c-4957-b1a2-a181e5026076",
+    "id": "a8a47cba-c103-4b56-932e-bfb2053c48d1",
     "user_code": "STUD_104",
     "full_name": "Vipul Sawant",
     "email": "sawantvipul77@gmail.com",
-    "phone": "8788201742",
-    "password_hash": "69035044e58a8e12c4e985a0f52125e27b27b8f51bde7bf4d039b6d0b9b0396d",
     "role": "STUDENT",
-    "organization": "Talakunchi Networks",
-    "employee_or_student_id": "TKVips",
     "default_origin": "National Park (Borivali East)",
     "default_destination": "Andheri Subway",
-    "corridor_landmark": "Via Western Express Highway & JVLR",
     "preferred_mode": "MOTORCYCLE",
-    "secondary_mode": "METRO",
-    "departure_time": "08:30:00",
     "target_arrival_time": "09:30:00",
+    "created_at": "2026-10-12T14:41:53.474478+00:00",
+    "updated_at": "2026-10-12T14:41:53.474478+00:00",
+    "phone": null,
+    "scheduled_sms_time": "08:00",
+    "sms_consent": false,
+    "sms_notifications_enabled": false,
     "alert_preferences": {
-      "flood_sensitivity": "MODERATE",
-      "delay_sensitivity_min": 10,
-      "notify_in_app": true,
-      "notify_sms_whatsapp": true,
-      "notify_emergency_sos": true
+      "notify_sms": false,
+      "notify_in_app": true
+    }
+  },
+  {
+    "id": "91dfda3d-f5d0-49db-b092-a5ad3b4463cc",
+    "user_code": "COMMUTER_105",
+    "full_name": "Ganesh",
+    "email": "ganeshkolage21@gmail.com",
+    "phone": "9372912368",
+    "password_hash": "6a28cfc23592642cdd094f9c4005d0f79248b4e0135c4f6e87dab5e4a5803e4a",
+    "default_origin": "GPS: 19.1219, 72.8244",
+    "default_destination": "BKC",
+    "preferred_mode": "MOTORCYCLE",
+    "scheduled_sms_time": "08:00",
+    "sms_consent": false,
+    "sms_notifications_enabled": false,
+    "alert_preferences": {
+      "notify_sms": false,
+      "notify_in_app": true
     },
-    "emergency_contact": {
-      "name": "Sahil",
-      "phone": "9372912368"
-    },
-    "created_at": "2026-10-12T14:41:51.629114",
+    "created_at": "2026-10-12T20:50:13.103782",
     "is_demo_persona": false
   }
 ]
