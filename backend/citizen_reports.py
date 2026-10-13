@@ -104,11 +104,20 @@ class CitizenReportManager:
         self._user_last_submission_time[sender_key] = now
         self._recent_submissions.append(normalized_record)
 
+        # Trigger personalized location-aware alert generation for affected commuters (Objective 7)
+        dispatched_alerts = []
+        try:
+            from backend.alert_engine import alert_engine
+            dispatched_alerts = alert_engine.evaluate_incident_for_all_users(normalized_record)
+        except Exception as e_alert:
+            pass
+
         return {
             "success": True,
             "incident_id": incident_id,
             "message": "Citizen incident report submitted successfully and added to city intelligence feed.",
-            "incident": normalized_record
+            "incident": normalized_record,
+            "alerts_generated_count": len(dispatched_alerts)
         }
 
 citizen_report_manager = CitizenReportManager()

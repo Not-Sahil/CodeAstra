@@ -1,0 +1,388 @@
+[
+  {
+    "work_order_id": "WO-MUM-2026-3016",
+    "incident_id": "INC_MUM_20260715_01",
+    "incident_type": "Urban Flooding",
+    "location_name": "Western Railway Slow & Fast Tracks (Borivali-Malad), Malad Subway, SV Road",
+    "latitude": 19.1875,
+    "longitude": 72.8504,
+    "problem_description": "Severe inundation at Western Railway Slow & Fast Tracks (Borivali-Malad), Malad Subway, SV Road resulting in complete light vehicle stoppage and transit diversion.",
+    "observed_symptoms": [
+      "Rapid Water Inundation (+68.0 cm depth)",
+      "Corridor Traffic Flow Collapse (7.2 km/h)",
+      "Citizen Waterlogging Calls & Stranded Vehicles"
+    ],
+    "root_cause_hypothesis": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "supporting_evidence": [
+      "BMC Doppler Weather Radar AWS_02",
+      "Western Railway Suburban SCADA (Track Km 28/4)"
+    ],
+    "confidence_score": 0.93,
+    "recommended_response": "Dispatch appropriately rated dewatering pump set and traffic control personnel to affected waterlogging location, subject to on-site verification, resource availability, and authorized municipal approval.",
+    "suggested_resources": [
+      {
+        "category": "DEWATERING_EQUIPMENT",
+        "item": "50 HP High-Capacity Submersible Dewatering Pump Set",
+        "recommended_qty": 2,
+        "status": "REQUIRES_ON_SITE_VERIFICATION",
+        "note": "Verify sump pit accessibility and power hookup before operation."
+      },
+      {
+        "category": "TRAFFIC_MANAGEMENT",
+        "item": "Reflective Road Barricades & Caution Gantry Signs",
+        "recommended_qty": 12,
+        "status": "REQUIRES_ON_SITE_VERIFICATION",
+        "note": "Deploy at SV Road North/South entry to prevent light motor vehicle ingress."
+      },
+      {
+        "category": "PERSONNEL",
+        "item": "Mumbai Traffic Police Wardens & MCGM SWD Response Crew",
+        "recommended_qty": 6,
+        "status": "REQUIRES_ON_SITE_VERIFICATION",
+        "note": "Manual gating and traffic diversion towards New Link Road."
+      }
+    ],
+    "priority": "CRITICAL",
+    "department": "MCGM Storm Water Drains Dept & Mumbai Traffic Police",
+    "verification_steps": [
+      "Step 1: On-site visual confirmation of water accumulation exceeding 45 cm before pump deployment.",
+      "Step 2: Inspect gravity box culvert manhole for physical silt/debris obstruction.",
+      "Step 3: Check electrical feeder isolation to eliminate stray current hazard before entering standing water.",
+      "Step 4: Verify that high tide backflow flap gates are functioning."
+    ],
+    "safety_considerations": [
+      "CAUTION: Potential submerged electrical conduits near Western Railway underpass.",
+      "CAUTION: Open manhole suction risk under standing water; do not operate without safety tether.",
+      "SAFETY MANDATE: Strictly prohibit two-wheelers and auto-rickshaws from entering submerged section."
+    ],
+    "status": "DRAFT",
+    "operator_notes": "Draft generated automatically from UrbanPulse AI incident assessment at 08:07:49 IST.",
+    "created_by": "OFFICER_PATIL",
+    "approved_by": null,
+    "approved_at": null,
+    "is_simulated": false,
+    "external_transmission_status": "NOT_TRANSMITTED",
+    "created_at": "2026-10-13T08:07:49.139075",
+    "updated_at": "2026-10-13T08:07:49.139075"
+  },
+  {
+    "work_order_id": "WO-MUM-2026-3914",
+    "incident_id": "INC_MUM_20260715_01",
+    "incident_type": "Urban Flooding",
+    "location_name": "Western Railway Slow & Fast Tracks (Borivali-Malad), Malad Subway, SV Road",
+    "latitude": 19.1875,
+    "longitude": 72.8504,
+    "problem_description": "Severe inundation at Western Railway Slow & Fast Tracks (Borivali-Malad), Malad Subway, SV Road resulting in complete light vehicle stoppage and transit diversion.",
+    "observed_symptoms": [
+      "Rapid Water Inundation (+68.0 cm depth)",
+      "Corridor Traffic Flow Collapse (7.2 km/h)",
+      "Citizen Waterlogging Calls & Stranded Vehicles"
+    ],
+    "root_cause_hypothesis": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "supporting_evidence": [
+      "BMC Doppler Weather Radar AWS_02",
+      "Western Railway Suburban SCADA (Track Km 28/4)"
+    ],
+    "confidence_score": 0.93,
+    "recommended_response": "Dispatch appropriately rated dewatering pump set and traffic control personnel to affected waterlogging location, subject to on-site verification, resource availability, and authorized municipal approval.",
+    "suggested_resources": [
+      {
+        "category": "DEWATERING_EQUIPMENT",
+        "item": "50 HP High-Capacity Submersible Dewatering Pump Set",
+        "recommended_qty": 2,
+        "status": "REQUIRES_ON_SITE_VERIFICATION",
+        "note": "Verify sump pit accessibility and power hookup before operation."
+      },
+      {
+        "category": "TRAFFIC_MANAGEMENT",
+        "item": "Reflective Road Barricades & Caution Gantry Signs",
+        "recommended_qty": 12,
+        "status": "REQUIRES_ON_SITE_VERIFICATION",
+        "note": "Deploy at SV Road North/South entry to prevent light motor vehicle ingress."
+      },
+      {
+        "category": "PERSONNEL",
+        "item": "Mumbai Traffic Police Wardens & MCGM SWD Response Crew",
+        "recommended_qty": 6,
+        "status": "REQUIRES_ON_SITE_VERIFICATION",
+        "note": "Manual gating and traffic diversion towards New Link Road."
+      }
+    ],
+    "priority": "CRITICAL",
+    "department": "MCGM Storm Water Drains Dept & Mumbai Traffic Police",
+    "verification_steps": [
+      "Step 1: On-site visual confirmation of water accumulation exceeding 45 cm before pump deployment.",
+      "Step 2: Inspect gravity box culvert manhole for physical silt/debris obstruction.",
+      "Step 3: Check electrical feeder isolation to eliminate stray current hazard before entering standing water.",
+      "Step 4: Verify that high tide backflow flap gates are functioning."
+    ],
+    "safety_considerations": [
+      "CAUTION: Potential submerged electrical conduits near Western Railway underpass.",
+      "CAUTION: Open manhole suction risk under standing water; do not operate without safety tether.",
+      "SAFETY MANDATE: Strictly prohibit two-wheelers and auto-rickshaws from entering submerged section."
+    ],
+    "status": "APPROVED",
+    "operator_notes": "Emergency municipal clearance granted.",
+    "created_by": "COMMISSIONER_PATIL",
+    "approved_by": "COMMISSIONER_PATIL",
+    "approved_at": "2026-10-13T08:06:21.294175",
+    "is_simulated": false,
+    "external_transmission_status": "NOT_TRANSMITTED",
+    "created_at": "2026-10-13T08:06:20.512062",
+    "updated_at": "2026-10-13T08:06:21.294175"
+  },
+  {
+    "work_order_id": "WO-MUM-2026-7680",
+    "incident_id": "INC_MUM_20260715_01",
+    "incident_type": "Urban Flooding",
+    "location_name": "Western Railway Slow & Fast Tracks (Borivali-Malad), Malad Subway, SV Road",
+    "latitude": 19.1875,
+    "longitude": 72.8504,
+    "problem_description": "Severe inundation at Western Railway Slow & Fast Tracks (Borivali-Malad), Malad Subway, SV Road resulting in complete light vehicle stoppage and transit diversion.",
+    "observed_symptoms": [
+      "Rapid Water Inundation (+68.0 cm depth)",
+      "Corridor Traffic Flow Collapse (7.2 km/h)",
+      "Citizen Waterlogging Calls & Stranded Vehicles"
+    ],
+    "root_cause_hypothesis": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "supporting_evidence": [
+      "BMC Doppler Weather Radar AWS_02",
+      "Western Railway Suburban SCADA (Track Km 28/4)"
+    ],
+    "confidence_score": 0.93,
+    "recommended_response": "Dispatch appropriately rated dewatering pump set and traffic control personnel to affected waterlogging location, subject to on-site verification, resource availability, and authorized municipal approval.",
+    "suggested_resources": [
+      {
+        "category": "DEWATERING_EQUIPMENT",
+        "item": "50 HP High-Capacity Submersible Dewatering Pump Set",
+        "recommended_qty": 2,
+        "status": "REQUIRES_ON_SITE_VERIFICATION",
+        "note": "Verify sump pit accessibility and power hookup before operation."
+      },
+      {
+        "category": "TRAFFIC_MANAGEMENT",
+        "item": "Reflective Road Barricades & Caution Gantry Signs",
+        "recommended_qty": 12,
+        "status": "REQUIRES_ON_SITE_VERIFICATION",
+        "note": "Deploy at SV Road North/South entry to prevent light motor vehicle ingress."
+      },
+      {
+        "category": "PERSONNEL",
+        "item": "Mumbai Traffic Police Wardens & MCGM SWD Response Crew",
+        "recommended_qty": 6,
+        "status": "REQUIRES_ON_SITE_VERIFICATION",
+        "note": "Manual gating and traffic diversion towards New Link Road."
+      }
+    ],
+    "priority": "CRITICAL",
+    "department": "MCGM Storm Water Drains Dept & Mumbai Traffic Police",
+    "verification_steps": [
+      "Step 1: On-site visual confirmation of water accumulation exceeding 45 cm before pump deployment.",
+      "Step 2: Inspect gravity box culvert manhole for physical silt/debris obstruction.",
+      "Step 3: Check electrical feeder isolation to eliminate stray current hazard before entering standing water.",
+      "Step 4: Verify that high tide backflow flap gates are functioning."
+    ],
+    "safety_considerations": [
+      "CAUTION: Potential submerged electrical conduits near Western Railway underpass.",
+      "CAUTION: Open manhole suction risk under standing water; do not operate without safety tether.",
+      "SAFETY MANDATE: Strictly prohibit two-wheelers and auto-rickshaws from entering submerged section."
+    ],
+    "status": "DRAFT",
+    "operator_notes": "Draft generated automatically from UrbanPulse AI incident assessment at 07:58:14 IST.",
+    "created_by": "OFFICER_PATIL",
+    "approved_by": null,
+    "approved_at": null,
+    "is_simulated": false,
+    "external_transmission_status": "NOT_TRANSMITTED",
+    "created_at": "2026-10-13T07:58:14.265774",
+    "updated_at": "2026-10-13T07:58:14.265774"
+  },
+  {
+    "work_order_id": "WO-MUM-2026-3578",
+    "incident_id": "INC_MUM_20260715_01",
+    "incident_type": "Urban Flooding",
+    "location_name": "Western Railway Slow & Fast Tracks (Borivali-Malad), Malad Subway, SV Road",
+    "latitude": 19.1875,
+    "longitude": 72.8504,
+    "problem_description": "Severe inundation at Western Railway Slow & Fast Tracks (Borivali-Malad), Malad Subway, SV Road resulting in complete light vehicle stoppage and transit diversion.",
+    "observed_symptoms": [
+      "Rapid Water Inundation (+68.0 cm depth)",
+      "Corridor Traffic Flow Collapse (7.2 km/h)",
+      "Citizen Waterlogging Calls & Stranded Vehicles"
+    ],
+    "root_cause_hypothesis": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "supporting_evidence": [
+      "BMC Doppler Weather Radar AWS_02",
+      "Western Railway Suburban SCADA (Track Km 28/4)"
+    ],
+    "confidence_score": 0.93,
+    "recommended_response": "Dispatch appropriately rated dewatering pump set and traffic control personnel to affected waterlogging location, subject to on-site verification, resource availability, and authorized municipal approval.",
+    "suggested_resources": [
+      {
+        "category": "DEWATERING_EQUIPMENT",
+        "item": "50 HP High-Capacity Submersible Dewatering Pump Set",
+        "recommended_qty": 2,
+        "status": "REQUIRES_ON_SITE_VERIFICATION",
+        "note": "Verify sump pit accessibility and power hookup before operation."
+      },
+      {
+        "category": "TRAFFIC_MANAGEMENT",
+        "item": "Reflective Road Barricades & Caution Gantry Signs",
+        "recommended_qty": 12,
+        "status": "REQUIRES_ON_SITE_VERIFICATION",
+        "note": "Deploy at SV Road North/South entry to prevent light motor vehicle ingress."
+      },
+      {
+        "category": "PERSONNEL",
+        "item": "Mumbai Traffic Police Wardens & MCGM SWD Response Crew",
+        "recommended_qty": 6,
+        "status": "REQUIRES_ON_SITE_VERIFICATION",
+        "note": "Manual gating and traffic diversion towards New Link Road."
+      }
+    ],
+    "priority": "CRITICAL",
+    "department": "MCGM Storm Water Drains Dept & Mumbai Traffic Police",
+    "verification_steps": [
+      "Step 1: On-site visual confirmation of water accumulation exceeding 45 cm before pump deployment.",
+      "Step 2: Inspect gravity box culvert manhole for physical silt/debris obstruction.",
+      "Step 3: Check electrical feeder isolation to eliminate stray current hazard before entering standing water.",
+      "Step 4: Verify that high tide backflow flap gates are functioning."
+    ],
+    "safety_considerations": [
+      "CAUTION: Potential submerged electrical conduits near Western Railway underpass.",
+      "CAUTION: Open manhole suction risk under standing water; do not operate without safety tether.",
+      "SAFETY MANDATE: Strictly prohibit two-wheelers and auto-rickshaws from entering submerged section."
+    ],
+    "status": "DRAFT",
+    "operator_notes": "Draft generated automatically from UrbanPulse AI incident assessment at 07:57:54 IST.",
+    "created_by": "OFFICER_PATIL",
+    "approved_by": null,
+    "approved_at": null,
+    "is_simulated": false,
+    "external_transmission_status": "NOT_TRANSMITTED",
+    "created_at": "2026-10-13T07:57:54.209295",
+    "updated_at": "2026-10-13T07:57:54.209295"
+  },
+  {
+    "work_order_id": "WO-MUM-2026-TEST02",
+    "incident_id": "INC_MUM_20260715_01",
+    "incident_type": "Urban Flooding",
+    "location_name": "Malad Subway",
+    "latitude": 19.1875,
+    "longitude": 72.8504,
+    "problem_description": "Waterlogging test",
+    "observed_symptoms": [],
+    "root_cause_hypothesis": "Root cause undetermined",
+    "supporting_evidence": [],
+    "confidence_score": 0.85,
+    "recommended_response": "",
+    "suggested_resources": [],
+    "priority": "HIGH",
+    "department": "MCGM Storm Water Drains Dept",
+    "verification_steps": [],
+    "safety_considerations": [],
+    "status": "APPROVED",
+    "operator_notes": "Reviewed and cleared for crew mobilization.",
+    "created_by": "OPERATOR_DESK",
+    "approved_by": "MUNICIPAL_DISPATCHER_1",
+    "approved_at": "2026-10-13T08:07:50.593419",
+    "is_simulated": false,
+    "external_transmission_status": "NOT_TRANSMITTED",
+    "created_at": "2026-10-13T08:07:50.194413",
+    "updated_at": "2026-10-13T08:07:50.593419"
+  },
+  {
+    "work_order_id": "WO-MUM-2026-TEST01",
+    "incident_id": "INC_MUM_20260715_01",
+    "incident_type": "Urban Flooding",
+    "location_name": "Malad Subway",
+    "latitude": 19.1875,
+    "longitude": 72.8504,
+    "problem_description": "Waterlogging test",
+    "observed_symptoms": [],
+    "root_cause_hypothesis": "Root cause undetermined",
+    "supporting_evidence": [],
+    "confidence_score": 0.85,
+    "recommended_response": "",
+    "suggested_resources": [],
+    "priority": "HIGH",
+    "department": "MCGM Storm Water Drains Dept",
+    "verification_steps": [],
+    "safety_considerations": [],
+    "status": "DRAFT",
+    "operator_notes": "",
+    "created_by": "OPERATOR_DESK",
+    "approved_by": null,
+    "approved_at": null,
+    "is_simulated": false,
+    "external_transmission_status": "NOT_TRANSMITTED",
+    "created_at": "2026-10-13T08:07:49.555993",
+    "updated_at": "2026-10-13T08:07:49.555993"
+  },
+  {
+    "work_order_id": "WO-MUM-2026-3849",
+    "incident_id": "INC_MUM_20260715_01",
+    "incident_type": "Urban Flooding",
+    "location_name": "Western Railway Slow & Fast Tracks (Borivali-Malad), Malad Subway, SV Road",
+    "latitude": 19.1875,
+    "longitude": 72.8504,
+    "problem_description": "Severe inundation at Western Railway Slow & Fast Tracks (Borivali-Malad), Malad Subway, SV Road resulting in complete light vehicle stoppage and transit diversion.",
+    "observed_symptoms": [
+      "Rapid Water Inundation (+68.0 cm depth)",
+      "Corridor Traffic Flow Collapse (7.2 km/h)",
+      "Citizen Waterlogging Calls & Stranded Vehicles"
+    ],
+    "root_cause_hypothesis": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "supporting_evidence": [
+      "BMC Doppler Weather Radar AWS_02",
+      "Western Railway Suburban SCADA (Track Km 28/4)"
+    ],
+    "confidence_score": 0.93,
+    "recommended_response": "Dispatch appropriately rated dewatering pump set and traffic control personnel to affected waterlogging location, subject to on-site verification, resource availability, and authorized municipal approval.",
+    "suggested_resources": [
+      {
+        "category": "DEWATERING_EQUIPMENT",
+        "item": "50 HP High-Capacity Submersible Dewatering Pump Set",
+        "recommended_qty": 2,
+        "status": "REQUIRES_ON_SITE_VERIFICATION",
+        "note": "Verify sump pit accessibility and power hookup before operation."
+      },
+      {
+        "category": "TRAFFIC_MANAGEMENT",
+        "item": "Reflective Road Barricades & Caution Gantry Signs",
+        "recommended_qty": 12,
+        "status": "REQUIRES_ON_SITE_VERIFICATION",
+        "note": "Deploy at SV Road North/South entry to prevent light motor vehicle ingress."
+      },
+      {
+        "category": "PERSONNEL",
+        "item": "Mumbai Traffic Police Wardens & MCGM SWD Response Crew",
+        "recommended_qty": 6,
+        "status": "REQUIRES_ON_SITE_VERIFICATION",
+        "note": "Manual gating and traffic diversion towards New Link Road."
+      }
+    ],
+    "priority": "CRITICAL",
+    "department": "MCGM Storm Water Drains Dept & Mumbai Traffic Police",
+    "verification_steps": [
+      "Step 1: On-site visual confirmation of water accumulation exceeding 45 cm before pump deployment.",
+      "Step 2: Inspect gravity box culvert manhole for physical silt/debris obstruction.",
+      "Step 3: Check electrical feeder isolation to eliminate stray current hazard before entering standing water.",
+      "Step 4: Verify that high tide backflow flap gates are functioning."
+    ],
+    "safety_considerations": [
+      "CAUTION: Potential submerged electrical conduits near Western Railway underpass.",
+      "CAUTION: Open manhole suction risk under standing water; do not operate without safety tether.",
+      "SAFETY MANDATE: Strictly prohibit two-wheelers and auto-rickshaws from entering submerged section."
+    ],
+    "status": "DRAFT",
+    "operator_notes": "Draft generated automatically from UrbanPulse AI incident assessment at 07:57:31 IST.",
+    "created_by": "OFFICER_PATIL",
+    "approved_by": null,
+    "approved_at": null,
+    "is_simulated": false,
+    "external_transmission_status": "NOT_TRANSMITTED",
+    "created_at": "2026-10-13T07:57:31.494889",
+    "updated_at": "2026-10-13T07:57:31.494889"
+  }
+]

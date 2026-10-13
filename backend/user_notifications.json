@@ -1,0 +1,1214 @@
+[
+  {
+    "user_id": "e4114236-8b29-4e7c-bbd5-47be5c8dde29",
+    "user_code": "COMMUTER_107",
+    "alert_type": "COMMUTE",
+    "title": "Corridor Disruption: Urban Flooding on GPS: 19.1218, ->BKC",
+    "message": "UrbanPulse Alert: Urban Flooding on GPS: 19.1218, ->BKC. Est. travel: 34m. Check route before leaving.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "SMS",
+      "EMAIL"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "REALTIME_CORRIDOR_MONITOR",
+      "sms_status": "delivered_via_phone",
+      "email_status": "email_simulated"
+    },
+    "idempotency_key": "rt_COMMUTER_107_1990956",
+    "id": "80fe1a03-a813-4436-a809-a004e004bd24",
+    "created_at": "2026-10-13T03:07:34.087247"
+  },
+  {
+    "user_id": "e4114236-8b29-4e7c-bbd5-47be5c8dde29",
+    "user_code": "COMMUTER_107",
+    "incident_id": "INC_MUM_20260720_19",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Milan Subway Waterlogging & Traffic Standstill",
+    "message": "Disruption detected 151m from your commute route towards BKC. Impacts Milan Subway Santacruz West Link, Western Railway Underpass.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "SMS",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "PARTIAL_SMS_FAILED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 17,
+      "confidence_score": 0.94,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "f37fc37c602b44dad29bbe6a62e7e50e",
+    "created_at": "2026-10-13T02:32:14.164638+00:00",
+    "id": "63aa8c73-b1c3-4132-9f65-f6d8390eaf42"
+  },
+  {
+    "user_id": "2d5df373-7bae-4938-8689-c0fd12d9cb65",
+    "user_code": "COMMUTER_106",
+    "incident_id": "INC_MUM_20260725_35",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (CRITICAL): Overturned Container Truck on JVLR WEH Junction Flyover",
+    "message": "Disruption detected 240m from your commute route towards Rajiv Gandhi Institute of Technology (RGIT, Versova). Impacts Jogeshwari JVLR Flyover connecting Western Express Highway.",
+    "severity": "CRITICAL",
+    "channels": [
+      "IN_APP",
+      "SMS",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "PARTIAL_SMS_FAILED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 13,
+      "confidence_score": 0.93,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "6f483a3a7c562e9b4a3cf2622aa389ab",
+    "created_at": "2026-10-13T02:32:12.409314+00:00",
+    "id": "4f90448c-02da-44e6-a16e-95cb05390cb6"
+  },
+  {
+    "user_id": "2d5df373-7bae-4938-8689-c0fd12d9cb65",
+    "user_code": "COMMUTER_106",
+    "incident_id": "INC_MUM_20260716_04",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Multi-Vehicle Collision on WEH Pathanwadi Flyover Southbound",
+    "message": "Disruption detected 61m from your commute route towards Rajiv Gandhi Institute of Technology (RGIT, Versova). Impacts Western Express Highway (Pathanwadi Flyover Southbound).",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "SMS",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 17,
+      "confidence_score": 0.92,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "4ed76ca79d86c3790cf136ffd1d724f1",
+    "created_at": "2026-10-13T02:32:12.200810+00:00",
+    "id": "cbf74489-55b0-49c9-944e-855843754b9a"
+  },
+  {
+    "user_id": "a8a47cba-c103-4b56-932e-bfb2053c48d1",
+    "user_code": "STUD_104",
+    "incident_id": "INC_MUM_20260725_35",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (CRITICAL): Overturned Container Truck on JVLR WEH Junction Flyover",
+    "message": "Disruption detected 240m from your commute route towards Andheri Subway. Impacts Jogeshwari JVLR Flyover connecting Western Express Highway.",
+    "severity": "CRITICAL",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 13,
+      "confidence_score": 0.93,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "0be13405c41a260c7a8897f5ba78f449",
+    "created_at": "2026-10-13T02:32:08.867256+00:00",
+    "id": "2813c0e4-e7de-4952-b2a9-88d3388a3fd9"
+  },
+  {
+    "user_id": "a8a47cba-c103-4b56-932e-bfb2053c48d1",
+    "user_code": "STUD_104",
+    "incident_id": "INC_MUM_20260716_04",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Multi-Vehicle Collision on WEH Pathanwadi Flyover Southbound",
+    "message": "Disruption detected 61m from your commute route towards Andheri Subway. Impacts Western Express Highway (Pathanwadi Flyover Southbound).",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 17,
+      "confidence_score": 0.92,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "87978db5cc7086fb5ec0df7712d88442",
+    "created_at": "2026-10-13T02:32:08.679237+00:00",
+    "id": "b28a1c02-576b-45b0-8e37-5f43c4277390"
+  },
+  {
+    "user_id": "a8a47cba-c103-4b56-932e-bfb2053c48d1",
+    "user_code": "STUD_104",
+    "incident_id": "INC_MUM_20260715_02",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Andheri Subway Inundation & SV Road Diversion",
+    "message": "Disruption detected 33m from your commute route towards Andheri Subway. Impacts Andheri Subway East-West Link, SV Road Andheri West.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 13,
+      "confidence_score": 0.91,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "fd6c9bd79b922f694e6641f372c32945",
+    "created_at": "2026-10-13T02:32:08.125577+00:00",
+    "id": "261ab358-ef59-41c6-957a-2c56fad5f754"
+  },
+  {
+    "user_id": "34760f4c-5988-4ac2-859d-078741e2f5a9",
+    "user_code": "EMERGENCY_003",
+    "incident_id": "INC_MUM_20260720_19",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Milan Subway Waterlogging & Traffic Standstill",
+    "message": "Disruption detected 273m from your commute route towards KEM Hospital (Parel). Impacts Milan Subway Santacruz West Link, Western Railway Underpass.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 17,
+      "confidence_score": 0.94,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "8e3ea4aeb65465772a3070c9b86e0f03",
+    "created_at": "2026-10-13T02:32:06.528154+00:00",
+    "id": "827efe2d-c441-4393-9584-0a90352a4961"
+  },
+  {
+    "user_id": "34760f4c-5988-4ac2-859d-078741e2f5a9",
+    "user_code": "EMERGENCY_003",
+    "incident_id": "INC_MUM_20260715_02",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Andheri Subway Inundation & SV Road Diversion",
+    "message": "Disruption detected 214m from your commute route towards KEM Hospital (Parel). Impacts Andheri Subway East-West Link, SV Road Andheri West.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 13,
+      "confidence_score": 0.91,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "d57eb83d2454804de2abe37d9d7e79ba",
+    "created_at": "2026-10-13T02:32:06.311123+00:00",
+    "id": "2f7cb9a0-1fb8-4bd8-8b1d-e9516b8ee5f0"
+  },
+  {
+    "user_id": "34760f4c-5988-4ac2-859d-078741e2f5a9",
+    "user_code": "EMERGENCY_003",
+    "incident_id": "INC_MUM_DADAR_HINDMATA",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Dadar TT Circle & Hindmata Low-Lying Water Accumulation",
+    "message": "Disruption detected 134m from your commute route towards KEM Hospital (Parel). Impacts Hindmata Flyover Underpass, Dr. Ambedkar Road, Dadar East.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 4,
+      "confidence_score": 0.92,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "25a2a2dc098d371ae884575f66a49c6f",
+    "created_at": "2026-10-13T02:32:05.776436+00:00",
+    "id": "6c9f0e9f-9b19-4f06-9c4e-bb35e7e109c0"
+  },
+  {
+    "user_id": "34760f4c-5988-4ac2-859d-078741e2f5a9",
+    "user_code": "EMERGENCY_003",
+    "incident_id": "INC_MUM_20260715_02",
+    "alert_type": "NEARBY",
+    "title": "Nearby Hazard Alert: Andheri Subway Inundation & SV Road Diversion",
+    "message": "Hazard active 0.33 km from Saved Origin (Andheri West). Affecting Andheri Subway East-West Link, SV Road Andheri West.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 13,
+      "confidence_score": 0.91,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "35d78f46c643c817b9f471b391f4fc09",
+    "created_at": "2026-10-13T02:32:04.055173+00:00",
+    "id": "ccab7d7f-741e-4655-89e7-32171ded2a79"
+  },
+  {
+    "user_id": "fbfaf006-9f57-4a8d-a63f-58b3fc7a6021",
+    "user_code": "CORP_002",
+    "incident_id": "INC_MUM_20260720_19",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Milan Subway Waterlogging & Traffic Standstill",
+    "message": "Disruption detected 273m from your commute route towards Bandra Kurla Complex (BKC G-Block). Impacts Milan Subway Santacruz West Link, Western Railway Underpass.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 17,
+      "confidence_score": 0.94,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "6f29aeb49c9f6c42183bdab9ad2aba2b",
+    "created_at": "2026-10-13T02:32:03.771273+00:00",
+    "id": "b73d7e6d-2ef7-426c-86a9-4371887b5c49"
+  },
+  {
+    "user_id": "fbfaf006-9f57-4a8d-a63f-58b3fc7a6021",
+    "user_code": "CORP_002",
+    "incident_id": "INC_MUM_20260715_02",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Andheri Subway Inundation & SV Road Diversion",
+    "message": "Disruption detected 214m from your commute route towards Bandra Kurla Complex (BKC G-Block). Impacts Andheri Subway East-West Link, SV Road Andheri West.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 13,
+      "confidence_score": 0.91,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "adea033d2b74360037f32f962c491b30",
+    "created_at": "2026-10-13T02:32:03.577367+00:00",
+    "id": "051a5a9d-14a3-4ab6-851a-5ed00d9dec67"
+  },
+  {
+    "user_id": "ed75c626-a60b-4bcc-b934-df65ca542589",
+    "user_code": "STUDENT_001",
+    "incident_id": "INC_MUM_20260725_35",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (CRITICAL): Overturned Container Truck on JVLR WEH Junction Flyover",
+    "message": "Disruption detected 240m from your commute route towards Rajiv Gandhi Institute of Technology (RGIT, Versova). Impacts Jogeshwari JVLR Flyover connecting Western Express Highway.",
+    "severity": "CRITICAL",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 13,
+      "confidence_score": 0.93,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "274e4a4fc128fca63d2349b3003851f2",
+    "created_at": "2026-10-13T02:32:01.198098+00:00",
+    "id": "b2eb6617-4b61-4019-b298-e58631bdf31c"
+  },
+  {
+    "user_id": "ed75c626-a60b-4bcc-b934-df65ca542589",
+    "user_code": "STUDENT_001",
+    "incident_id": "INC_MUM_20260716_04",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Multi-Vehicle Collision on WEH Pathanwadi Flyover Southbound",
+    "message": "Disruption detected 61m from your commute route towards Rajiv Gandhi Institute of Technology (RGIT, Versova). Impacts Western Express Highway (Pathanwadi Flyover Southbound).",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 17,
+      "confidence_score": 0.92,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "a025ad8f555d5ab3b1b6ffa126107ea2",
+    "created_at": "2026-10-13T02:32:00.908015+00:00",
+    "id": "caa84e53-deb1-4db5-b08e-1290e97b9abf"
+  },
+  {
+    "user_id": "e4114236-8b29-4e7c-bbd5-47be5c8dde29",
+    "user_code": "COMMUTER_107",
+    "alert_type": "COMMUTE",
+    "title": "Corridor Disruption: Urban Flooding on GPS: 19.1218, ->BKC",
+    "message": "UrbanPulse Alert: Urban Flooding on GPS: 19.1218, ->BKC. Est. travel: 34m. Check route before leaving.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "SMS",
+      "EMAIL"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "REALTIME_CORRIDOR_MONITOR",
+      "sms_status": "delivered_via_phone",
+      "email_status": "email_simulated"
+    },
+    "idempotency_key": "rt_COMMUTER_107_1990951",
+    "id": "60626dee-da9c-4740-a55e-dd9b3ebb0024",
+    "created_at": "2026-10-13T01:49:02.491107"
+  },
+  {
+    "user_id": "e4114236-8b29-4e7c-bbd5-47be5c8dde29",
+    "user_code": "COMMUTER_107",
+    "incident_id": "INC_MUM_20260720_19",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Milan Subway Waterlogging & Traffic Standstill",
+    "message": "Disruption detected 151m from your commute route towards BKC. Impacts Milan Subway Santacruz West Link, Western Railway Underpass.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "SMS",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 17,
+      "confidence_score": 0.94,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "31e320cda932a655ed01d293d3ef01b6",
+    "created_at": "2026-10-13T01:47:01.588065+00:00",
+    "id": "acce235c-8801-43b9-bff9-7a9d16752931"
+  },
+  {
+    "user_id": "2d5df373-7bae-4938-8689-c0fd12d9cb65",
+    "user_code": "COMMUTER_106",
+    "incident_id": "INC_MUM_20260725_35",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (CRITICAL): Overturned Container Truck on JVLR WEH Junction Flyover",
+    "message": "Disruption detected 240m from your commute route towards Rajiv Gandhi Institute of Technology (RGIT, Versova). Impacts Jogeshwari JVLR Flyover connecting Western Express Highway.",
+    "severity": "CRITICAL",
+    "channels": [
+      "IN_APP",
+      "SMS",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 13,
+      "confidence_score": 0.93,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "946c1e38775549486177e9c5f3b5e6d0",
+    "created_at": "2026-10-13T01:46:58.300139+00:00",
+    "id": "cbd0c43b-8ba6-41da-bf4a-42a4b74bd99a"
+  },
+  {
+    "user_id": "2d5df373-7bae-4938-8689-c0fd12d9cb65",
+    "user_code": "COMMUTER_106",
+    "incident_id": "INC_MUM_20260716_04",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Multi-Vehicle Collision on WEH Pathanwadi Flyover Southbound",
+    "message": "Disruption detected 61m from your commute route towards Rajiv Gandhi Institute of Technology (RGIT, Versova). Impacts Western Express Highway (Pathanwadi Flyover Southbound).",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "SMS",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 17,
+      "confidence_score": 0.92,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "222acb6ec0989dc74c3090f725583f84",
+    "created_at": "2026-10-13T01:46:56.338403+00:00",
+    "id": "7079789e-e674-4d61-a1c1-f1fe414ddbb4"
+  },
+  {
+    "user_id": "a8a47cba-c103-4b56-932e-bfb2053c48d1",
+    "user_code": "STUD_104",
+    "incident_id": "INC_MUM_20260725_35",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (CRITICAL): Overturned Container Truck on JVLR WEH Junction Flyover",
+    "message": "Disruption detected 240m from your commute route towards Andheri Subway. Impacts Jogeshwari JVLR Flyover connecting Western Express Highway.",
+    "severity": "CRITICAL",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 13,
+      "confidence_score": 0.93,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "c91f4830723343d4d31fd4791a8ac114",
+    "created_at": "2026-10-13T01:46:53.120959+00:00",
+    "id": "a5e60728-75fe-41c1-a400-f3cc0914b05c"
+  },
+  {
+    "user_id": "a8a47cba-c103-4b56-932e-bfb2053c48d1",
+    "user_code": "STUD_104",
+    "incident_id": "INC_MUM_20260716_04",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Multi-Vehicle Collision on WEH Pathanwadi Flyover Southbound",
+    "message": "Disruption detected 61m from your commute route towards Andheri Subway. Impacts Western Express Highway (Pathanwadi Flyover Southbound).",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 17,
+      "confidence_score": 0.92,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "c5b489d04b6ca5460bc421f1d5b5d062",
+    "created_at": "2026-10-13T01:46:52.848668+00:00",
+    "id": "3f43feb3-f696-4939-97dd-6cc6a9778c1a"
+  },
+  {
+    "user_id": "a8a47cba-c103-4b56-932e-bfb2053c48d1",
+    "user_code": "STUD_104",
+    "incident_id": "INC_MUM_20260715_02",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Andheri Subway Inundation & SV Road Diversion",
+    "message": "Disruption detected 33m from your commute route towards Andheri Subway. Impacts Andheri Subway East-West Link, SV Road Andheri West.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 13,
+      "confidence_score": 0.91,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "a787e00e2e853c617df0b0222fb7912a",
+    "created_at": "2026-10-13T01:46:52.573987+00:00",
+    "id": "e3932c7c-1412-4059-b594-39a81260767c"
+  },
+  {
+    "user_id": "34760f4c-5988-4ac2-859d-078741e2f5a9",
+    "user_code": "EMERGENCY_003",
+    "incident_id": "INC_MUM_20260720_19",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Milan Subway Waterlogging & Traffic Standstill",
+    "message": "Disruption detected 273m from your commute route towards KEM Hospital (Parel). Impacts Milan Subway Santacruz West Link, Western Railway Underpass.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 17,
+      "confidence_score": 0.94,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "f005472050a36d8ffe02ad3e99f5a9cf",
+    "created_at": "2026-10-13T01:46:49.576894+00:00",
+    "id": "b1426ee7-a161-4972-ab9f-ffd7178019cc"
+  },
+  {
+    "user_id": "34760f4c-5988-4ac2-859d-078741e2f5a9",
+    "user_code": "EMERGENCY_003",
+    "incident_id": "INC_MUM_20260715_02",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Andheri Subway Inundation & SV Road Diversion",
+    "message": "Disruption detected 214m from your commute route towards KEM Hospital (Parel). Impacts Andheri Subway East-West Link, SV Road Andheri West.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 13,
+      "confidence_score": 0.91,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "166c099ec7a5cb24c5a41f0ae33e56c2",
+    "created_at": "2026-10-13T01:46:48.844074+00:00",
+    "id": "ef2e0050-df14-4fc2-8646-34f315f08f5a"
+  },
+  {
+    "user_id": "34760f4c-5988-4ac2-859d-078741e2f5a9",
+    "user_code": "EMERGENCY_003",
+    "incident_id": "INC_MUM_DADAR_HINDMATA",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Dadar TT Circle & Hindmata Low-Lying Water Accumulation",
+    "message": "Disruption detected 134m from your commute route towards KEM Hospital (Parel). Impacts Hindmata Flyover Underpass, Dr. Ambedkar Road, Dadar East.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 4,
+      "confidence_score": 0.92,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "c7bc77d2994f4a379db471f7afeb5bb4",
+    "created_at": "2026-10-13T01:46:48.109481+00:00",
+    "id": "bf21ddfa-7f50-4ef2-9b3d-90f27238bd71"
+  },
+  {
+    "user_id": "34760f4c-5988-4ac2-859d-078741e2f5a9",
+    "user_code": "EMERGENCY_003",
+    "incident_id": "INC_MUM_20260715_02",
+    "alert_type": "NEARBY",
+    "title": "Nearby Hazard Alert: Andheri Subway Inundation & SV Road Diversion",
+    "message": "Hazard active 0.33 km from Saved Origin (Andheri West). Affecting Andheri Subway East-West Link, SV Road Andheri West.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 13,
+      "confidence_score": 0.91,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "e07c9b499574a74a7fd060c1037e1f70",
+    "created_at": "2026-10-13T01:46:44.847923+00:00",
+    "id": "30255919-2c50-44f6-b9ef-589357827cfe"
+  },
+  {
+    "user_id": "fbfaf006-9f57-4a8d-a63f-58b3fc7a6021",
+    "user_code": "CORP_002",
+    "incident_id": "INC_MUM_20260720_19",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Milan Subway Waterlogging & Traffic Standstill",
+    "message": "Disruption detected 273m from your commute route towards Bandra Kurla Complex (BKC G-Block). Impacts Milan Subway Santacruz West Link, Western Railway Underpass.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 17,
+      "confidence_score": 0.94,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "696a4f1eaef683ffb83ef9f4a7d61c85",
+    "created_at": "2026-10-13T01:46:43.461810+00:00",
+    "id": "46952dcc-7534-43c5-824e-2b1491a110d2"
+  },
+  {
+    "user_id": "fbfaf006-9f57-4a8d-a63f-58b3fc7a6021",
+    "user_code": "CORP_002",
+    "incident_id": "INC_MUM_20260715_02",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Andheri Subway Inundation & SV Road Diversion",
+    "message": "Disruption detected 214m from your commute route towards Bandra Kurla Complex (BKC G-Block). Impacts Andheri Subway East-West Link, SV Road Andheri West.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 13,
+      "confidence_score": 0.91,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "724fdc3be1550696cd9d42c57df034bd",
+    "created_at": "2026-10-13T01:46:43.212522+00:00",
+    "id": "5aedfdd3-7e7e-4b8e-856b-2ed2d07523ea"
+  },
+  {
+    "user_id": "ed75c626-a60b-4bcc-b934-df65ca542589",
+    "user_code": "STUDENT_001",
+    "incident_id": "INC_MUM_20260725_35",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (CRITICAL): Overturned Container Truck on JVLR WEH Junction Flyover",
+    "message": "Disruption detected 240m from your commute route towards Rajiv Gandhi Institute of Technology (RGIT, Versova). Impacts Jogeshwari JVLR Flyover connecting Western Express Highway.",
+    "severity": "CRITICAL",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 13,
+      "confidence_score": 0.93,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "5741a6eb3f53cd8a1db4279ff74cdebc",
+    "created_at": "2026-10-13T01:46:41.046350+00:00",
+    "id": "d9c5dbd4-b283-4603-be2d-a1aec02d8734"
+  },
+  {
+    "user_id": "ed75c626-a60b-4bcc-b934-df65ca542589",
+    "user_code": "STUDENT_001",
+    "incident_id": "INC_MUM_20260716_04",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MAJOR): Multi-Vehicle Collision on WEH Pathanwadi Flyover Southbound",
+    "message": "Disruption detected 61m from your commute route towards Rajiv Gandhi Institute of Technology (RGIT, Versova). Impacts Western Express Highway (Pathanwadi Flyover Southbound).",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 17,
+      "confidence_score": 0.92,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "874ebc69bed4b57c207ab7c2a0d9ac91",
+    "created_at": "2026-10-13T01:46:40.800178+00:00",
+    "id": "14da4890-aced-454b-ac1e-214ea8256ab2"
+  },
+  {
+    "user_code": "COMMUTER_107",
+    "alert_type": "SCHEDULED",
+    "title": "TEXTBEE Commute Alert Dispatch",
+    "message": "UrbanPulse: Good morning! Your commute route Borivali->Dadar is CLEAR. Est. travel: ~65m. Safe journey!",
+    "severity": "MODERATE",
+    "channels": [
+      "SMS"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "provider": "TEXTBEE",
+      "result": {
+        "success": true,
+        "request_id": "6acd890674e21da91af6e78d",
+        "status": "delivered_via_phone",
+        "provider": "TEXTBEE",
+        "recipients_count": 1,
+        "masked_recipients": [
+          "+91-XXXXX-2368"
+        ],
+        "message": "SMS dispatched to queue via connected Android phone (TextBee).",
+        "warning": null,
+        "provider_message": "SMS added to queue for processing",
+        "timestamp": "2026-10-13T01:27:33Z"
+      }
+    },
+    "id": "922de19f-0819-4594-9040-fe1767fefc94",
+    "created_at": "2026-10-13T01:27:35.134907"
+  },
+  {
+    "user_id": "ed75c626-a60b-4bcc-b934-df65ca542589",
+    "user_code": "STUDENT_001",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor CLEAR (Ashokvan -> Rajiv Gandhi I)",
+    "message": "UrbanPulse: Hi Sahil! Your route Ashokvan->Rajiv Gandhi I is CLEAR. Est. travel: ~40m. Safe journey!",
+    "severity": "LOW",
+    "channels": [
+      "IN_APP",
+      "EMAIL"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "REALTIME_CORRIDOR_MONITOR",
+      "sms_status": "NOT_REQUESTED",
+      "email_status": "email_simulated"
+    },
+    "idempotency_key": "rt_STUDENT_001_1990949",
+    "id": "e9df988a-faaf-4509-8ecf-13accc2e7812",
+    "created_at": "2026-10-13T01:21:48.895534"
+  },
+  {
+    "user_id": "e4114236-8b29-4e7c-bbd5-47be5c8dde29",
+    "user_code": "COMMUTER_107",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor CLEAR (Borivali Stati -> Dadar Station,)",
+    "message": "UrbanPulse: Hi Sahil! Your route Borivali Stati->Dadar Station, is CLEAR. Est. travel: ~62m. Safe journey!",
+    "severity": "LOW",
+    "channels": [
+      "IN_APP",
+      "SMS",
+      "EMAIL"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "REALTIME_CORRIDOR_MONITOR",
+      "sms_status": "delivered_via_phone",
+      "email_status": "email_simulated"
+    },
+    "idempotency_key": "rt_COMMUTER_107_1990949",
+    "id": "a46ca68b-0937-4ba2-a0a4-998b70648afb",
+    "created_at": "2026-10-13T01:20:32.398924"
+  },
+  {
+    "user_id": "f6f8e85b-d98c-4cc9-bcbc-92720dfe68d1",
+    "user_code": "COMMUTER_108",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor CLEAR (Borivali Stati -> Dadar Station,)",
+    "message": "UrbanPulse: Hi vipul! Your route Borivali Stati->Dadar Station, is CLEAR. Est. travel: ~69m. Safe journey!",
+    "severity": "LOW",
+    "channels": [
+      "IN_APP",
+      "SMS",
+      "EMAIL"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "REALTIME_CORRIDOR_MONITOR",
+      "sms_status": "delivered_via_phone",
+      "email_status": "email_simulated"
+    },
+    "idempotency_key": "rt_COMMUTER_108_1990949",
+    "id": "d8dd9e60-1a94-473c-b99b-2a14d35c92f8",
+    "created_at": "2026-10-13T01:19:58.153310"
+  },
+  {
+    "user_id": "34760f4c-5988-4ac2-859d-078741e2f5a9",
+    "user_code": "EMERGENCY_003",
+    "incident_id": "INC_MUM_20260715_02",
+    "alert_type": "NEARBY",
+    "title": "Nearby Hazard Alert: Andheri Subway Inundation & SV Road Diversion",
+    "message": "Hazard active 0.33 km from Saved Origin (Andheri West). Affecting Andheri Subway East-West Link, SV Road Andheri West.",
+    "severity": "MAJOR",
+    "channels": [
+      "IN_APP",
+      "EMAIL",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "MUMBAI_DISASTER_MANAGEMENT_CAD_112",
+      "supporting_evidence_count": 13,
+      "confidence_score": 0.91,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "6843c3e60e79f364e384a9e9b81c1304",
+    "created_at": "2026-10-13T01:19:45.199038+00:00",
+    "id": "8ef3da4b-9ba1-4b13-82cd-bac5c95eac66"
+  },
+  {
+    "user_code": "COMMUTER_107",
+    "alert_type": "SCHEDULED",
+    "title": "TEXTBEE Commute Alert Dispatch",
+    "message": "UrbanPulse: Good morning! Your commute route Borivali->Dadar is CLEAR. Est. travel: ~65m. Safe journey!",
+    "severity": "MODERATE",
+    "channels": [
+      "SMS"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "provider": "TEXTBEE",
+      "result": {
+        "success": true,
+        "request_id": "6acd847c74e21da91af36161",
+        "status": "delivered_via_phone",
+        "provider": "TEXTBEE",
+        "recipients_count": 1,
+        "masked_recipients": [
+          "+91-XXXXX-2368"
+        ],
+        "message": "SMS dispatched to queue via connected Android phone (TextBee).",
+        "warning": null,
+        "provider_message": "SMS added to queue for processing",
+        "timestamp": "2026-10-13T01:08:11Z"
+      }
+    },
+    "id": "e0464990-7be2-4479-a178-fd0fe32893cf",
+    "created_at": "2026-10-13T01:08:13.336849"
+  },
+  {
+    "user_code": "COMMUTER_108",
+    "alert_type": "SCHEDULED",
+    "title": "SMS Commute Alert Dispatch",
+    "message": "UrbanPulse: Good morning! Your commute route Borivali->Dadar is CLEAR. Est. travel: ~65m. Safe journey!",
+    "severity": "MODERATE",
+    "channels": [
+      "SMS"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "provider": "SMS",
+      "result": {
+        "success": true,
+        "request_id": "SMS_REQ_4ba82c4f95",
+        "status": "duplicate_suppressed",
+        "message": "Duplicate message suppressed by idempotency guard (already dispatched within last 5 minutes).",
+        "timestamp": "2026-10-12T23:42:58Z"
+      }
+    },
+    "id": "12db806a-ad42-41f8-9081-51cbdb853053",
+    "created_at": "2026-10-12T23:42:58.796116"
+  },
+  {
+    "user_code": "COMMUTER_108",
+    "alert_type": "SCHEDULED",
+    "title": "TEXTBEE Commute Alert Dispatch",
+    "message": "UrbanPulse: Good morning! Your commute route Borivali->Dadar is CLEAR. Est. travel: ~65m. Safe journey!",
+    "severity": "MODERATE",
+    "channels": [
+      "SMS"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": true,
+    "evidence_summary": {
+      "provider": "TEXTBEE",
+      "result": {
+        "success": true,
+        "request_id": "6acd702974e21da91adf74da",
+        "status": "delivered_via_phone",
+        "provider": "TEXTBEE",
+        "recipients_count": 1,
+        "masked_recipients": [
+          "+91-XXXXX-1742"
+        ],
+        "message": "SMS queued on your Samsung phone! (Note: ensure SMS permission is allowed in the TextBee app).",
+        "warning": {
+          "code": "SMS_PERMISSION_MISSING",
+          "message": "The textbee app on this phone last reported the SMS permission as off. The message fails if it is still off."
+        },
+        "provider_message": "SMS added to queue for processing",
+        "timestamp": "2026-10-12T23:41:28Z"
+      }
+    },
+    "id": "95473cd4-9592-4dda-9a6e-63ee7793017d",
+    "created_at": "2026-10-12T23:41:30.092240"
+  },
+  {
+    "user_code": "COMMUTER_108",
+    "alert_type": "SCHEDULED",
+    "title": "Morning Commute SMS (Simulated)",
+    "message": "UrbanPulse: Good morning! Your commute route Borivali->Dadar is CLEAR. Est. travel: ~65m. Safe journey!",
+    "severity": "LOW",
+    "channels": [
+      "SMS",
+      "IN_APP"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": true,
+    "evidence_summary": {
+      "source": "FAST2SMS_SIMULATION",
+      "recipient": "8788201742"
+    },
+    "id": "be529e1f-bc9d-42d9-b270-fad40f7fd315",
+    "created_at": "2026-10-12T23:21:34.461157"
+  },
+  {
+    "user_code": "COMMUTER_108",
+    "alert_type": "SCHEDULED",
+    "title": "Fast2SMS Commute Alert Dispatch",
+    "message": "UrbanPulse: Good morning! Your commute route Borivali->Dadar is CLEAR. Est. travel: ~65m. Safe journey!",
+    "severity": "MODERATE",
+    "channels": [
+      "SMS"
+    ],
+    "delivery_status": "FAILED",
+    "is_read": true,
+    "evidence_summary": {
+      "provider": "FAST2SMS",
+      "result": {
+        "success": false,
+        "request_id": "SMS_REQ_cd7bfd5152",
+        "status": "gateway_activation_required",
+        "http_status": 400,
+        "error": "Fast2SMS gateway requires a one-time \u20b9100 recharge on fast2sms.com to activate API delivery to Indian mobile networks.",
+        "message": "Fast2SMS gateway requires a one-time \u20b9100 recharge on fast2sms.com to activate API delivery to Indian mobile networks.",
+        "timestamp": "2026-10-12T23:21:09Z"
+      }
+    },
+    "id": "f6aa6c34-0929-49c7-b391-f6e4e692d4a7",
+    "created_at": "2026-10-12T23:21:10.303422"
+  },
+  {
+    "user_code": "COMMUTER_108",
+    "alert_type": "SCHEDULED",
+    "title": "Morning Commute SMS (Simulated)",
+    "message": "UrbanPulse: Rain and waterlogging alert along your commute corridor.",
+    "severity": "LOW",
+    "channels": [
+      "SMS",
+      "IN_APP"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": true,
+    "evidence_summary": {
+      "source": "FAST2SMS_SIMULATION",
+      "recipient": "8788201742"
+    },
+    "id": "70415c0a-00a9-4e39-8327-c1c34fee3576",
+    "created_at": "2026-10-12T23:19:18.011367"
+  },
+  {
+    "user_id": null,
+    "user_code": null,
+    "alert_type": "SCHEDULED",
+    "title": "Morning Commute Corridor Summary",
+    "message": "UrbanPulse Alert: Disruption on Borivali->Dadar near Road Accident. Take Metro to save ~21m.",
+    "severity": "MODERATE",
+    "channels": [
+      "SMS",
+      "IN_APP"
+    ],
+    "delivery_status": "FAILED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "FAST2SMS_SCHEDULED_DISPATCH"
+    },
+    "idempotency_key": "sched_None_20261013",
+    "id": "c3984c06-85d4-4fb6-9690-f40f6fa0189f",
+    "created_at": "2026-10-12T23:08:32.699386"
+  },
+  {
+    "user_id": "a8a47cba-c103-4b56-932e-bfb2053c48d1",
+    "user_code": "STUD_104",
+    "incident_id": "CITIZEN_A4F4F48B",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MODERATE): Waterlogging at SV Road",
+    "message": "Disruption detected 4m from your commute route towards Andheri Subway. Impacts Affected Corridor. [\u2139\ufe0f Community hazard alert reported by local commuter. Municipal sensor confirmation pending.]",
+    "severity": "MODERATE",
+    "channels": [
+      "IN_APP",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "Citizen (Pooja)",
+      "supporting_evidence_count": 1,
+      "confidence_score": 0.85,
+      "verification_status": "COMMUNITY_UNVERIFIED",
+      "provenance": "CITIZEN_REPORT"
+    },
+    "missing_data_qualification": "\u2139\ufe0f Community hazard alert reported by local commuter. Municipal sensor confirmation pending.",
+    "idempotency_key": "90fcb838ab4a83f1b5eded20aae72d60",
+    "created_at": "2026-10-12T23:05:55.812446+00:00",
+    "id": "6897c58d-199c-4981-a73a-8a9932eab200"
+  },
+  {
+    "user_id": "34760f4c-5988-4ac2-859d-078741e2f5a9",
+    "user_code": "EMERGENCY_003",
+    "incident_id": "CITIZEN_A4F4F48B",
+    "alert_type": "COMMUTE",
+    "title": "Commute Corridor Alert (MODERATE): Waterlogging at SV Road",
+    "message": "Disruption detected 213m from your commute route towards KEM Hospital (Parel). Impacts Affected Corridor. [\u2139\ufe0f Community hazard alert reported by local commuter. Municipal sensor confirmation pending.]",
+    "severity": "MODERATE",
+    "channels": [
+      "IN_APP",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "Citizen (Pooja)",
+      "supporting_evidence_count": 1,
+      "confidence_score": 0.85,
+      "verification_status": "COMMUNITY_UNVERIFIED",
+      "provenance": "CITIZEN_REPORT"
+    },
+    "missing_data_qualification": "\u2139\ufe0f Community hazard alert reported by local commuter. Municipal sensor confirmation pending.",
+    "idempotency_key": "5e06525fab6df2d1991da1a2d8a093e1",
+    "created_at": "2026-10-12T23:05:55.327588+00:00",
+    "id": "cb5f298f-dfea-4e57-9d6f-3ce0b5883395"
+  },
+  {
+    "user_id": "34760f4c-5988-4ac2-859d-078741e2f5a9",
+    "user_code": "EMERGENCY_003",
+    "incident_id": "CITIZEN_A4F4F48B",
+    "alert_type": "NEARBY",
+    "title": "Nearby Hazard Alert: Waterlogging at SV Road",
+    "message": "Hazard active 0.33 km from Saved Origin (Andheri West). Affecting Affected Corridor. [\u2139\ufe0f Community hazard alert reported by local commuter. Municipal sensor confirmation pending.]",
+    "severity": "MODERATE",
+    "channels": [
+      "IN_APP",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "DELIVERED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "Citizen (Pooja)",
+      "supporting_evidence_count": 1,
+      "confidence_score": 0.85,
+      "verification_status": "COMMUNITY_UNVERIFIED",
+      "provenance": "CITIZEN_REPORT"
+    },
+    "missing_data_qualification": "\u2139\ufe0f Community hazard alert reported by local commuter. Municipal sensor confirmation pending.",
+    "idempotency_key": "622138c19293034ea9c166b0ce1e28fe",
+    "created_at": "2026-10-12T23:05:53.859335+00:00",
+    "id": "155647be-a677-465a-bcf7-96c00e7e8775"
+  },
+  {
+    "user_id": "user-uuid-alice-001",
+    "user_code": "COMMUTER_ALICE",
+    "incident_id": "INC_CRIT_SMS",
+    "alert_type": "NEARBY",
+    "title": "Nearby Hazard Alert: Major Highway Collapse",
+    "message": "Hazard active 0.0 km from Home. Affecting Western Express Highway.",
+    "severity": "CRITICAL",
+    "channels": [
+      "IN_APP",
+      "SMS",
+      "WEB_PUSH"
+    ],
+    "delivery_status": "PARTIAL_SMS_FAILED",
+    "is_read": false,
+    "evidence_summary": {
+      "source": "City Operations CAD",
+      "supporting_evidence_count": 1,
+      "confidence_score": 0.85,
+      "verification_status": "OFFICIALLY_VERIFIED",
+      "provenance": "MUNICIPAL_DISRUPTION_FEED"
+    },
+    "missing_data_qualification": null,
+    "idempotency_key": "e2940e23876a8b122efae3613aa1f5bb",
+    "created_at": "2026-10-12T23:05:47.177591+00:00",
+    "id": "433b2e8c-d399-4a3a-bbcf-b637fa85711e"
+  }
+]

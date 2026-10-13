@@ -18,7 +18,8 @@
     "alert_preferences": {
       "notify_sms": false,
       "notify_in_app": true
-    }
+    },
+    "password_hash": "1a667338c2898f0c1980ff5a19f836c8e09ac039db1308044d177067f46b7301"
   },
   {
     "id": "fbfaf006-9f57-4a8d-a63f-58b3fc7a6021",
@@ -117,10 +118,59 @@
     "sms_consent": true,
     "sms_notifications_enabled": true,
     "alert_preferences": {
-      "notify_sms": true,
+      "notify_sms": false,
       "notify_in_app": true
     },
-    "created_at": "2026-10-12T21:15:45.342746",
-    "is_demo_persona": false
+    "created_at": "2026-10-12T21:15:45.342746+00:00",
+    "is_demo_persona": false,
+    "role": "STUDENT",
+    "target_arrival_time": "09:00:00",
+    "updated_at": "2026-10-12T21:15:45.737877+00:00"
+  },
+  {
+    "id": "e4114236-8b29-4e7c-bbd5-47be5c8dde29",
+    "user_code": "COMMUTER_107",
+    "full_name": "Sahil Surve",
+    "email": "sahil.27.surve@gmail.com",
+    "phone": "+919372912368",
+    "password_hash": "e74df3889923e1e6bfd79a8cef8451a1070b32563c0f864a76aafc99ed8ab413",
+    "default_origin": "GPS: 19.1218, 72.8242",
+    "default_destination": "BKC",
+    "preferred_mode": "MOTORCYCLE",
+    "scheduled_sms_time": "08:00",
+    "sms_consent": true,
+    "sms_notifications_enabled": true,
+    "alert_preferences": {
+      "notify_sms": false,
+      "notify_in_app": true
+    },
+    "created_at": "2026-10-12T22:26:03.129296+00:00",
+    "is_demo_persona": false,
+    "role": "STUDENT",
+    "target_arrival_time": "09:00:00",
+    "updated_at": "2026-10-12T22:26:04.266358+00:00"
+  },
+  {
+    "id": "f6f8e85b-d98c-4cc9-bcbc-92720dfe68d1",
+    "user_code": "COMMUTER_108",
+    "full_name": "vipul",
+    "email": "sawantvipul45@gmail.com",
+    "phone": "8788201742",
+    "password_hash": "29fd1ecac404759e60448bc29f36a8062dd5c3620402c2221360523481108732",
+    "default_origin": "GPS: 19.1219, 72.8244",
+    "default_destination": "Rajiv Gandhi Institute of Technology (RGIT, Versova)",
+    "preferred_mode": "DRIVE",
+    "scheduled_sms_time": "08:00",
+    "sms_consent": true,
+    "sms_notifications_enabled": true,
+    "alert_preferences": {
+      "notify_sms": false,
+      "notify_in_app": true
+    },
+    "created_at": "2026-10-12T23:12:21.511941+00:00",
+    "is_demo_persona": false,
+    "role": "STUDENT",
+    "target_arrival_time": "09:00:00",
+    "updated_at": "2026-10-12T23:12:22.335681+00:00"
   }
 ]

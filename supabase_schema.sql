@@ -39,6 +39,9 @@ ALTER TABLE public.users ADD COLUMN IF NOT EXISTS sms_notifications_enabled BOOL
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS alert_preferences JSONB DEFAULT '{"notify_sms": false, "notify_in_app": true}'::jsonb;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS default_origin VARCHAR(255);
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS default_destination VARCHAR(255);
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS saved_locations JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS nearby_radius_km DOUBLE PRECISION DEFAULT 1.0;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS min_alert_severity VARCHAR(50) DEFAULT 'MODERATE';
 
 -- -----------------------------------------------------------------------------
 -- 2. URBAN INCIDENTS & PROVENANCE TABLE
@@ -162,7 +165,28 @@ CREATE TABLE IF NOT EXISTS public.sms_delivery_logs (
 );
 
 -- -----------------------------------------------------------------------------
--- 7. REPLAY & SIMULATION LOGS
+-- 7. PERSONALIZED USER NOTIFICATIONS & AUDIT LEDGER (Objective 1 & 8)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.user_notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    user_code VARCHAR(50),
+    incident_id VARCHAR(50) REFERENCES public.incidents(incident_id) ON DELETE SET NULL,
+    alert_type VARCHAR(50) NOT NULL, -- NEARBY, COMMUTE, UPDATE, SCHEDULED
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    severity VARCHAR(50) NOT NULL, -- LOW, MODERATE, MAJOR, CRITICAL
+    channels JSONB DEFAULT '["IN_APP"]'::jsonb, -- Array of channels e.g. ["IN_APP", "SMS", "WEB_PUSH"]
+    delivery_status VARCHAR(50) DEFAULT 'DELIVERED', -- DELIVERED, ACCEPTED, FAILED, MOCKED, IN_APP_ONLY
+    is_read BOOLEAN DEFAULT false,
+    evidence_summary JSONB DEFAULT '{}'::jsonb,
+    missing_data_qualification TEXT,
+    idempotency_key VARCHAR(160) UNIQUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- -----------------------------------------------------------------------------
+-- 8. REPLAY & SIMULATION LOGS
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.replay_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -175,7 +199,7 @@ CREATE TABLE IF NOT EXISTS public.replay_logs (
 );
 
 -- -----------------------------------------------------------------------------
--- 8. INDEXES FOR FAST GEOSPATIAL & TEMPORAL QUERIES
+-- 9. INDEXES FOR FAST GEOSPATIAL & TEMPORAL QUERIES
 -- -----------------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_incidents_coords ON public.incidents(centroid_lat, centroid_lon);
 CREATE INDEX IF NOT EXISTS idx_incidents_status ON public.incidents(status);
@@ -184,9 +208,13 @@ CREATE INDEX IF NOT EXISTS idx_events_incident ON public.incident_events(inciden
 CREATE INDEX IF NOT EXISTS idx_events_timestamp ON public.incident_events(event_timestamp);
 CREATE INDEX IF NOT EXISTS idx_commute_time ON public.commute_queries(searched_at);
 CREATE INDEX IF NOT EXISTS idx_sms_logs_time ON public.sms_delivery_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_user_notif_user_time ON public.user_notifications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_notif_code_time ON public.user_notifications(user_code, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_notif_incident ON public.user_notifications(incident_id);
+CREATE INDEX IF NOT EXISTS idx_user_notif_read ON public.user_notifications(user_id, is_read);
 
 -- -----------------------------------------------------------------------------
--- 9. ROW LEVEL SECURITY (RLS) POLICIES
+-- 10. ROW LEVEL SECURITY (RLS) POLICIES
 -- -----------------------------------------------------------------------------
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.incidents ENABLE ROW LEVEL SECURITY;
@@ -195,6 +223,7 @@ ALTER TABLE public.commute_queries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.source_health ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.scheduled_commute_alerts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sms_delivery_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.replay_logs ENABLE ROW LEVEL SECURITY;
 
 -- Idempotent policy creation
@@ -207,6 +236,7 @@ BEGIN
     DROP POLICY IF EXISTS "Full access users" ON public.users;
     DROP POLICY IF EXISTS "Public access sms_logs" ON public.sms_delivery_logs;
     DROP POLICY IF EXISTS "Public full access events" ON public.incident_events;
+    DROP POLICY IF EXISTS "Public full access user_notifications" ON public.user_notifications;
     DROP POLICY IF EXISTS "Public full access replay" ON public.replay_logs;
 END $$;
 
@@ -217,6 +247,94 @@ CREATE POLICY "Public access commute_queries" ON public.commute_queries FOR ALL 
 CREATE POLICY "Full access users" ON public.users FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Public access sms_logs" ON public.sms_delivery_logs FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Public full access events" ON public.incident_events FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access user_notifications" ON public.user_notifications FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Public full access replay" ON public.replay_logs FOR ALL USING (true) WITH CHECK (true);
 
+-- -----------------------------------------------------------------------------
+-- 11. MUNICIPAL WORK ORDERS & OPERATOR BRIEFINGS
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.municipal_work_orders (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    work_order_id VARCHAR(100) UNIQUE NOT NULL,
+    incident_id VARCHAR(50) REFERENCES public.incidents(incident_id) ON DELETE SET NULL,
+    incident_type VARCHAR(100) NOT NULL,
+    location_name VARCHAR(255) NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
+    problem_description TEXT NOT NULL,
+    observed_symptoms JSONB DEFAULT '[]'::jsonb,
+    root_cause_hypothesis TEXT,
+    supporting_evidence JSONB DEFAULT '[]'::jsonb,
+    confidence_score DOUBLE PRECISION DEFAULT 0.85,
+    recommended_response TEXT NOT NULL,
+    suggested_resources JSONB DEFAULT '[]'::jsonb,
+    priority VARCHAR(50) NOT NULL DEFAULT 'HIGH', -- CRITICAL, HIGH, MEDIUM, LOW
+    department VARCHAR(150) NOT NULL DEFAULT 'MCGM Storm Water Drains Dept',
+    verification_steps JSONB DEFAULT '[]'::jsonb,
+    safety_considerations JSONB DEFAULT '[]'::jsonb,
+    status VARCHAR(50) DEFAULT 'DRAFT', -- DRAFT, APPROVED, REJECTED, CANCELLED, TRANSMITTED
+    operator_notes TEXT,
+    created_by VARCHAR(100) DEFAULT 'OPERATOR_DESK',
+    approved_by VARCHAR(100),
+    approved_at TIMESTAMPTZ,
+    is_simulated BOOLEAN DEFAULT false,
+    external_transmission_status VARCHAR(50) DEFAULT 'NOT_TRANSMITTED',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.work_order_audit_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    work_order_id VARCHAR(100) NOT NULL,
+    action VARCHAR(100) NOT NULL, -- DRAFT_CREATED, EDITED, APPROVED, REJECTED, CANCELLED, TRANSMIT_BLOCKED
+    actor VARCHAR(100) NOT NULL,
+    actor_role VARCHAR(50) NOT NULL, -- OPERATOR, ADMIN, CITIZEN
+    previous_status VARCHAR(50),
+    new_status VARCHAR(50),
+    details JSONB DEFAULT '{}'::jsonb,
+    timestamp TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.operator_briefings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    incident_id VARCHAR(50) REFERENCES public.incidents(incident_id) ON DELETE CASCADE,
+    headline TEXT NOT NULL,
+    summary_q1_what_is_happening TEXT NOT NULL,
+    supported_explanation_q2 TEXT NOT NULL,
+    supporting_observations_q3 JSONB DEFAULT '[]'::jsonb,
+    contradicting_observations_q4 JSONB DEFAULT '[]'::jsonb,
+    confidence_delta_explanation_q5 TEXT NOT NULL,
+    missing_stale_sources_q6 JSONB DEFAULT '[]'::jsonb,
+    excluded_sensors_q7 JSONB DEFAULT '[]'::jsonb,
+    potential_public_impact_q8 TEXT NOT NULL,
+    recommended_action_q9 TEXT NOT NULL,
+    uncertainties_q10 JSONB DEFAULT '[]'::jsonb,
+    confidence_score DOUBLE PRECISION NOT NULL,
+    generated_by VARCHAR(50) DEFAULT 'DETERMINISTIC_EVIDENCE_ENGINE',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_work_orders_incident ON public.municipal_work_orders(incident_id);
+CREATE INDEX IF NOT EXISTS idx_work_orders_status ON public.municipal_work_orders(status);
+CREATE INDEX IF NOT EXISTS idx_audit_work_order ON public.work_order_audit_logs(work_order_id, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_briefings_incident ON public.operator_briefings(incident_id, created_at DESC);
+
+-- Enable RLS
+ALTER TABLE public.municipal_work_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.work_order_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.operator_briefings ENABLE ROW LEVEL SECURITY;
+
+DO $$ 
+BEGIN
+    DROP POLICY IF EXISTS "Public full access work_orders" ON public.municipal_work_orders;
+    DROP POLICY IF EXISTS "Public full access work_order_audit" ON public.work_order_audit_logs;
+    DROP POLICY IF EXISTS "Public full access operator_briefings" ON public.operator_briefings;
+END $$;
+
+CREATE POLICY "Public full access work_orders" ON public.municipal_work_orders FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access work_order_audit" ON public.work_order_audit_logs FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public full access operator_briefings" ON public.operator_briefings FOR ALL USING (true) WITH CHECK (true);
+
 -- End of consolidated schema. No fake commuter or incident seed data inserted.
+

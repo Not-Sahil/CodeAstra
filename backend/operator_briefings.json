@@ -1,0 +1,772 @@
+[
+  {
+    "incident_id": "INC_MUM_20260715_01",
+    "generated_at": "2026-10-13 08:42:32 IST",
+    "confidence_score": 0.93,
+    "confidence_grade": "High",
+    "has_supported_root_cause": true,
+    "root_cause_headline": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "q1_what_is_happening": "Severe localized urban waterlogging at Malad Subway (SV Road invert), with water accumulation reaching 68.0 cm and traffic speeds collapsing to 7.2 km/h.",
+    "q2_supported_explanation": "Heavy monsoon runoff (82.4 mm/hr) coincided with heavy silt deposition inside the 1,200mm diameter box drain culvert, reducing gravity outflow capacity by ~72% and inducing backflow into the Malad subway invert.",
+    "q3_supporting_observations": [
+      "BMC_FLD_MALAD_SUB: Ultrasonic Water Depth Gauge (68.0 cm water depth)",
+      "BMC_AWS_02 Doppler Radar: Rainfall Telemetry (82.4 mm/hr)",
+      "TomTom / WEH_RADAR_04: Traffic Speed Radar (Speed dropped to 7 km/h)",
+      "112 CAD Call #4029: Citizen Emergency Report (2.5 ft standing water at subway)"
+    ],
+    "q4_contradicting_observations": [],
+    "q5_confidence_delta": "Confidence score adjusted from 91.0% to 93.0%. Key factors: (1) Contradictory signal from BMC_FLD_MALAD_NORTH down-weighted confidence by 18%; (2) Duplicate report #7782 excluded to maintain corroboration integrity; (3) Physical depth corroborated by ultrasonic telemetry.",
+    "q6_missing_stale_sources": [
+      "BMC_AWS_GOREGAON: Periphery station beyond immediate radius"
+    ],
+    "q7_excluded_sensors": [
+      "BMC_FLD_MALAD_NORTH (EXCLUDED_FROM_CORROBORATION): Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+      "BMC_AWS_GOREGAON_PERIPHERY (EXCLUDED_OUT_OF_BOUNDS): Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+      "CITIZEN_TWEET_7782 (EXCLUDED_SEMANTIC_DUPLICATE): NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count."
+    ],
+    "q8_public_impact": "~85,000 commuters exposed to major corridor delays; BEST bus routes 202 & 249 diverted (+48 min delay); Western Railway slow tracks experiencing precautionary speed regulation.",
+    "q9_recommended_action": "1. Dispatch BMC 50 HP dewatering pump set to Malad subway invert.\n2. Traffic Police: Close subway to light vehicles and divert traffic via Link Road at Mithchowki.\n3. Issue corridor alert to Borivali commuters recommending transfer to elevated Metro Line 2A.",
+    "q10_uncertainties": [
+      "High tide backflow crest timeline at Malad Creek (expected peak at 11:45 IST).",
+      "Offline depth gauge status: All corridor sensors operational."
+    ],
+    "sensor_exclusion_ledger": [
+      {
+        "sensor_id": "BMC_FLD_MALAD_NORTH",
+        "sensor_type": "Ultrasonic Depth Gauge",
+        "status": "EXCLUDED_FROM_CORROBORATION",
+        "reason": "Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+        "coordinates": [
+          19.195,
+          72.849
+        ],
+        "distance_from_centroid_km": 1.2
+      },
+      {
+        "sensor_id": "BMC_AWS_GOREGAON_PERIPHERY",
+        "sensor_type": "Weather Rain Gauge",
+        "status": "EXCLUDED_OUT_OF_BOUNDS",
+        "reason": "Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+        "coordinates": [
+          19.1645,
+          72.8493
+        ],
+        "distance_from_centroid_km": 4.2
+      },
+      {
+        "sensor_id": "CITIZEN_TWEET_7782",
+        "sensor_type": "Crowdsourced Social Post",
+        "status": "EXCLUDED_SEMANTIC_DUPLICATE",
+        "reason": "NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count.",
+        "coordinates": [
+          19.187,
+          72.85
+        ],
+        "distance_from_centroid_km": 0.3
+      }
+    ],
+    "operator_query": null,
+    "query_response": null,
+    "created_at": "2026-10-13T08:42:32.279073"
+  },
+  {
+    "incident_id": "INC_MUM_20260715_01",
+    "generated_at": "2026-10-13 08:06:19 IST",
+    "confidence_score": 0.93,
+    "confidence_grade": "High",
+    "has_supported_root_cause": true,
+    "root_cause_headline": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "q1_what_is_happening": "Severe localized urban waterlogging at Malad Subway (SV Road invert), with water accumulation reaching 68.0 cm and traffic speeds collapsing to 7.2 km/h.",
+    "q2_supported_explanation": "Heavy monsoon runoff (82.4 mm/hr) coincided with heavy silt deposition inside the 1,200mm diameter box drain culvert, reducing gravity outflow capacity by ~72% and inducing backflow into the Malad subway invert.",
+    "q3_supporting_observations": [
+      "BMC_FLD_MALAD_SUB: Ultrasonic Water Depth Gauge (68.0 cm water depth)",
+      "BMC_AWS_02 Doppler Radar: Rainfall Telemetry (82.4 mm/hr)",
+      "TomTom / WEH_RADAR_04: Traffic Speed Radar (Speed dropped to 7 km/h)",
+      "112 CAD Call #4029: Citizen Emergency Report (2.5 ft standing water at subway)"
+    ],
+    "q4_contradicting_observations": [],
+    "q5_confidence_delta": "Confidence score adjusted from 91.0% to 93.0%. Key factors: (1) Contradictory signal from BMC_FLD_MALAD_NORTH down-weighted confidence by 18%; (2) Duplicate report #7782 excluded to maintain corroboration integrity; (3) Physical depth corroborated by ultrasonic telemetry.",
+    "q6_missing_stale_sources": [
+      "BMC_AWS_GOREGAON: Periphery station beyond immediate radius"
+    ],
+    "q7_excluded_sensors": [
+      "BMC_FLD_MALAD_NORTH (EXCLUDED_FROM_CORROBORATION): Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+      "BMC_AWS_GOREGAON_PERIPHERY (EXCLUDED_OUT_OF_BOUNDS): Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+      "CITIZEN_TWEET_7782 (EXCLUDED_SEMANTIC_DUPLICATE): NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count."
+    ],
+    "q8_public_impact": "~85,000 commuters exposed to major corridor delays; BEST bus routes 202 & 249 diverted (+48 min delay); Western Railway slow tracks experiencing precautionary speed regulation.",
+    "q9_recommended_action": "1. Dispatch BMC 50 HP dewatering pump set to Malad subway invert.\n2. Traffic Police: Close subway to light vehicles and divert traffic via Link Road at Mithchowki.\n3. Issue corridor alert to Borivali commuters recommending transfer to elevated Metro Line 2A.",
+    "q10_uncertainties": [
+      "High tide backflow crest timeline at Malad Creek (expected peak at 11:45 IST).",
+      "Offline depth gauge status: All corridor sensors operational."
+    ],
+    "sensor_exclusion_ledger": [
+      {
+        "sensor_id": "BMC_FLD_MALAD_NORTH",
+        "sensor_type": "Ultrasonic Depth Gauge",
+        "status": "EXCLUDED_FROM_CORROBORATION",
+        "reason": "Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+        "coordinates": [
+          19.195,
+          72.849
+        ],
+        "distance_from_centroid_km": 1.2
+      },
+      {
+        "sensor_id": "BMC_AWS_GOREGAON_PERIPHERY",
+        "sensor_type": "Weather Rain Gauge",
+        "status": "EXCLUDED_OUT_OF_BOUNDS",
+        "reason": "Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+        "coordinates": [
+          19.1645,
+          72.8493
+        ],
+        "distance_from_centroid_km": 4.2
+      },
+      {
+        "sensor_id": "CITIZEN_TWEET_7782",
+        "sensor_type": "Crowdsourced Social Post",
+        "status": "EXCLUDED_SEMANTIC_DUPLICATE",
+        "reason": "NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count.",
+        "coordinates": [
+          19.187,
+          72.85
+        ],
+        "distance_from_centroid_km": 0.3
+      }
+    ],
+    "operator_query": "Explain why confidence dropped and why Sensor BMC_FLD_MALAD_NORTH was ignored",
+    "query_response": "Confidence Analysis: Confidence score adjusted from 91.0% to 93.0%. Key factors: (1) Contradictory signal from BMC_FLD_MALAD_NORTH down-weighted confidence by 18%; (2) Duplicate report #7782 excluded to maintain corroboration integrity; (3) Physical depth corroborated by ultrasonic telemetry.\n\nSensor Exclusion Analysis: Sensor BMC_FLD_MALAD_NORTH was excluded from corroboration because its 0 cm reading directly conflicted with 3 independent corroborating streams. Sensor BMC_AWS_GOREGAON was excluded because it sits 4.2 km outside the active 2.2 km correlation perimeter.",
+    "created_at": "2026-10-13T08:06:19.646910"
+  },
+  {
+    "incident_id": "INC_MUM_20260715_01",
+    "generated_at": "2026-10-13 07:58:13 IST",
+    "confidence_score": 0.93,
+    "confidence_grade": "High",
+    "has_supported_root_cause": true,
+    "root_cause_headline": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "q1_what_is_happening": "Severe localized urban waterlogging at Malad Subway (SV Road invert), with water accumulation reaching 68.0 cm and traffic speeds collapsing to 7.2 km/h.",
+    "q2_supported_explanation": "Heavy monsoon runoff (82.4 mm/hr) coincided with heavy silt deposition inside the 1,200mm diameter box drain culvert, reducing gravity outflow capacity by ~72% and inducing backflow into the Malad subway invert.",
+    "q3_supporting_observations": [
+      "BMC_FLD_MALAD_SUB: Ultrasonic Water Depth Gauge (68.0 cm water depth)",
+      "BMC_AWS_02 Doppler Radar: Rainfall Telemetry (82.4 mm/hr)",
+      "TomTom / WEH_RADAR_04: Traffic Speed Radar (Speed dropped to 7 km/h)",
+      "112 CAD Call #4029: Citizen Emergency Report (2.5 ft standing water at subway)"
+    ],
+    "q4_contradicting_observations": [],
+    "q5_confidence_delta": "Confidence score adjusted from 91.0% to 93.0%. Key factors: (1) Contradictory signal from BMC_FLD_MALAD_NORTH down-weighted confidence by 18%; (2) Duplicate report #7782 excluded to maintain corroboration integrity; (3) Physical depth corroborated by ultrasonic telemetry.",
+    "q6_missing_stale_sources": [
+      "BMC_AWS_GOREGAON: Periphery station beyond immediate radius"
+    ],
+    "q7_excluded_sensors": [
+      "BMC_FLD_MALAD_NORTH (EXCLUDED_FROM_CORROBORATION): Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+      "BMC_AWS_GOREGAON_PERIPHERY (EXCLUDED_OUT_OF_BOUNDS): Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+      "CITIZEN_TWEET_7782 (EXCLUDED_SEMANTIC_DUPLICATE): NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count."
+    ],
+    "q8_public_impact": "~85,000 commuters exposed to major corridor delays; BEST bus routes 202 & 249 diverted (+48 min delay); Western Railway slow tracks experiencing precautionary speed regulation.",
+    "q9_recommended_action": "1. Dispatch BMC 50 HP dewatering pump set to Malad subway invert.\n2. Traffic Police: Close subway to light vehicles and divert traffic via Link Road at Mithchowki.\n3. Issue corridor alert to Borivali commuters recommending transfer to elevated Metro Line 2A.",
+    "q10_uncertainties": [
+      "High tide backflow crest timeline at Malad Creek (expected peak at 11:45 IST).",
+      "Offline depth gauge status: All corridor sensors operational."
+    ],
+    "sensor_exclusion_ledger": [
+      {
+        "sensor_id": "BMC_FLD_MALAD_NORTH",
+        "sensor_type": "Ultrasonic Depth Gauge",
+        "status": "EXCLUDED_FROM_CORROBORATION",
+        "reason": "Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+        "coordinates": [
+          19.195,
+          72.849
+        ],
+        "distance_from_centroid_km": 1.2
+      },
+      {
+        "sensor_id": "BMC_AWS_GOREGAON_PERIPHERY",
+        "sensor_type": "Weather Rain Gauge",
+        "status": "EXCLUDED_OUT_OF_BOUNDS",
+        "reason": "Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+        "coordinates": [
+          19.1645,
+          72.8493
+        ],
+        "distance_from_centroid_km": 4.2
+      },
+      {
+        "sensor_id": "CITIZEN_TWEET_7782",
+        "sensor_type": "Crowdsourced Social Post",
+        "status": "EXCLUDED_SEMANTIC_DUPLICATE",
+        "reason": "NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count.",
+        "coordinates": [
+          19.187,
+          72.85
+        ],
+        "distance_from_centroid_km": 0.3
+      }
+    ],
+    "operator_query": "Explain why confidence dropped and why Sensor BMC_FLD_MALAD_NORTH was ignored",
+    "query_response": "Confidence Analysis: Confidence score adjusted from 91.0% to 93.0%. Key factors: (1) Contradictory signal from BMC_FLD_MALAD_NORTH down-weighted confidence by 18%; (2) Duplicate report #7782 excluded to maintain corroboration integrity; (3) Physical depth corroborated by ultrasonic telemetry.\n\nSensor Exclusion Analysis: Sensor BMC_FLD_MALAD_NORTH was excluded from corroboration because its 0 cm reading directly conflicted with 3 independent corroborating streams. Sensor BMC_AWS_GOREGAON was excluded because it sits 4.2 km outside the active 2.2 km correlation perimeter.",
+    "created_at": "2026-10-13T07:58:13.922604"
+  },
+  {
+    "incident_id": "INC_MUM_20260715_01",
+    "generated_at": "2026-10-13 07:58:13 IST",
+    "confidence_score": 0.93,
+    "confidence_grade": "High",
+    "has_supported_root_cause": true,
+    "root_cause_headline": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "q1_what_is_happening": "Severe localized urban waterlogging at Malad Subway (SV Road invert), with water accumulation reaching 68.0 cm and traffic speeds collapsing to 7.2 km/h.",
+    "q2_supported_explanation": "Heavy monsoon runoff (82.4 mm/hr) coincided with heavy silt deposition inside the 1,200mm diameter box drain culvert, reducing gravity outflow capacity by ~72% and inducing backflow into the Malad subway invert.",
+    "q3_supporting_observations": [
+      "BMC_FLD_MALAD_SUB: Ultrasonic Water Depth Gauge (68.0 cm water depth)",
+      "BMC_AWS_02 Doppler Radar: Rainfall Telemetry (82.4 mm/hr)",
+      "TomTom / WEH_RADAR_04: Traffic Speed Radar (Speed dropped to 7 km/h)",
+      "112 CAD Call #4029: Citizen Emergency Report (2.5 ft standing water at subway)"
+    ],
+    "q4_contradicting_observations": [],
+    "q5_confidence_delta": "Confidence score adjusted from 91.0% to 93.0%. Key factors: (1) Contradictory signal from BMC_FLD_MALAD_NORTH down-weighted confidence by 18%; (2) Duplicate report #7782 excluded to maintain corroboration integrity; (3) Physical depth corroborated by ultrasonic telemetry.",
+    "q6_missing_stale_sources": [
+      "BMC_AWS_GOREGAON: Periphery station beyond immediate radius"
+    ],
+    "q7_excluded_sensors": [
+      "BMC_FLD_MALAD_NORTH (EXCLUDED_FROM_CORROBORATION): Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+      "BMC_AWS_GOREGAON_PERIPHERY (EXCLUDED_OUT_OF_BOUNDS): Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+      "CITIZEN_TWEET_7782 (EXCLUDED_SEMANTIC_DUPLICATE): NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count."
+    ],
+    "q8_public_impact": "~85,000 commuters exposed to major corridor delays; BEST bus routes 202 & 249 diverted (+48 min delay); Western Railway slow tracks experiencing precautionary speed regulation.",
+    "q9_recommended_action": "1. Dispatch BMC 50 HP dewatering pump set to Malad subway invert.\n2. Traffic Police: Close subway to light vehicles and divert traffic via Link Road at Mithchowki.\n3. Issue corridor alert to Borivali commuters recommending transfer to elevated Metro Line 2A.",
+    "q10_uncertainties": [
+      "High tide backflow crest timeline at Malad Creek (expected peak at 11:45 IST).",
+      "Offline depth gauge status: All corridor sensors operational."
+    ],
+    "sensor_exclusion_ledger": [
+      {
+        "sensor_id": "BMC_FLD_MALAD_NORTH",
+        "sensor_type": "Ultrasonic Depth Gauge",
+        "status": "EXCLUDED_FROM_CORROBORATION",
+        "reason": "Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+        "coordinates": [
+          19.195,
+          72.849
+        ],
+        "distance_from_centroid_km": 1.2
+      },
+      {
+        "sensor_id": "BMC_AWS_GOREGAON_PERIPHERY",
+        "sensor_type": "Weather Rain Gauge",
+        "status": "EXCLUDED_OUT_OF_BOUNDS",
+        "reason": "Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+        "coordinates": [
+          19.1645,
+          72.8493
+        ],
+        "distance_from_centroid_km": 4.2
+      },
+      {
+        "sensor_id": "CITIZEN_TWEET_7782",
+        "sensor_type": "Crowdsourced Social Post",
+        "status": "EXCLUDED_SEMANTIC_DUPLICATE",
+        "reason": "NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count.",
+        "coordinates": [
+          19.187,
+          72.85
+        ],
+        "distance_from_centroid_km": 0.3
+      }
+    ],
+    "operator_query": null,
+    "query_response": null,
+    "created_at": "2026-10-13T07:58:13.641783"
+  },
+  {
+    "incident_id": "INC_MUM_20260715_01",
+    "generated_at": "2026-10-13 07:58:13 IST",
+    "confidence_score": 0.93,
+    "confidence_grade": "High",
+    "has_supported_root_cause": true,
+    "root_cause_headline": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "q1_what_is_happening": "Severe localized urban waterlogging at Malad Subway (SV Road invert), with water accumulation reaching 68.0 cm and traffic speeds collapsing to 7.2 km/h.",
+    "q2_supported_explanation": "Heavy monsoon runoff (82.4 mm/hr) coincided with heavy silt deposition inside the 1,200mm diameter box drain culvert, reducing gravity outflow capacity by ~72% and inducing backflow into the Malad subway invert.",
+    "q3_supporting_observations": [
+      "BMC_FLD_MALAD_SUB: Ultrasonic Water Depth Gauge (68.0 cm water depth)",
+      "BMC_AWS_02 Doppler Radar: Rainfall Telemetry (82.4 mm/hr)",
+      "TomTom / WEH_RADAR_04: Traffic Speed Radar (Speed dropped to 7 km/h)",
+      "112 CAD Call #4029: Citizen Emergency Report (2.5 ft standing water at subway)"
+    ],
+    "q4_contradicting_observations": [],
+    "q5_confidence_delta": "Confidence score adjusted from 91.0% to 93.0%. Key factors: (1) Contradictory signal from BMC_FLD_MALAD_NORTH down-weighted confidence by 18%; (2) Duplicate report #7782 excluded to maintain corroboration integrity; (3) Physical depth corroborated by ultrasonic telemetry.",
+    "q6_missing_stale_sources": [
+      "BMC_AWS_GOREGAON: Periphery station beyond immediate radius"
+    ],
+    "q7_excluded_sensors": [
+      "BMC_FLD_MALAD_NORTH (EXCLUDED_FROM_CORROBORATION): Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+      "BMC_AWS_GOREGAON_PERIPHERY (EXCLUDED_OUT_OF_BOUNDS): Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+      "CITIZEN_TWEET_7782 (EXCLUDED_SEMANTIC_DUPLICATE): NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count."
+    ],
+    "q8_public_impact": "~85,000 commuters exposed to major corridor delays; BEST bus routes 202 & 249 diverted (+48 min delay); Western Railway slow tracks experiencing precautionary speed regulation.",
+    "q9_recommended_action": "1. Dispatch BMC 50 HP dewatering pump set to Malad subway invert.\n2. Traffic Police: Close subway to light vehicles and divert traffic via Link Road at Mithchowki.\n3. Issue corridor alert to Borivali commuters recommending transfer to elevated Metro Line 2A.",
+    "q10_uncertainties": [
+      "High tide backflow crest timeline at Malad Creek (expected peak at 11:45 IST).",
+      "Offline depth gauge status: All corridor sensors operational."
+    ],
+    "sensor_exclusion_ledger": [
+      {
+        "sensor_id": "BMC_FLD_MALAD_NORTH",
+        "sensor_type": "Ultrasonic Depth Gauge",
+        "status": "EXCLUDED_FROM_CORROBORATION",
+        "reason": "Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+        "coordinates": [
+          19.195,
+          72.849
+        ],
+        "distance_from_centroid_km": 1.2
+      },
+      {
+        "sensor_id": "BMC_AWS_GOREGAON_PERIPHERY",
+        "sensor_type": "Weather Rain Gauge",
+        "status": "EXCLUDED_OUT_OF_BOUNDS",
+        "reason": "Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+        "coordinates": [
+          19.1645,
+          72.8493
+        ],
+        "distance_from_centroid_km": 4.2
+      },
+      {
+        "sensor_id": "CITIZEN_TWEET_7782",
+        "sensor_type": "Crowdsourced Social Post",
+        "status": "EXCLUDED_SEMANTIC_DUPLICATE",
+        "reason": "NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count.",
+        "coordinates": [
+          19.187,
+          72.85
+        ],
+        "distance_from_centroid_km": 0.3
+      }
+    ],
+    "operator_query": null,
+    "query_response": null,
+    "created_at": "2026-10-13T07:58:13.357923"
+  },
+  {
+    "incident_id": "INC_MUM_20260715_01",
+    "generated_at": "2026-10-13 07:57:53 IST",
+    "confidence_score": 0.93,
+    "confidence_grade": "High",
+    "has_supported_root_cause": true,
+    "root_cause_headline": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "q1_what_is_happening": "Severe localized urban waterlogging at Malad Subway (SV Road invert), with water accumulation reaching 68.0 cm and traffic speeds collapsing to 7.2 km/h.",
+    "q2_supported_explanation": "Heavy monsoon runoff (82.4 mm/hr) coincided with heavy silt deposition inside the 1,200mm diameter box drain culvert, reducing gravity outflow capacity by ~72% and inducing backflow into the Malad subway invert.",
+    "q3_supporting_observations": [
+      "BMC_FLD_MALAD_SUB: Ultrasonic Water Depth Gauge (68.0 cm water depth)",
+      "BMC_AWS_02 Doppler Radar: Rainfall Telemetry (82.4 mm/hr)",
+      "TomTom / WEH_RADAR_04: Traffic Speed Radar (Speed dropped to 7 km/h)",
+      "112 CAD Call #4029: Citizen Emergency Report (2.5 ft standing water at subway)"
+    ],
+    "q4_contradicting_observations": [],
+    "q5_confidence_delta": "Confidence score adjusted from 91.0% to 93.0%. Key factors: (1) Contradictory signal from BMC_FLD_MALAD_NORTH down-weighted confidence by 18%; (2) Duplicate report #7782 excluded to maintain corroboration integrity; (3) Physical depth corroborated by ultrasonic telemetry.",
+    "q6_missing_stale_sources": [
+      "BMC_AWS_GOREGAON: Periphery station beyond immediate radius"
+    ],
+    "q7_excluded_sensors": [
+      "BMC_FLD_MALAD_NORTH (EXCLUDED_FROM_CORROBORATION): Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+      "BMC_AWS_GOREGAON_PERIPHERY (EXCLUDED_OUT_OF_BOUNDS): Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+      "CITIZEN_TWEET_7782 (EXCLUDED_SEMANTIC_DUPLICATE): NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count."
+    ],
+    "q8_public_impact": "~85,000 commuters exposed to major corridor delays; BEST bus routes 202 & 249 diverted (+48 min delay); Western Railway slow tracks experiencing precautionary speed regulation.",
+    "q9_recommended_action": "1. Dispatch BMC 50 HP dewatering pump set to Malad subway invert.\n2. Traffic Police: Close subway to light vehicles and divert traffic via Link Road at Mithchowki.\n3. Issue corridor alert to Borivali commuters recommending transfer to elevated Metro Line 2A.",
+    "q10_uncertainties": [
+      "High tide backflow crest timeline at Malad Creek (expected peak at 11:45 IST).",
+      "Offline depth gauge status: All corridor sensors operational."
+    ],
+    "sensor_exclusion_ledger": [
+      {
+        "sensor_id": "BMC_FLD_MALAD_NORTH",
+        "sensor_type": "Ultrasonic Depth Gauge",
+        "status": "EXCLUDED_FROM_CORROBORATION",
+        "reason": "Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+        "coordinates": [
+          19.195,
+          72.849
+        ],
+        "distance_from_centroid_km": 1.2
+      },
+      {
+        "sensor_id": "BMC_AWS_GOREGAON_PERIPHERY",
+        "sensor_type": "Weather Rain Gauge",
+        "status": "EXCLUDED_OUT_OF_BOUNDS",
+        "reason": "Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+        "coordinates": [
+          19.1645,
+          72.8493
+        ],
+        "distance_from_centroid_km": 4.2
+      },
+      {
+        "sensor_id": "CITIZEN_TWEET_7782",
+        "sensor_type": "Crowdsourced Social Post",
+        "status": "EXCLUDED_SEMANTIC_DUPLICATE",
+        "reason": "NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count.",
+        "coordinates": [
+          19.187,
+          72.85
+        ],
+        "distance_from_centroid_km": 0.3
+      }
+    ],
+    "operator_query": "Explain why confidence dropped and why Sensor BMC_FLD_MALAD_NORTH was ignored",
+    "query_response": "Confidence Analysis: Confidence score adjusted from 91.0% to 93.0%. Key factors: (1) Contradictory signal from BMC_FLD_MALAD_NORTH down-weighted confidence by 18%; (2) Duplicate report #7782 excluded to maintain corroboration integrity; (3) Physical depth corroborated by ultrasonic telemetry.\n\nSensor Exclusion Analysis: Sensor BMC_FLD_MALAD_NORTH was excluded from corroboration because its 0 cm reading directly conflicted with 3 independent corroborating streams. Sensor BMC_AWS_GOREGAON was excluded because it sits 4.2 km outside the active 2.2 km correlation perimeter.",
+    "created_at": "2026-10-13T07:57:53.906790"
+  },
+  {
+    "incident_id": "INC_MUM_20260715_01",
+    "generated_at": "2026-10-13 07:57:53 IST",
+    "confidence_score": 0.93,
+    "confidence_grade": "High",
+    "has_supported_root_cause": true,
+    "root_cause_headline": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "q1_what_is_happening": "Severe localized urban waterlogging at Malad Subway (SV Road invert), with water accumulation reaching 68.0 cm and traffic speeds collapsing to 7.2 km/h.",
+    "q2_supported_explanation": "Heavy monsoon runoff (82.4 mm/hr) coincided with heavy silt deposition inside the 1,200mm diameter box drain culvert, reducing gravity outflow capacity by ~72% and inducing backflow into the Malad subway invert.",
+    "q3_supporting_observations": [
+      "BMC_FLD_MALAD_SUB: Ultrasonic Water Depth Gauge (68.0 cm water depth)",
+      "BMC_AWS_02 Doppler Radar: Rainfall Telemetry (82.4 mm/hr)",
+      "TomTom / WEH_RADAR_04: Traffic Speed Radar (Speed dropped to 7 km/h)",
+      "112 CAD Call #4029: Citizen Emergency Report (2.5 ft standing water at subway)"
+    ],
+    "q4_contradicting_observations": [],
+    "q5_confidence_delta": "Confidence score adjusted from 91.0% to 93.0%. Key factors: (1) Contradictory signal from BMC_FLD_MALAD_NORTH down-weighted confidence by 18%; (2) Duplicate report #7782 excluded to maintain corroboration integrity; (3) Physical depth corroborated by ultrasonic telemetry.",
+    "q6_missing_stale_sources": [
+      "BMC_AWS_GOREGAON: Periphery station beyond immediate radius"
+    ],
+    "q7_excluded_sensors": [
+      "BMC_FLD_MALAD_NORTH (EXCLUDED_FROM_CORROBORATION): Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+      "BMC_AWS_GOREGAON_PERIPHERY (EXCLUDED_OUT_OF_BOUNDS): Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+      "CITIZEN_TWEET_7782 (EXCLUDED_SEMANTIC_DUPLICATE): NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count."
+    ],
+    "q8_public_impact": "~85,000 commuters exposed to major corridor delays; BEST bus routes 202 & 249 diverted (+48 min delay); Western Railway slow tracks experiencing precautionary speed regulation.",
+    "q9_recommended_action": "1. Dispatch BMC 50 HP dewatering pump set to Malad subway invert.\n2. Traffic Police: Close subway to light vehicles and divert traffic via Link Road at Mithchowki.\n3. Issue corridor alert to Borivali commuters recommending transfer to elevated Metro Line 2A.",
+    "q10_uncertainties": [
+      "High tide backflow crest timeline at Malad Creek (expected peak at 11:45 IST).",
+      "Offline depth gauge status: All corridor sensors operational."
+    ],
+    "sensor_exclusion_ledger": [
+      {
+        "sensor_id": "BMC_FLD_MALAD_NORTH",
+        "sensor_type": "Ultrasonic Depth Gauge",
+        "status": "EXCLUDED_FROM_CORROBORATION",
+        "reason": "Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+        "coordinates": [
+          19.195,
+          72.849
+        ],
+        "distance_from_centroid_km": 1.2
+      },
+      {
+        "sensor_id": "BMC_AWS_GOREGAON_PERIPHERY",
+        "sensor_type": "Weather Rain Gauge",
+        "status": "EXCLUDED_OUT_OF_BOUNDS",
+        "reason": "Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+        "coordinates": [
+          19.1645,
+          72.8493
+        ],
+        "distance_from_centroid_km": 4.2
+      },
+      {
+        "sensor_id": "CITIZEN_TWEET_7782",
+        "sensor_type": "Crowdsourced Social Post",
+        "status": "EXCLUDED_SEMANTIC_DUPLICATE",
+        "reason": "NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count.",
+        "coordinates": [
+          19.187,
+          72.85
+        ],
+        "distance_from_centroid_km": 0.3
+      }
+    ],
+    "operator_query": null,
+    "query_response": null,
+    "created_at": "2026-10-13T07:57:53.260245"
+  },
+  {
+    "incident_id": "INC_MUM_20260715_01",
+    "generated_at": "2026-10-13 07:57:51 IST",
+    "confidence_score": 0.93,
+    "confidence_grade": "High",
+    "has_supported_root_cause": true,
+    "root_cause_headline": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "q1_what_is_happening": "Severe localized urban waterlogging at Malad Subway (SV Road invert), with water accumulation reaching 68.0 cm and traffic speeds collapsing to 7.2 km/h.",
+    "q2_supported_explanation": "Heavy monsoon runoff (82.4 mm/hr) coincided with heavy silt deposition inside the 1,200mm diameter box drain culvert, reducing gravity outflow capacity by ~72% and inducing backflow into the Malad subway invert.",
+    "q3_supporting_observations": [
+      "BMC_FLD_MALAD_SUB: Ultrasonic Water Depth Gauge (68.0 cm water depth)",
+      "BMC_AWS_02 Doppler Radar: Rainfall Telemetry (82.4 mm/hr)",
+      "TomTom / WEH_RADAR_04: Traffic Speed Radar (Speed dropped to 7 km/h)",
+      "112 CAD Call #4029: Citizen Emergency Report (2.5 ft standing water at subway)"
+    ],
+    "q4_contradicting_observations": [],
+    "q5_confidence_delta": "Confidence score adjusted from 91.0% to 93.0%. Key factors: (1) Contradictory signal from BMC_FLD_MALAD_NORTH down-weighted confidence by 18%; (2) Duplicate report #7782 excluded to maintain corroboration integrity; (3) Physical depth corroborated by ultrasonic telemetry.",
+    "q6_missing_stale_sources": [
+      "BMC_AWS_GOREGAON: Periphery station beyond immediate radius"
+    ],
+    "q7_excluded_sensors": [
+      "BMC_FLD_MALAD_NORTH (EXCLUDED_FROM_CORROBORATION): Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+      "BMC_AWS_GOREGAON_PERIPHERY (EXCLUDED_OUT_OF_BOUNDS): Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+      "CITIZEN_TWEET_7782 (EXCLUDED_SEMANTIC_DUPLICATE): NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count."
+    ],
+    "q8_public_impact": "~85,000 commuters exposed to major corridor delays; BEST bus routes 202 & 249 diverted (+48 min delay); Western Railway slow tracks experiencing precautionary speed regulation.",
+    "q9_recommended_action": "1. Dispatch BMC 50 HP dewatering pump set to Malad subway invert.\n2. Traffic Police: Close subway to light vehicles and divert traffic via Link Road at Mithchowki.\n3. Issue corridor alert to Borivali commuters recommending transfer to elevated Metro Line 2A.",
+    "q10_uncertainties": [
+      "High tide backflow crest timeline at Malad Creek (expected peak at 11:45 IST).",
+      "Offline depth gauge status: All corridor sensors operational."
+    ],
+    "sensor_exclusion_ledger": [
+      {
+        "sensor_id": "BMC_FLD_MALAD_NORTH",
+        "sensor_type": "Ultrasonic Depth Gauge",
+        "status": "EXCLUDED_FROM_CORROBORATION",
+        "reason": "Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+        "coordinates": [
+          19.195,
+          72.849
+        ],
+        "distance_from_centroid_km": 1.2
+      },
+      {
+        "sensor_id": "BMC_AWS_GOREGAON_PERIPHERY",
+        "sensor_type": "Weather Rain Gauge",
+        "status": "EXCLUDED_OUT_OF_BOUNDS",
+        "reason": "Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+        "coordinates": [
+          19.1645,
+          72.8493
+        ],
+        "distance_from_centroid_km": 4.2
+      },
+      {
+        "sensor_id": "CITIZEN_TWEET_7782",
+        "sensor_type": "Crowdsourced Social Post",
+        "status": "EXCLUDED_SEMANTIC_DUPLICATE",
+        "reason": "NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count.",
+        "coordinates": [
+          19.187,
+          72.85
+        ],
+        "distance_from_centroid_km": 0.3
+      }
+    ],
+    "operator_query": null,
+    "query_response": null,
+    "created_at": "2026-10-13T07:57:51.515913"
+  },
+  {
+    "incident_id": "INC_MUM_20260715_01",
+    "generated_at": "2026-10-13 07:57:31 IST",
+    "confidence_score": 0.93,
+    "confidence_grade": "High",
+    "has_supported_root_cause": true,
+    "root_cause_headline": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "q1_what_is_happening": "Severe localized urban waterlogging at Malad Subway (SV Road invert), with water accumulation reaching 68.0 cm and traffic speeds collapsing to 7.2 km/h.",
+    "q2_supported_explanation": "Heavy monsoon runoff (82.4 mm/hr) coincided with heavy silt deposition inside the 1,200mm diameter box drain culvert, reducing gravity outflow capacity by ~72% and inducing backflow into the Malad subway invert.",
+    "q3_supporting_observations": [
+      "BMC_FLD_MALAD_SUB: Ultrasonic Water Depth Gauge (68.0 cm water depth)",
+      "BMC_AWS_02 Doppler Radar: Rainfall Telemetry (82.4 mm/hr)",
+      "TomTom / WEH_RADAR_04: Traffic Speed Radar (Speed dropped to 7 km/h)",
+      "112 CAD Call #4029: Citizen Emergency Report (2.5 ft standing water at subway)"
+    ],
+    "q4_contradicting_observations": [],
+    "q5_confidence_delta": "Confidence score adjusted from 91.0% to 93.0%. Key factors: (1) Contradictory signal from BMC_FLD_MALAD_NORTH down-weighted confidence by 18%; (2) Duplicate report #7782 excluded to maintain corroboration integrity; (3) Physical depth corroborated by ultrasonic telemetry.",
+    "q6_missing_stale_sources": [
+      "BMC_AWS_GOREGAON: Periphery station beyond immediate radius"
+    ],
+    "q7_excluded_sensors": [
+      "BMC_FLD_MALAD_NORTH (EXCLUDED_FROM_CORROBORATION): Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+      "BMC_AWS_GOREGAON_PERIPHERY (EXCLUDED_OUT_OF_BOUNDS): Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+      "CITIZEN_TWEET_7782 (EXCLUDED_SEMANTIC_DUPLICATE): NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count."
+    ],
+    "q8_public_impact": "~85,000 commuters exposed to major corridor delays; BEST bus routes 202 & 249 diverted (+48 min delay); Western Railway slow tracks experiencing precautionary speed regulation.",
+    "q9_recommended_action": "1. Dispatch BMC 50 HP dewatering pump set to Malad subway invert.\n2. Traffic Police: Close subway to light vehicles and divert traffic via Link Road at Mithchowki.\n3. Issue corridor alert to Borivali commuters recommending transfer to elevated Metro Line 2A.",
+    "q10_uncertainties": [
+      "High tide backflow crest timeline at Malad Creek (expected peak at 11:45 IST).",
+      "Offline depth gauge status: All corridor sensors operational."
+    ],
+    "sensor_exclusion_ledger": [
+      {
+        "sensor_id": "BMC_FLD_MALAD_NORTH",
+        "sensor_type": "Ultrasonic Depth Gauge",
+        "status": "EXCLUDED_FROM_CORROBORATION",
+        "reason": "Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+        "coordinates": [
+          19.195,
+          72.849
+        ],
+        "distance_from_centroid_km": 1.2
+      },
+      {
+        "sensor_id": "BMC_AWS_GOREGAON_PERIPHERY",
+        "sensor_type": "Weather Rain Gauge",
+        "status": "EXCLUDED_OUT_OF_BOUNDS",
+        "reason": "Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+        "coordinates": [
+          19.1645,
+          72.8493
+        ],
+        "distance_from_centroid_km": 4.2
+      },
+      {
+        "sensor_id": "CITIZEN_TWEET_7782",
+        "sensor_type": "Crowdsourced Social Post",
+        "status": "EXCLUDED_SEMANTIC_DUPLICATE",
+        "reason": "NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count.",
+        "coordinates": [
+          19.187,
+          72.85
+        ],
+        "distance_from_centroid_km": 0.3
+      }
+    ],
+    "operator_query": "Explain why confidence dropped and why Sensor BMC_FLD_MALAD_NORTH was ignored",
+    "query_response": "Confidence Analysis: Confidence score adjusted from 91.0% to 93.0%. Key factors: (1) Contradictory signal from BMC_FLD_MALAD_NORTH down-weighted confidence by 18%; (2) Duplicate report #7782 excluded to maintain corroboration integrity; (3) Physical depth corroborated by ultrasonic telemetry.\n\nSensor Exclusion Analysis: Sensor BMC_FLD_MALAD_NORTH was excluded from corroboration because its 0 cm reading directly conflicted with 3 independent corroborating streams. Sensor BMC_AWS_GOREGAON was excluded because it sits 4.2 km outside the active 2.2 km correlation perimeter.",
+    "created_at": "2026-10-13T07:57:31.210170"
+  },
+  {
+    "incident_id": "INC_MUM_20260715_01",
+    "generated_at": "2026-10-13 07:57:30 IST",
+    "confidence_score": 0.93,
+    "confidence_grade": "High",
+    "has_supported_root_cause": true,
+    "root_cause_headline": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "q1_what_is_happening": "Severe localized urban waterlogging at Malad Subway (SV Road invert), with water accumulation reaching 68.0 cm and traffic speeds collapsing to 7.2 km/h.",
+    "q2_supported_explanation": "Heavy monsoon runoff (82.4 mm/hr) coincided with heavy silt deposition inside the 1,200mm diameter box drain culvert, reducing gravity outflow capacity by ~72% and inducing backflow into the Malad subway invert.",
+    "q3_supporting_observations": [
+      "BMC_FLD_MALAD_SUB: Ultrasonic Water Depth Gauge (68.0 cm water depth)",
+      "BMC_AWS_02 Doppler Radar: Rainfall Telemetry (82.4 mm/hr)",
+      "TomTom / WEH_RADAR_04: Traffic Speed Radar (Speed dropped to 7 km/h)",
+      "112 CAD Call #4029: Citizen Emergency Report (2.5 ft standing water at subway)"
+    ],
+    "q4_contradicting_observations": [],
+    "q5_confidence_delta": "Confidence score adjusted from 91.0% to 93.0%. Key factors: (1) Contradictory signal from BMC_FLD_MALAD_NORTH down-weighted confidence by 18%; (2) Duplicate report #7782 excluded to maintain corroboration integrity; (3) Physical depth corroborated by ultrasonic telemetry.",
+    "q6_missing_stale_sources": [
+      "BMC_AWS_GOREGAON: Periphery station beyond immediate radius"
+    ],
+    "q7_excluded_sensors": [
+      "BMC_FLD_MALAD_NORTH (EXCLUDED_FROM_CORROBORATION): Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+      "BMC_AWS_GOREGAON_PERIPHERY (EXCLUDED_OUT_OF_BOUNDS): Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+      "CITIZEN_TWEET_7782 (EXCLUDED_SEMANTIC_DUPLICATE): NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count."
+    ],
+    "q8_public_impact": "~85,000 commuters exposed to major corridor delays; BEST bus routes 202 & 249 diverted (+48 min delay); Western Railway slow tracks experiencing precautionary speed regulation.",
+    "q9_recommended_action": "1. Dispatch BMC 50 HP dewatering pump set to Malad subway invert.\n2. Traffic Police: Close subway to light vehicles and divert traffic via Link Road at Mithchowki.\n3. Issue corridor alert to Borivali commuters recommending transfer to elevated Metro Line 2A.",
+    "q10_uncertainties": [
+      "High tide backflow crest timeline at Malad Creek (expected peak at 11:45 IST).",
+      "Offline depth gauge status: All corridor sensors operational."
+    ],
+    "sensor_exclusion_ledger": [
+      {
+        "sensor_id": "BMC_FLD_MALAD_NORTH",
+        "sensor_type": "Ultrasonic Depth Gauge",
+        "status": "EXCLUDED_FROM_CORROBORATION",
+        "reason": "Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+        "coordinates": [
+          19.195,
+          72.849
+        ],
+        "distance_from_centroid_km": 1.2
+      },
+      {
+        "sensor_id": "BMC_AWS_GOREGAON_PERIPHERY",
+        "sensor_type": "Weather Rain Gauge",
+        "status": "EXCLUDED_OUT_OF_BOUNDS",
+        "reason": "Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+        "coordinates": [
+          19.1645,
+          72.8493
+        ],
+        "distance_from_centroid_km": 4.2
+      },
+      {
+        "sensor_id": "CITIZEN_TWEET_7782",
+        "sensor_type": "Crowdsourced Social Post",
+        "status": "EXCLUDED_SEMANTIC_DUPLICATE",
+        "reason": "NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count.",
+        "coordinates": [
+          19.187,
+          72.85
+        ],
+        "distance_from_centroid_km": 0.3
+      }
+    ],
+    "operator_query": null,
+    "query_response": null,
+    "created_at": "2026-10-13T07:57:30.581851"
+  },
+  {
+    "incident_id": "INC_MUM_20260715_01",
+    "generated_at": "2026-10-13 07:57:29 IST",
+    "confidence_score": 0.93,
+    "confidence_grade": "High",
+    "has_supported_root_cause": true,
+    "root_cause_headline": "Storm Drain Silt Clogging & Gravity Culvert Backflow",
+    "q1_what_is_happening": "Severe localized urban waterlogging at Malad Subway (SV Road invert), with water accumulation reaching 68.0 cm and traffic speeds collapsing to 7.2 km/h.",
+    "q2_supported_explanation": "Heavy monsoon runoff (82.4 mm/hr) coincided with heavy silt deposition inside the 1,200mm diameter box drain culvert, reducing gravity outflow capacity by ~72% and inducing backflow into the Malad subway invert.",
+    "q3_supporting_observations": [
+      "BMC_FLD_MALAD_SUB: Ultrasonic Water Depth Gauge (68.0 cm water depth)",
+      "BMC_AWS_02 Doppler Radar: Rainfall Telemetry (82.4 mm/hr)",
+      "TomTom / WEH_RADAR_04: Traffic Speed Radar (Speed dropped to 7 km/h)",
+      "112 CAD Call #4029: Citizen Emergency Report (2.5 ft standing water at subway)"
+    ],
+    "q4_contradicting_observations": [],
+    "q5_confidence_delta": "Confidence score adjusted from 91.0% to 93.0%. Key factors: (1) Contradictory signal from BMC_FLD_MALAD_NORTH down-weighted confidence by 18%; (2) Duplicate report #7782 excluded to maintain corroboration integrity; (3) Physical depth corroborated by ultrasonic telemetry.",
+    "q6_missing_stale_sources": [
+      "BMC_AWS_GOREGAON: Periphery station beyond immediate radius"
+    ],
+    "q7_excluded_sensors": [
+      "BMC_FLD_MALAD_NORTH (EXCLUDED_FROM_CORROBORATION): Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+      "BMC_AWS_GOREGAON_PERIPHERY (EXCLUDED_OUT_OF_BOUNDS): Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+      "CITIZEN_TWEET_7782 (EXCLUDED_SEMANTIC_DUPLICATE): NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count."
+    ],
+    "q8_public_impact": "~85,000 commuters exposed to major corridor delays; BEST bus routes 202 & 249 diverted (+48 min delay); Western Railway slow tracks experiencing precautionary speed regulation.",
+    "q9_recommended_action": "1. Dispatch BMC 50 HP dewatering pump set to Malad subway invert.\n2. Traffic Police: Close subway to light vehicles and divert traffic via Link Road at Mithchowki.\n3. Issue corridor alert to Borivali commuters recommending transfer to elevated Metro Line 2A.",
+    "q10_uncertainties": [
+      "High tide backflow crest timeline at Malad Creek (expected peak at 11:45 IST).",
+      "Offline depth gauge status: All corridor sensors operational."
+    ],
+    "sensor_exclusion_ledger": [
+      {
+        "sensor_id": "BMC_FLD_MALAD_NORTH",
+        "sensor_type": "Ultrasonic Depth Gauge",
+        "status": "EXCLUDED_FROM_CORROBORATION",
+        "reason": "Reading of 0.0 cm directly contradicted 3 independent physical gauges and CAD emergency reports. Preserved in contradiction ledger but excluded from positive corroboration.",
+        "coordinates": [
+          19.195,
+          72.849
+        ],
+        "distance_from_centroid_km": 1.2
+      },
+      {
+        "sensor_id": "BMC_AWS_GOREGAON_PERIPHERY",
+        "sensor_type": "Weather Rain Gauge",
+        "status": "EXCLUDED_OUT_OF_BOUNDS",
+        "reason": "Geographic location (4.2 km) exceeded the maximum incident spatial correlation radius (2.2 km).",
+        "coordinates": [
+          19.1645,
+          72.8493
+        ],
+        "distance_from_centroid_km": 4.2
+      },
+      {
+        "sensor_id": "CITIZEN_TWEET_7782",
+        "sensor_type": "Crowdsourced Social Post",
+        "status": "EXCLUDED_SEMANTIC_DUPLICATE",
+        "reason": "NLP semantic matcher identified 98.4% cosine text similarity with earlier CAD Call #4029. Excluded to prevent false inflation of independent corroboration count.",
+        "coordinates": [
+          19.187,
+          72.85
+        ],
+        "distance_from_centroid_km": 0.3
+      }
+    ],
+    "operator_query": null,
+    "query_response": null,
+    "created_at": "2026-10-13T07:57:29.105876"
+  }
+]

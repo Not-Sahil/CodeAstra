@@ -5,7 +5,10 @@ import {
   ExternalLink, Car, Bike, Train, Footprints, Plus, Shield, 
   Radio, Check, X, Info, Settings, Compass, LocateFixed,
   LogIn, UserPlus, CheckCircle, ArrowRight, Activity, Database,
-  LayoutDashboard, LogOut, IndianRupee, Zap
+  LayoutDashboard, LogOut, IndianRupee, Zap, Bell, BellRing, 
+  BellOff, Volume2, ShieldAlert, Sparkles, Filter, CheckCheck, Smartphone, Mail,
+  Play, Pause, SkipBack, SkipForward, RotateCcw, FileText, XCircle, Sliders,
+  Split, Download, Printer, Eye, Share2, HelpCircle, Network
 } from 'lucide-react';
 import './App.css';
 
@@ -30,6 +33,17 @@ export default function App() {
     } catch {
       return 'home';
     }
+  });
+
+  // Personalized Notifications State (Objective 1, 2, 5)
+  const [userNotifications, setUserNotifications] = useState([]);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  const [showNotificationsDrawer, setShowNotificationsDrawer] = useState(false);
+  const [notificationFilter, setNotificationFilter] = useState('ALL'); // 'ALL' | 'COMMUTE' | 'NEARBY' | 'UPDATE'
+  const [isEvaluatingAlerts, setIsEvaluatingAlerts] = useState(false);
+  const [alertEvaluationFeedback, setAlertEvaluationFeedback] = useState(null);
+  const [pushPermission, setPushPermission] = useState(() => {
+    return (typeof window !== 'undefined' && 'Notification' in window) ? Notification.permission : 'denied';
   });
 
   // Authentication gating: unauthenticated visitors stay on Landing Page ('home').
@@ -77,7 +91,46 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [testSmsStatus, setTestSmsStatus] = useState(null);
   const [isSendingTestSms, setIsSendingTestSms] = useState(false);
+  const [testEmailStatus, setTestEmailStatus] = useState(null);
+  const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
+  const [isScanningCorridor, setIsScanningCorridor] = useState(false);
+  const [scanCorridorStatus, setScanCorridorStatus] = useState(null);
+  const [smsPhoneInput, setSmsPhoneInput] = useState(() => currentUser?.phone || '8788201742');
+  const [smsProviderStatus, setSmsProviderStatus] = useState(null);
   const [mapProvider, setMapProvider] = useState('google'); // 'google' (Google Maps Roadmap), 'google_hybrid' (Satellite), 'osm' (OpenStreetMap)
+
+  // Incident Intelligence & Municipal Response State (Phase 13)
+  const [incidentTab, setIncidentTab] = useState('comparison'); // 'comparison' | 'root_cause' | 'timeline' | 'work_orders' | 'map'
+  const [comparisonMode, setComparisonMode] = useState('FUSION'); // 'CONVENTIONAL' | 'FUSION'
+  const [causalAnalysis, setCausalAnalysis] = useState(null);
+  const [comparisonData, setComparisonData] = useState(null);
+  const [timelineEvents, setTimelineEvents] = useState([]);
+  const [timelineStep, setTimelineStep] = useState(8);
+  const [reconstructedState, setReconstructedState] = useState(null);
+  const [isPlayingTimeline, setIsPlayingTimeline] = useState(false);
+  const [isScrubbingLoading, setIsScrubbingLoading] = useState(false);
+
+  // Operator Briefing Modal State
+  const [showBriefingModal, setShowBriefingModal] = useState(false);
+  const [operatorBriefing, setOperatorBriefing] = useState(null);
+  const [isLoadingBriefing, setIsLoadingBriefing] = useState(false);
+  const [briefingQueryInput, setBriefingQueryInput] = useState('');
+  const [isQueryingBriefing, setIsQueryingBriefing] = useState(false);
+
+  // Municipal Work Orders State
+  const [showWorkOrderModal, setShowWorkOrderModal] = useState(false);
+  const [municipalWorkOrders, setMunicipalWorkOrders] = useState([]);
+  const [activeWorkOrder, setActiveWorkOrder] = useState(null);
+  const [workOrderAuditTrail, setWorkOrderAuditTrail] = useState([]);
+  const [isDraftingWorkOrder, setIsDraftingWorkOrder] = useState(false);
+  const [isEditingWorkOrder, setIsEditingWorkOrder] = useState(false);
+  const [editedProblemDesc, setEditedProblemDesc] = useState('');
+  const [editedResponse, setEditedResponse] = useState('');
+  const [editedPriority, setEditedPriority] = useState('HIGH');
+  const [editedDepartment, setEditedDepartment] = useState('MCGM Storm Water Drains Dept');
+  const [workOrderOperatorNotes, setWorkOrderOperatorNotes] = useState('');
+  const [workOrderFeedback, setWorkOrderFeedback] = useState(null);
+
 
   // Map References
   const mapContainerRef = useRef(null);
@@ -176,6 +229,11 @@ export default function App() {
     fetch(`${API_BASE}/api/sources/health`)
       .then(res => res.json())
       .then(data => setSourcesHealth(data))
+      .catch(console.error);
+
+    fetch(`${API_BASE}/api/alerts/sms-provider-status`)
+      .then(res => res.json())
+      .then(data => setSmsProviderStatus(data))
       .catch(console.error);
   };
 
@@ -293,6 +351,30 @@ export default function App() {
 
         routePolylineRef.current = polyline;
         mapInstanceRef.current.fitBounds(polyline.getBounds(), { padding: [40, 40] });
+
+        // Origin Marker (Start)
+        if (coords.length > 0) {
+          const startMarker = L.circleMarker(coords[0], {
+            radius: 7,
+            fillColor: '#10b981',
+            color: '#ffffff',
+            weight: 2.5,
+            fillOpacity: 1.0
+          }).bindPopup(`<b>Origin:</b> ${commuteResult.origin || 'Start'}`).addTo(mapInstanceRef.current);
+          incidentLayersRef.current.push(startMarker);
+        }
+
+        // Destination Marker (End)
+        if (coords.length > 1) {
+          const endMarker = L.circleMarker(coords[coords.length - 1], {
+            radius: 7,
+            fillColor: '#ef4444',
+            color: '#ffffff',
+            weight: 2.5,
+            fillOpacity: 1.0
+          }).bindPopup(`<b>Destination:</b> ${commuteResult.destination || 'End'}`).addTo(mapInstanceRef.current);
+          incidentLayersRef.current.push(endMarker);
+        }
 
         // Add Route-Specific Corridor Incidents (Phase 10)
         const corridorIncidents = commuteResult.intersecting_incidents || [];
@@ -459,8 +541,156 @@ export default function App() {
     }
   };
 
+  // -------------------------------------------------------------------------
+  // PERSONALIZED LOCATION-BASED NOTIFICATION CENTER (Objective 1, 2, 5)
+  // -------------------------------------------------------------------------
+  const fetchUserNotifications = async () => {
+    if (!currentUser) return;
+    const userIdentifier = currentUser.user_code || currentUser.id || currentUser.email;
+    if (!userIdentifier) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/notifications/${userIdentifier}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUserNotifications(data.notifications || []);
+        setUnreadNotificationsCount(data.unread_count || 0);
+      }
+    } catch (err) {
+      console.warn('Could not fetch notifications:', err);
+    }
+  };
+
+  // Evaluate alerts immediately using current GPS location + saved commute route
+  const handleEvaluateAlertsNow = async () => {
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
+    setIsEvaluatingAlerts(true);
+    setAlertEvaluationFeedback(null);
+    try {
+      const payload = {
+        user_code: currentUser.user_code || currentUser.id,
+        email: currentUser.email,
+        lat: deviceLocation.coords?.lat,
+        lon: deviceLocation.coords?.lon
+      };
+      const res = await fetch(`${API_BASE}/api/alerts/evaluate-now`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUserNotifications(data.total_notifications || []);
+        setUnreadNotificationsCount(data.unread_count || 0);
+
+        const newCount = data.newly_generated_count || 0;
+        if (newCount > 0) {
+          setAlertEvaluationFeedback(`⚠️ Discovered ${newCount} active disruption alert(s) relevant to your location & route.`);
+          // Trigger browser native push notification if permission granted
+          if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+            const topAlert = data.newly_generated_alerts[0];
+            try {
+              new Notification(topAlert.title, {
+                body: topAlert.message,
+                icon: '/vite.svg'
+              });
+            } catch (e) {
+              console.log('Browser notification error:', e);
+            }
+          }
+        } else {
+          setAlertEvaluationFeedback('✅ No new hazards within your proximity or corridor. Safe travels!');
+        }
+      }
+    } catch (err) {
+      setAlertEvaluationFeedback('Could not evaluate alerts at this moment.');
+    } finally {
+      setIsEvaluatingAlerts(false);
+      setTimeout(() => setAlertEvaluationFeedback(null), 6000);
+    }
+  };
+
+  const handleMarkNotificationRead = async (notifId) => {
+    try {
+      await fetch(`${API_BASE}/api/notifications/${notifId}/read`, {
+        method: 'POST'
+      });
+      setUserNotifications(prev => prev.map(n => n.id === notifId ? { ...n, is_read: true } : n));
+      setUnreadNotificationsCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.warn('Could not mark notification read:', err);
+    }
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    if (!currentUser) return;
+    const userIdentifier = currentUser.user_code || currentUser.id || currentUser.email;
+    try {
+      await fetch(`${API_BASE}/api/notifications/read-all`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_identifier: userIdentifier })
+      });
+      setUserNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadNotificationsCount(0);
+    } catch (err) {
+      console.warn('Could not mark all notifications read:', err);
+    }
+  };
+
+  const handleTriggerTestAlert = async () => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/alerts/test-trigger`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_code: currentUser.user_code || currentUser.id })
+      });
+      if (res.ok) {
+        fetchUserNotifications();
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+          try {
+            new Notification('UrbanPulse Alert Generated', {
+              body: 'Commute Corridor Alert: Andheri Subway waterlogging simulated alert.',
+              icon: '/vite.svg'
+            });
+          } catch (e) {}
+        }
+      }
+    } catch (err) {}
+  };
+
+  const handleRequestPushPermission = async () => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      try {
+        const perm = await Notification.requestPermission();
+        setPushPermission(perm);
+        if (perm === 'granted') {
+          new Notification('UrbanPulse Notifications Active', {
+            body: 'You will receive real-time alerts for flood & traffic incidents on your corridor.',
+            icon: '/vite.svg'
+          });
+        }
+      } catch (err) {
+        console.warn('Error requesting push permission:', err);
+      }
+    }
+  };
+
+  // Poll notifications periodically when user is logged in
+  useEffect(() => {
+    if (currentUser) {
+      fetchUserNotifications();
+      const interval = setInterval(fetchUserNotifications, 25000);
+      return () => clearInterval(interval);
+    }
+  }, [currentUser]);
+
+
   // Fast2SMS Test Send (Phase 13.E)
-  const handleSendTestSms = async (phone) => {
+  const handleSendTestSms = async (phone, simulate = false) => {
     setIsSendingTestSms(true);
     setTestSmsStatus(null);
     try {
@@ -469,16 +699,376 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: phone,
-          message: 'UrbanPulse Test: Automated morning commute notification system active.'
+          message: 'UrbanPulse: Good morning! Your commute route Borivali->Dadar is CLEAR. Est. travel: ~65m. Safe journey!',
+          simulate: simulate,
+          user_code: currentUser?.user_code || 'COMMUTER'
         })
       });
       const data = await res.json();
-      setTestSmsStatus(data);
+      const isSuccess = data.success === true;
+      const errorMsg = data.error || data.detail || (typeof data.message === 'string' && !isSuccess ? data.message : null) || 'SMS delivery rejected';
+      setTestSmsStatus({
+        ...data,
+        success: isSuccess,
+        status: data.status || (isSuccess ? 'accepted' : 'failed'),
+        error: isSuccess ? null : errorMsg,
+        message: data.message || (isSuccess ? 'Alert dispatched' : null)
+      });
+      fetchUserNotifications();
     } catch (err) {
-      setTestSmsStatus({ success: false, error: 'Network error contacting SMS service' });
+      setTestSmsStatus({ success: false, error: 'Network error contacting SMS service: ' + err.message });
     } finally {
       setIsSendingTestSms(false);
     }
+  };
+
+  // Immediate corridor scan and multi-channel dispatch (Phase 13)
+  const handleScanAndNotify = async () => {
+    setIsScanningCorridor(true);
+    setScanCorridorStatus(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/alerts/scan-and-notify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_code: currentUser?.user_code || 'COMMUTER',
+          email: currentUser?.email || 'sawantvipul45@gmail.com',
+          phone: smsPhoneInput.trim() || currentUser?.phone || '8788201742',
+          origin: currentUser?.default_origin || 'Borivali (West)',
+          destination: currentUser?.default_destination || 'Dadar (West)'
+        })
+      });
+      const data = await res.json();
+      const det = data.details || {};
+      setScanCorridorStatus({
+        success: true,
+        message: det.has_hazards 
+          ? `⚠️ Disruption detected on ${det.corridor}: Live alert dispatched via SMS & Email!` 
+          : `✓ Corridor ${det.corridor} is CLEAR: Safe travel status logged & sent!`
+      });
+      fetchUserNotifications();
+    } catch (err) {
+      setScanCorridorStatus({ success: false, error: 'Failed to scan corridor: ' + err.message });
+    } finally {
+      setIsScanningCorridor(false);
+    }
+  };
+
+  // Emergency Commute Email Test Dispatch
+  const handleSendTestEmail = async (email) => {
+    setIsSendingTestEmail(true);
+    setTestEmailStatus(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/alerts/test-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email || currentUser?.email || 'sawantvipul45@gmail.com',
+          name: currentUser?.full_name || 'Commuter',
+          origin: currentUser?.default_origin || 'Borivali',
+          destination: currentUser?.default_destination || 'Dadar'
+        })
+      });
+      const data = await res.json();
+      setTestEmailStatus({
+        success: data.success,
+        message: data.success ? `✓ Emergency email alert dispatched to ${data.recipient || email}!` : `✗ ${data.error || 'Email dispatch failed'}`
+      });
+      fetchUserNotifications();
+    } catch (err) {
+      setTestEmailStatus({ success: false, message: '✗ Error: ' + err.message });
+    } finally {
+      setIsSendingTestEmail(false);
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // PHASE 13: CAUSAL INTELLIGENCE & MUNICIPAL RESPONSE WORKFLOW HANDLERS
+  // ---------------------------------------------------------------------------
+  const activeIncidentId = selectedIncident?.incident_id || 'INC_MUM_20260715_01';
+
+  const fetchCausalData = async (incId = activeIncidentId) => {
+    try {
+      const [compRes, causalRes, eventsRes, ordersRes] = await Promise.all([
+        fetch(`${API_BASE}/api/incident/${incId}/comparison`),
+        fetch(`${API_BASE}/api/incident/${incId}/causal-analysis`),
+        fetch(`${API_BASE}/api/incident/${incId}/timeline-scrubber`),
+        fetch(`${API_BASE}/api/work-orders?incident_id=${incId}`)
+      ]);
+      if (compRes.ok) setComparisonData(await compRes.json());
+      if (causalRes.ok) setCausalAnalysis(await causalRes.json());
+      if (eventsRes.ok) {
+        const evData = await eventsRes.json();
+        setTimelineEvents(evData.events || []);
+      }
+      if (ordersRes.ok) {
+        const oData = await ordersRes.json();
+        setMunicipalWorkOrders(oData.work_orders || []);
+      }
+    } catch (err) {
+      console.warn('Error fetching causal intelligence:', err);
+    }
+  };
+
+  const fetchTimelineStepReconstruction = async (step, incId = activeIncidentId) => {
+    setIsScrubbingLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/incident/${incId}/reconstruct-step?step=${step}`);
+      if (res.ok) {
+        const data = await res.json();
+        setReconstructedState(data);
+      }
+    } catch (err) {
+      console.warn('Error reconstructing step:', err);
+    } finally {
+      setIsScrubbingLoading(false);
+    }
+  };
+
+  // Re-fetch when switching to incidents view or changing selected incident
+  useEffect(() => {
+    if (activeTab === 'incidents') {
+      fetchCausalData(activeIncidentId);
+      fetchTimelineStepReconstruction(timelineStep, activeIncidentId);
+    }
+  }, [activeTab, activeIncidentId]);
+
+  // Scrub step change
+  useEffect(() => {
+    if (activeTab === 'incidents') {
+      fetchTimelineStepReconstruction(timelineStep, activeIncidentId);
+    }
+  }, [timelineStep]);
+
+  // Scrubber playback timer
+  useEffect(() => {
+    let timer = null;
+    if (isPlayingTimeline) {
+      timer = setInterval(() => {
+        setTimelineStep(prev => {
+          if (prev >= 8) {
+            setIsPlayingTimeline(false);
+            return 8;
+          }
+          return prev + 1;
+        });
+      }, 2500);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isPlayingTimeline]);
+
+  // Operator Briefing Generation
+  const handleGenerateBriefing = async (query = '') => {
+    setIsLoadingBriefing(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/incident/${activeIncidentId}/operator-briefing`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query || null })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setOperatorBriefing(data);
+        setShowBriefingModal(true);
+      }
+    } catch (err) {
+      console.warn('Error generating operator briefing:', err);
+    } finally {
+      setIsLoadingBriefing(false);
+    }
+  };
+
+  // Query specific briefing question
+  const handleQueryBriefing = async (e) => {
+    if (e) e.preventDefault();
+    if (!briefingQueryInput.trim()) return;
+    setIsQueryingBriefing(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/incident/${activeIncidentId}/operator-briefing`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: briefingQueryInput })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setOperatorBriefing(data);
+      }
+    } catch (err) {
+      console.warn('Error querying briefing:', err);
+    } finally {
+      setIsQueryingBriefing(false);
+    }
+  };
+
+  // Municipal Work Order Generation
+  const handleGenerateWorkOrderDraft = async () => {
+    setIsDraftingWorkOrder(true);
+    setWorkOrderFeedback(null);
+    try {
+      const operatorName = currentUser?.full_name || 'OPERATOR_DESK';
+      const res = await fetch(`${API_BASE}/api/work-orders/draft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          incident_id: activeIncidentId,
+          operator_name: operatorName
+        })
+      });
+      if (res.ok) {
+        const draft = await res.json();
+        setActiveWorkOrder(draft);
+        setEditedProblemDesc(draft.problem_description || '');
+        setEditedResponse(draft.recommended_response || '');
+        setEditedPriority(draft.priority || 'HIGH');
+        setEditedDepartment(draft.department || 'MCGM Storm Water Drains Dept');
+        setIsEditingWorkOrder(false);
+        setShowWorkOrderModal(true);
+        // Refresh audit
+        const auditRes = await fetch(`${API_BASE}/api/work-orders/${draft.work_order_id}/audit-trail`);
+        if (auditRes.ok) {
+          const aData = await auditRes.json();
+          setWorkOrderAuditTrail(aData.audit_trail || []);
+        }
+        fetchCausalData(activeIncidentId);
+      }
+    } catch (err) {
+      console.warn('Error drafting work order:', err);
+    } finally {
+      setIsDraftingWorkOrder(false);
+    }
+  };
+
+  const handleOpenExistingWorkOrder = async (order) => {
+    setActiveWorkOrder(order);
+    setEditedProblemDesc(order.problem_description || '');
+    setEditedResponse(order.recommended_response || '');
+    setEditedPriority(order.priority || 'HIGH');
+    setEditedDepartment(order.department || 'MCGM Storm Water Drains Dept');
+    setIsEditingWorkOrder(false);
+    setShowWorkOrderModal(true);
+    try {
+      const auditRes = await fetch(`${API_BASE}/api/work-orders/${order.work_order_id}/audit-trail`);
+      if (auditRes.ok) {
+        const aData = await auditRes.json();
+        setWorkOrderAuditTrail(aData.audit_trail || []);
+      }
+    } catch (err) {}
+  };
+
+  // Work Order Edit Save
+  const handleSaveWorkOrderEdits = async () => {
+    if (!activeWorkOrder) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/work-orders/${activeWorkOrder.work_order_id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          problem_description: editedProblemDesc,
+          recommended_response: editedResponse,
+          priority: editedPriority,
+          department: editedDepartment,
+          actor: currentUser?.full_name || 'OPERATOR',
+          role: currentUser?.role || 'OPERATOR'
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setActiveWorkOrder(data.work_order);
+        setIsEditingWorkOrder(false);
+        setWorkOrderFeedback({ success: true, message: 'Work order updated successfully.' });
+        const auditRes = await fetch(`${API_BASE}/api/work-orders/${activeWorkOrder.work_order_id}/audit-trail`);
+        if (auditRes.ok) {
+          const aData = await auditRes.json();
+          setWorkOrderAuditTrail(aData.audit_trail || []);
+        }
+        fetchCausalData(activeIncidentId);
+      }
+    } catch (err) {
+      setWorkOrderFeedback({ success: false, message: 'Could not update work order.' });
+    }
+  };
+
+  // Work Order Approval
+  const handleApproveWorkOrder = async () => {
+    if (!activeWorkOrder) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/work-orders/${activeWorkOrder.work_order_id}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          actor: currentUser?.full_name || 'OPERATOR_PATIL',
+          role: currentUser?.role || 'OPERATOR',
+          notes: workOrderOperatorNotes || 'Authorized for field operational response.'
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setActiveWorkOrder(data.work_order);
+        setWorkOrderFeedback({ success: true, message: '✓ Work order approved & logged in municipal audit ledger.' });
+        fetchCausalData(activeIncidentId);
+        const auditRes = await fetch(`${API_BASE}/api/work-orders/${activeWorkOrder.work_order_id}/audit-trail`);
+        if (auditRes.ok) {
+          const aData = await auditRes.json();
+          setWorkOrderAuditTrail(aData.audit_trail || []);
+        }
+      } else {
+        const errData = await res.json();
+        setWorkOrderFeedback({ success: false, message: errData.detail || 'Approval failed.' });
+      }
+    } catch (err) {
+      setWorkOrderFeedback({ success: false, message: 'Error approving work order: ' + err.message });
+    }
+  };
+
+  // Work Order Rejection
+  const handleRejectWorkOrder = async () => {
+    if (!activeWorkOrder) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/work-orders/${activeWorkOrder.work_order_id}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          actor: currentUser?.full_name || 'OPERATOR_PATIL',
+          role: currentUser?.role || 'OPERATOR',
+          notes: workOrderOperatorNotes || 'Rejected during command desk review.'
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setActiveWorkOrder(data.work_order);
+        setWorkOrderFeedback({ success: true, message: 'Work order marked as REJECTED.' });
+        fetchCausalData(activeIncidentId);
+        const auditRes = await fetch(`${API_BASE}/api/work-orders/${activeWorkOrder.work_order_id}/audit-trail`);
+        if (auditRes.ok) {
+          const aData = await auditRes.json();
+          setWorkOrderAuditTrail(aData.audit_trail || []);
+        }
+      } else {
+        const errData = await res.json();
+        setWorkOrderFeedback({ success: false, message: errData.detail || 'Rejection failed.' });
+      }
+    } catch (err) {
+      setWorkOrderFeedback({ success: false, message: 'Error rejecting work order: ' + err.message });
+    }
+  };
+
+  // Export Work Order JSON
+  const handleExportWorkOrderJson = () => {
+    if (!activeWorkOrder) return;
+    const jsonStr = JSON.stringify({
+      work_order: activeWorkOrder,
+      audit_trail: workOrderAuditTrail,
+      exported_at: new Date().toISOString()
+    }, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${activeWorkOrder.work_order_id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Estimate realistic commute costs across Mumbai transit modes
@@ -585,6 +1175,27 @@ export default function App() {
             <span>Sources</span>
           </button>
 
+          {/* PERSONALIZED ALERT NOTIFICATION BELL (Objective 1 & 5) */}
+          {currentUser && (
+            <div style={{ position: 'relative' }}>
+              <button 
+                className="notification-bell-btn"
+                onClick={() => setShowNotificationsDrawer(prev => !prev)}
+                title="Personalized Location-Based Alerts"
+                aria-label="Alerts"
+              >
+                {unreadNotificationsCount > 0 ? (
+                  <BellRing size={15} style={{ color: '#ef4444' }} />
+                ) : (
+                  <Bell size={15} />
+                )}
+                {unreadNotificationsCount > 0 && (
+                  <span className="notification-badge">{unreadNotificationsCount}</span>
+                )}
+              </button>
+            </div>
+          )}
+
           {/* USER ACCOUNT CONTROLS */}
           {currentUser ? (
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -644,6 +1255,176 @@ export default function App() {
           )}
         </div>
       </header>
+
+      {/* NOTIFICATION CENTER DRAWER (Objective 1, 2, 5) */}
+      {showNotificationsDrawer && currentUser && (
+        <div className="notification-center-drawer" onClick={(e) => e.stopPropagation()}>
+          <div className="nc-header">
+            <div className="nc-title">
+              <ShieldAlert size={16} style={{ color: '#0284c7' }} />
+              <span>Personalized Transit Alerts</span>
+              {unreadNotificationsCount > 0 && (
+                <span className="nc-unread-pill">{unreadNotificationsCount} Unread</span>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <button 
+                className="macos-btn-secondary" 
+                style={{ padding: '4px 8px', fontSize: '11px' }}
+                onClick={() => setShowNotificationsDrawer(false)}
+              >
+                <X size={13} />
+              </button>
+            </div>
+          </div>
+
+          {/* BROWSER PUSH PERMISSION OPT-IN BANNER */}
+          {pushPermission === 'default' && (
+            <div style={{ background: '#f0f9ff', borderBottom: '1px solid #bae6fd', padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#0369a1' }}>
+                <BellRing size={13} />
+                <span>Enable browser push notifications for real-time corridor alerts?</span>
+              </div>
+              <button 
+                className="macos-btn-primary" 
+                style={{ padding: '3px 9px', fontSize: '11px' }}
+                onClick={handleRequestPushPermission}
+              >
+                Allow Push
+              </button>
+            </div>
+          )}
+
+          {/* EVALUATION ACTION BAR & FILTER TABS */}
+          <div className="nc-actions-bar">
+            <div className="nc-tabs">
+              {['ALL', 'COMMUTE', 'NEARBY', 'UPDATE'].map(tabKey => (
+                <button 
+                  key={tabKey}
+                  className={`nc-tab-btn ${notificationFilter === tabKey ? 'active' : ''}`}
+                  onClick={() => setNotificationFilter(tabKey)}
+                >
+                  {tabKey === 'ALL' ? `All (${userNotifications.length})` : 
+                   tabKey === 'COMMUTE' ? '🚗 Route' : 
+                   tabKey === 'NEARBY' ? '📍 Nearby' : '🚨 Updates'}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button 
+                className="macos-btn-secondary" 
+                style={{ padding: '3px 8px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                onClick={handleEvaluateAlertsNow}
+                disabled={isEvaluatingAlerts}
+                title="Scan live hazards around your current GPS location and commute"
+              >
+                <RefreshCw size={11} className={isEvaluatingAlerts ? 'spin' : ''} />
+                <span>{isEvaluatingAlerts ? 'Scanning...' : 'Scan Now'}</span>
+              </button>
+              {unreadNotificationsCount > 0 && (
+                <button 
+                  className="macos-btn-secondary" 
+                  style={{ padding: '3px 8px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  onClick={handleMarkAllNotificationsRead}
+                  title="Mark all notifications as read"
+                >
+                  <CheckCheck size={11} />
+                  <span>Read All</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* SCAN FEEDBACK BANNER */}
+          {alertEvaluationFeedback && (
+            <div style={{ background: '#f0fdf4', borderBottom: '1px solid #bbf7d0', padding: '7px 14px', fontSize: '11px', color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Sparkles size={12} />
+              <span>{alertEvaluationFeedback}</span>
+            </div>
+          )}
+
+          {/* NOTIFICATIONS LIST */}
+          <div className="nc-list">
+            {(() => {
+              const filtered = userNotifications.filter(n => {
+                if (notificationFilter === 'ALL') return true;
+                return n.alert_type === notificationFilter;
+              });
+
+              if (filtered.length === 0) {
+                return (
+                  <div className="nc-empty">
+                    <ShieldCheck size={28} style={{ color: '#10b981', strokeWidth: 1.5 }} />
+                    <strong style={{ fontSize: '13px', color: '#0f172a' }}>All Clear Along Your Route</strong>
+                    <span style={{ fontSize: '11px', maxWidth: '280px', lineHeight: 1.4 }}>
+                      No active disruptions reported within your commute corridor or nearby perimeter.
+                    </span>
+                  </div>
+                );
+              }
+
+              return filtered.map((n) => {
+                const sev = (n.severity || 'MODERATE').toLowerCase();
+                return (
+                  <div 
+                    key={n.id} 
+                    className={`nc-item severity-${sev} ${n.is_read ? '' : 'unread'}`}
+                    onClick={() => handleMarkNotificationRead(n.id)}
+                    title={n.is_read ? 'Read' : 'Click to mark as read'}
+                  >
+                    <div className="nc-item-header">
+                      <span className="nc-item-type">
+                        {n.alert_type === 'COMMUTE' ? '🚗 Commute Corridor' :
+                         n.alert_type === 'NEARBY' ? '📍 Nearby Hazard' :
+                         n.alert_type === 'UPDATE' ? '🚨 Disruption Update' : '🗓️ Daily Summary'}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ 
+                          fontSize: '10px', 
+                          fontWeight: 700, 
+                          padding: '1px 6px', 
+                          borderRadius: '4px',
+                          background: sev === 'critical' ? '#fee2e2' : sev === 'major' ? '#fef3c7' : '#e0f2fe',
+                          color: sev === 'critical' ? '#991b1b' : sev === 'major' ? '#92400e' : '#0369a1'
+                        }}>
+                          {n.severity}
+                        </span>
+                        {!n.is_read && (
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0284c7' }} />
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="nc-item-title">{n.title}</div>
+                    <p className="nc-item-msg">{n.message}</p>
+
+                    {/* MISSING SENSOR DATA HONEST QUALIFICATION BANNER */}
+                    {n.missing_data_qualification && (
+                      <div className="nc-missing-sensor-box">
+                        <AlertCircle size={13} style={{ flexShrink: 0, marginTop: '1px' }} />
+                        <span>{n.missing_data_qualification}</span>
+                      </div>
+                    )}
+
+                    {/* DISPATCH CHANNELS STRIP */}
+                    <div className="nc-channels-strip">
+                      {n.channels?.map((ch) => (
+                        <span key={ch} className={`nc-channel-tag ${ch.toLowerCase()}`}>
+                          {ch === 'SMS' ? '📱 SMS Dispatched' : ch === 'WEB_PUSH' ? '🔔 Browser Push' : '🖥️ In-App Alert'}
+                        </span>
+                      ))}
+                      <span style={{ fontSize: '10px', color: '#94a3b8', marginLeft: 'auto' }}>
+                        {n.created_at ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* 2. MAIN APPLICATION VIEWS */}
       <main className="macos-main-view">
@@ -745,8 +1526,8 @@ export default function App() {
                   <Send size={18} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>SCHEDULED DISPATCH</div>
-                  <div style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>Fast2SMS Morning Alerts</div>
+                  <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>EVENT-DRIVEN DISPATCH</div>
+                  <div style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>Instant SMS & Email Alerts</div>
                 </div>
               </div>
 
@@ -791,7 +1572,7 @@ export default function App() {
                   <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', color: '#14532d', lineHeight: 1.7 }}>
                     <li><strong>Perpendicular Corridor Math:</strong> Calculates exact perpendicular distance (meters) to your route polyline. Only incidents within 350m are reported.</li>
                     <li><strong>Multimodal Fusion:</strong> Continuously correlates railway tracks, road telemetry, Open-Meteo weather, and citizen ground reports.</li>
-                    <li><strong>Pre-Departure Morning SMS:</strong> Evaluates your registered commute corridor on the server every morning and dispatches a concise summary SMS before departure.</li>
+                    <li><strong>Event-Driven Incident & Login Alerts:</strong> Evaluates your commute corridor upon login and immediately whenever hazards develop, dispatching real-time SMS (TextBee Gateway) and rich HTML Email notifications.</li>
                   </ul>
                 </div>
               </div>
@@ -823,9 +1604,9 @@ export default function App() {
                 <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fffbeb', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
                   <Send size={18} />
                 </div>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 8px 0', color: '#0f172a' }}>Fast2SMS Incident Alerts</h3>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 8px 0', color: '#0f172a' }}>Instant SMS & Email Alerts</h3>
                 <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
-                  Automated server-side scheduler checks your commute corridor at your scheduled time (e.g. 08:00 AM) and sends an SMS summary to your registered mobile.
+                  Event-driven incident sentinel monitors your corridor 24/7. Dispatches instant SMS and emergency Email notifications whenever hazards escalate or whenever you sign in.
                 </p>
               </div>
             </div>
@@ -901,7 +1682,7 @@ export default function App() {
                     Welcome back, {currentUser.full_name}! 👋
                   </h1>
                   <p style={{ fontSize: '14px', color: '#475569', margin: 0, lineHeight: 1.5, maxWidth: '640px' }}>
-                    Your personalized Mumbai transit intelligence dashboard is active. Select a service below to evaluate your daily commute corridor, monitor citywide flood telemetry, or customize morning SMS alerts.
+                    Your personalized Mumbai transit intelligence dashboard is active. Select a service below to evaluate your daily commute corridor, monitor citywide flood telemetry, or customize real-time incident & login alerts.
                   </p>
                 </div>
 
@@ -912,8 +1693,8 @@ export default function App() {
                     <span>Corridor: {currentUser.default_origin?.split('(')[0]?.trim() || 'Borivali East'} ➔ {currentUser.default_destination?.split('(')[0]?.trim() || 'RGIT Versova'}</span>
                   </div>
                   <div className="macos-chip" style={{ background: '#ffffff', border: '1px solid #e2e8f0', color: '#334155' }}>
-                    <Send size={13} style={{ color: '#059669' }} />
-                    <span>Daily SMS: {currentUser.scheduled_sms_time || '08:00 AM'} ({currentUser.sms_notifications_enabled ? 'Active' : 'Muted'})</span>
+                    <Zap size={13} style={{ color: '#f59e0b' }} />
+                    <span>Instant Alerts: {currentUser.sms_consent ? 'Active (SMS + Email)' : 'In-App Ready'}</span>
                   </div>
                   <div className="macos-chip" style={{ background: '#ffffff', border: '1px solid #e2e8f0', color: '#64748b' }}>
                     <Car size={13} style={{ color: '#0284c7' }} />
@@ -1024,13 +1805,13 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* SERVICE CARD 3: COMMUTER PROFILE & SMS ALERTS */}
+                {/* SERVICE CARD 3: COMMUTER PROFILE & REAL-TIME ALERTS */}
                 <div 
                   className="dashboard-service-card"
                   onClick={() => setActiveTab('profile')}
                   role="button"
                   tabIndex={0}
-                  title="Open Commuter Profile & SMS Settings"
+                  title="Open Commuter Profile & Alert Settings"
                 >
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
@@ -1038,20 +1819,20 @@ export default function App() {
                         <User size={22} />
                       </div>
                       <span className="provenance-badge provenance-live" style={{ fontSize: '11px', background: '#d1fae5', color: '#065f46', borderColor: '#a7f3d0' }}>
-                        Supabase & Fast2SMS
+                        TextBee & Email Alerts
                       </span>
                     </div>
                     <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', margin: '0 0 8px 0' }}>
-                      Commuter Profile & SMS Alerts
+                      Commuter Profile & Real-Time Alerts
                     </h3>
                     <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, margin: '0 0 16px 0' }}>
-                      Configure your default home-to-work commute corridor, preferred travel mode (Car, Bike, Transit, Walk), and test on-demand SMS alerts via the Fast2SMS gateway.
+                      Configure your default home-to-work commute corridor, preferred travel mode, and manage real-time SMS (TextBee Gateway) and emergency Email notifications.
                     </p>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '14px', borderTop: '1px solid #f1f5f9' }}>
                     <span style={{ fontSize: '12px', fontWeight: 600, color: '#059669', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      Configure Profile & SMS <ArrowRight size={14} />
+                      Configure Alerts & Profile <ArrowRight size={14} />
                     </span>
                     <button 
                       className="macos-btn-secondary" 
@@ -1380,7 +2161,7 @@ export default function App() {
                       {!commuteResult ? (
                         deviceLocation.status === 'GRANTED' ? 'Device Location Identified • Enter destination to compute route' : 'Waiting for Destination'
                       ) : (
-                        `Google Route Displayed • ${commuteResult.current_eta_min} mins`
+                        `${commuteResult.is_authoritative_google_route ? 'Google Maps Route' : 'Traffic Route Displayed'} • ${commuteResult.distance_km || 0} km (${commuteResult.current_eta_min} mins)`
                       )}
                     </span>
                   </div>
@@ -1408,85 +2189,723 @@ export default function App() {
         {/* =====================================================================
             VIEW 2: CITY INCIDENTS (Authorized Feeds & Community Reports)
             ===================================================================== */}
+        {/* =====================================================================
+            VIEW 2: INCIDENT INTELLIGENCE & MUNICIPAL RESPONSE WORKSPACE (Phase 13)
+            ===================================================================== */}
         {activeTab === 'incidents' && (
-          <div className="city-incidents-grid">
-            {/* CITYWIDE MAP */}
-            <div className="macos-card macos-map-card" style={{ height: '700px' }}>
-              <div className="macos-map-floating-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: 'calc(100% - 28px)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span className="macos-chip-dot" />
-                  <span>Citywide Verified Incident Layer ({cityIncidents.length} active)</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* WORKSPACE TOP CONTROL BAR */}
+            <div className="macos-card" style={{ padding: '16px 20px', background: '#ffffff' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="macos-card-title" style={{ fontSize: '17px', color: '#0f172a' }}>
+                      <Activity size={18} color="#0284c7" /> Incident Intelligence & Municipal Operations
+                    </span>
+                    <span style={{ fontSize: '11px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: '#f0f9ff', color: '#0284c7', border: '1px solid #bae6fd' }}>
+                      MUMBAI DISASTER MGMT CELL
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                    Active Corridor: <strong style={{ color: '#0f172a' }}>{selectedIncident?.title || 'Severe Waterlogging at Malad Subway Corridor'}</strong> ({activeIncidentId})
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <select 
-                    className="macos-input"
-                    style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: 600, color: '#0284c7', cursor: 'pointer', outline: 'none' }}
-                    value={mapProvider}
-                    onChange={(e) => setMapProvider(e.target.value)}
-                  >
-                    <option value="google">🗺️ Google Maps</option>
-                    <option value="google_hybrid">🛰️ Satellite</option>
-                    <option value="osm">🌐 OpenStreetMap</option>
-                  </select>
-                </div>
-              </div>
-              <div ref={cityMapContainerRef} className="macos-map-container" />
-            </div>
 
-            {/* INCIDENT FEED & SUBMIT REPORT */}
-            <div className="city-sidebar-col">
-              <div className="macos-card" style={{ marginBottom: '16px' }}>
-                <div className="macos-card-header">
-                  <span className="macos-card-title">
-                    <AlertTriangle size={16} /> Verified Reports
-                  </span>
+                {/* OPERATOR RAPID ACTION BUTTONS */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                   <button 
-                    className="macos-btn-primary" 
-                    style={{ width: 'auto', padding: '6px 12px', fontSize: '12px' }}
-                    onClick={() => setShowReportModal(true)}
+                    className="macos-btn-secondary"
+                    style={{ padding: '7px 14px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', borderColor: '#0284c7', color: '#0284c7' }}
+                    onClick={() => handleGenerateBriefing()}
+                    disabled={isLoadingBriefing}
                   >
-                    <Plus size={13} />
-                    <span>Report Hazard</span>
+                    <Sparkles size={14} />
+                    <span>{isLoadingBriefing ? 'Synthesizing...' : 'Generate Operator Briefing'}</span>
+                  </button>
+
+                  <button 
+                    className="macos-btn-primary"
+                    style={{ padding: '7px 14px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    onClick={() => handleGenerateWorkOrderDraft()}
+                    disabled={isDraftingWorkOrder}
+                  >
+                    <FileText size={14} />
+                    <span>{isDraftingWorkOrder ? 'Drafting...' : 'Generate Municipal Work Order'}</span>
                   </button>
                 </div>
-                <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 12px 0' }}>
-                  Authorized municipal disruptions and community reports verified via multi-source correlation.
-                </p>
+              </div>
 
-                {/* INCIDENTS LIST */}
-                <div style={{ maxHeight: '580px', overflowY: 'auto', paddingRight: '4px' }}>
-                  {cityIncidents.map((inc) => (
-                    <div 
-                      key={inc.incident_id} 
-                      className="route-incident-card"
-                      style={{ cursor: 'pointer', borderColor: selectedIncident?.incident_id === inc.incident_id ? '#0284c7' : '#e2e8f0' }}
-                      onClick={() => {
-                        setSelectedIncident(inc);
-                        if (cityMapInstanceRef.current && inc.centroid_lat && inc.centroid_lon) {
-                          cityMapInstanceRef.current.setView([inc.centroid_lat, inc.centroid_lon], 14);
-                        }
-                      }}
+              {/* SUB-NAVIGATION PILLS */}
+              <div className="intel-subnav" style={{ marginTop: '14px', marginBottom: 0 }}>
+                <button 
+                  className={`intel-tab-btn ${incidentTab === 'comparison' ? 'active' : ''}`}
+                  onClick={() => setIncidentTab('comparison')}
+                >
+                  <Split size={14} />
+                  <span>⚖️ Before vs. After (Centerpiece)</span>
+                </button>
+                <button 
+                  className={`intel-tab-btn ${incidentTab === 'root_cause' ? 'active' : ''}`}
+                  onClick={() => setIncidentTab('root_cause')}
+                >
+                  <Network size={14} />
+                  <span>🧬 Root-Cause vs. Symptoms</span>
+                </button>
+                <button 
+                  className={`intel-tab-btn ${incidentTab === 'timeline' ? 'active' : ''}`}
+                  onClick={() => setIncidentTab('timeline')}
+                >
+                  <Clock size={14} />
+                  <span>⏱️ Signal Arrival Timeline</span>
+                </button>
+                <button 
+                  className={`intel-tab-btn ${incidentTab === 'work_orders' ? 'active' : ''}`}
+                  onClick={() => setIncidentTab('work_orders')}
+                >
+                  <FileText size={14} />
+                  <span>📑 Work Orders ({municipalWorkOrders.length})</span>
+                </button>
+                <button 
+                  className={`intel-tab-btn ${incidentTab === 'map' ? 'active' : ''}`}
+                  onClick={() => setIncidentTab('map')}
+                >
+                  <MapPin size={14} />
+                  <span>🗺️ City GIS Layer</span>
+                </button>
+              </div>
+            </div>
+
+            {/* =================================================================
+                SUB-TAB 1: BEFORE VS. AFTER COMPARISON (HACKATHON CENTERPIECE)
+                ================================================================= */}
+            {incidentTab === 'comparison' && (
+              <div className="macos-card" style={{ padding: '22px' }}>
+                {/* HERO TOGGLE BAR */}
+                <div className="comparison-hero-bar">
+                  <div>
+                    <h3 style={{ margin: '0 0 4px 0', fontSize: '15px', color: '#0f172a', fontWeight: 700 }}>
+                      Operational Comparison: Fragmented Observation Alerts vs. UrbanPulse Fused Intelligence
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#475569' }}>
+                      Toggle to inspect how 6 noisy, disconnected alerts collapse into 1 evidence-linked incident assessment with 350m corridor precision.
+                    </p>
+                  </div>
+
+                  {/* PROMINENT TOGGLE SWITCH */}
+                  <div className="comparison-mode-switch">
+                    <button 
+                      className={`comparison-switch-btn ${comparisonMode === 'CONVENTIONAL' ? 'active-legacy' : 'inactive'}`}
+                      onClick={() => setComparisonMode('CONVENTIONAL')}
                     >
-                      <div className="route-incident-header">
-                        <span className="route-incident-title">{inc.title}</span>
-                        <span style={{ fontSize: '10px', fontWeight: 600, color: '#059669', background: '#ecfdf5', padding: '2px 6px', borderRadius: '99px' }}>
-                          {inc.verification_status || 'VERIFIED'}
+                      <AlertTriangle size={14} />
+                      <span>Conventional Alerts (6 Unlinked)</span>
+                    </button>
+                    <button 
+                      className={`comparison-switch-btn ${comparisonMode === 'FUSION' ? 'active-fusion' : 'inactive'}`}
+                      onClick={() => setComparisonMode('FUSION')}
+                    >
+                      <ShieldCheck size={14} />
+                      <span>UrbanPulse Fusion (1 Unified)</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* CONVENTIONAL FRAGMENTED ALERTS VIEW */}
+                {comparisonMode === 'CONVENTIONAL' && (
+                  <div>
+                    <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '10px', padding: '12px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <AlertTriangle size={18} color="#ea580c" />
+                      <div style={{ fontSize: '12px', color: '#9a3412' }}>
+                        <strong>Conventional Monitoring Limitation:</strong> Commuters receive 6 separate, alarming alerts with 0% causal correlation and broad citywide broadcasting, causing widespread alert fatigue and unnecessary traffic panic.
+                      </div>
+                    </div>
+
+                    <div className="conventional-grid">
+                      {comparisonData?.conventional_view?.alerts?.map((al) => (
+                        <div key={al.alert_id} className="conventional-card">
+                          <div className="conventional-card-header">
+                            <span className="conventional-card-title">{al.headline}</span>
+                            <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: '#fee2e2', color: '#b91c1c' }}>
+                              {al.category}
+                            </span>
+                          </div>
+                          <div className="conventional-card-body">{al.body}</div>
+                          <div className="conventional-card-footer">
+                            <span>📡 Source: {al.source}</span>
+                            <span>📢 {al.dispatched_to}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 16px', fontSize: '12px', color: '#64748b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                      <span><strong>Total Fragmented Notifications:</strong> 6 Alerts Dispatched</span>
+                      <span><strong>Causal Correlation:</strong> 0% (Symptom treated as isolated cause)</span>
+                      <span><strong>Commuter Alert Fatigue:</strong> Severe (Sent to all 2.2M commuters)</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* URBANPULSE FUSED INTELLIGENCE VIEW */}
+                {comparisonMode === 'FUSION' && (
+                  <div>
+                    <div className="delta-banner">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Sparkles size={18} color="#059669" />
+                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#065f46' }}>
+                          Fusion Engine Transformation: 83.3% Alert Noise Reduction & Pinpointed Root Cause
                         </span>
                       </div>
-                      <div className="route-incident-desc">{inc.description || inc.known_cause}</div>
-                      <div className="route-incident-footer">
-                        <span className={`provenance-badge ${inc.provenance === 'CITIZEN_REPORT' ? 'provenance-citizen' : 'provenance-live'}`}>
-                          {inc.provenance || 'MUNICIPAL FEED'}
+                      <div className="delta-grid">
+                        <div className="delta-metric-box">
+                          <div className="delta-metric-val">1 Unified Incident</div>
+                          <div className="delta-metric-lbl">Collapsed 6 noisy alerts into 1 evidence assessment</div>
+                        </div>
+                        <div className="delta-metric-box">
+                          <div className="delta-metric-val">350m Corridor Filter</div>
+                          <div className="delta-metric-lbl">Only alerts SV Road users; spares ~85,000 unaffected citizens</div>
+                        </div>
+                        <div className="delta-metric-box">
+                          <div className="delta-metric-val">+43 Mins Recovered</div>
+                          <div className="delta-metric-lbl">Direct recommendation to divert to Metro Line 2A</div>
+                        </div>
+                        <div className="delta-metric-box">
+                          <div className="delta-metric-val">100% Causal Clarity</div>
+                          <div className="delta-metric-lbl">Culvert silt blockage isolated from rainfall symptoms</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CONSOLIDATED FUSION CARD */}
+                    <div className="fusion-card">
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
+                              {comparisonData?.fusion_view?.fused_data?.title || 'Severe Waterlogging at Malad Subway Corridor'}
+                            </span>
+                            <span style={{ fontSize: '11px', fontWeight: 700, padding: '3px 8px', borderRadius: '99px', background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' }}>
+                              FUSED INCIDENT INTELLIGENCE
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                            Classification: <strong>{comparisonData?.fusion_view?.fused_data?.unified_classification}</strong> • Confidence: <strong style={{ color: '#059669' }}>94% High</strong>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button 
+                            className="macos-btn-secondary" 
+                            style={{ fontSize: '11px', padding: '5px 10px' }}
+                            onClick={() => handleGenerateBriefing()}
+                          >
+                            <Sparkles size={12} /> Briefing
+                          </button>
+                          <button 
+                            className="macos-btn-primary" 
+                            style={{ fontSize: '11px', padding: '5px 10px' }}
+                            onClick={() => handleGenerateWorkOrderDraft()}
+                          >
+                            <FileText size={12} /> Work Order
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* ROOT CAUSE HIGHLIGHT */}
+                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '12px 14px', marginBottom: '14px' }}>
+                        <div style={{ fontSize: '11px', fontWeight: 700, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          🎯 Pinpointed Initiating Root Cause
+                        </div>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#14532d', marginTop: '2px' }}>
+                          {comparisonData?.fusion_view?.fused_data?.best_supported_root_cause}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#166534', marginTop: '4px' }}>
+                          Supported by multi-modal cross-correlation: Box culvert silt sensor SWD-G4 telemetry + Doppler Radar cloudburst intensity.
+                        </div>
+                      </div>
+
+                      {/* CORROBORATION & SYMPTOMS PILLS */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px', marginBottom: '14px' }}>
+                        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px' }}>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>🔍 Corroborating Evidence Streams (4)</div>
+                          <ul style={{ margin: '6px 0 0 16px', padding: 0, fontSize: '11px', color: '#64748b' }}>
+                            <li>BMC Doppler Radar: 82.4 mm/hr cloudburst</li>
+                            <li>Ultrasonic Gauge #104: 68.0 cm water depth</li>
+                            <li>TomTom Telemetry: 7.2 km/h traffic slowdown</li>
+                            <li>112 CAD Emergency Call #4029</li>
+                          </ul>
+                        </div>
+
+                        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px' }}>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>🛡️ Noise Filtering & Noise Suppression</div>
+                          <ul style={{ margin: '6px 0 0 16px', padding: 0, fontSize: '11px', color: '#64748b' }}>
+                            <li>1 duplicate social post excluded by NLP filter</li>
+                            <li>1 contradictory sensor (Malad North: 0cm) preserved</li>
+                            <li>Rail track submergence kept distinct (not blindly merged)</li>
+                          </ul>
+                        </div>
+                      </div>
+
+                      {/* ACTIONABLE RECOMMENDATION */}
+                      <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                        <span style={{ fontSize: '12px', color: '#14532d', fontWeight: 600 }}>
+                          🚀 Commuter Protection Action: {comparisonData?.fusion_view?.fused_data?.actionable_corridor_recommendation}
                         </span>
-                        <span style={{ fontSize: '10px' }}>Severity: {inc.severity_level}</span>
+                        <span style={{ fontSize: '11px', color: '#059669', fontWeight: 700 }}>
+                          350m Corridor Filter Active
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* =================================================================
+                SUB-TAB 2: ROOT-CAUSE VS. SYMPTOMS HIERARCHY (Requirement 2)
+                ================================================================= */}
+            {incidentTab === 'root_cause' && (
+              <div className="macos-card" style={{ padding: '22px' }}>
+                <div style={{ marginBottom: '18px' }}>
+                  <h3 style={{ margin: '0 0 4px 0', fontSize: '15px', color: '#0f172a', fontWeight: 700 }}>
+                    Multi-Tier Evidence Hierarchy: Causal Mechanism vs. Observed Symptoms
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+                    Strict visual segregation between initiating causes, physical symptoms, supporting evidence, correlated observations, and downstream consequences.
+                  </p>
+                </div>
+
+                <div className="causal-grid">
+                  {/* 1. POTENTIAL ROOT CAUSE CARD */}
+                  <div className={`causal-card ${causalAnalysis?.has_supported_root_cause ? 'root-cause' : 'root-cause-undetermined'}`} style={{ gridColumn: '1 / -1' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: causalAnalysis?.has_supported_root_cause ? '#15803d' : '#64748b' }}>
+                        {causalAnalysis?.has_supported_root_cause ? '🎯 Tier 1: Best-Supported Root Cause' : '❓ Tier 1: Root Cause Evaluation'}
+                      </span>
+                      <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '99px', background: causalAnalysis?.has_supported_root_cause ? '#dcfce7' : '#f1f5f9', color: causalAnalysis?.has_supported_root_cause ? '#166534' : '#64748b' }}>
+                        {causalAnalysis?.root_cause?.title || 'Root cause undetermined'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>
+                      {causalAnalysis?.root_cause?.title}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#334155', lineHeight: 1.5 }}>
+                      {causalAnalysis?.root_cause?.description}
+                    </div>
+                    <div style={{ marginTop: '10px', fontSize: '11px', color: '#64748b', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+                      <span>Initiated: <strong>{causalAnalysis?.root_cause?.initiating_timestamp}</strong></span>
+                      <span>Confidence: <strong>{Math.round((causalAnalysis?.confidence_score || 0.93) * 100)}%</strong></span>
+                      <span>Evidence Standard: <strong>Multi-Modal Corroboration</strong></span>
+                    </div>
+                  </div>
+
+                  {/* 2. DIRECTLY OBSERVED SYMPTOMS */}
+                  {causalAnalysis?.observed_symptoms?.map((sym) => (
+                    <div key={sym.id} className="causal-card symptom">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase' }}>
+                          ⚡ Observed Symptom
+                        </span>
+                        <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', background: '#e0f2fe', color: '#0369a1' }}>
+                          {sym.status}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>
+                        {sym.name}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#0284c7', fontWeight: 600, marginBottom: '6px' }}>
+                        Value: {sym.measured_value}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#64748b', borderTop: '1px dashed #f1f5f9', paddingTop: '6px' }}>
+                        Source: {sym.source} • {sym.timestamp}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* 3. CORRELATED OBSERVATIONS */}
+                  {causalAnalysis?.correlated_observations?.map((corr) => (
+                    <div key={corr.id} className="causal-card correlated">
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: '#d97706', textTransform: 'uppercase', marginBottom: '4px' }}>
+                        🔗 Correlated Observation (Unmerged)
+                      </div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>
+                        {corr.title}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#64748b' }}>
+                        {corr.relationship}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* 4. DOWNSTREAM CONSEQUENCES */}
+                  {causalAnalysis?.potential_consequences?.map((conseq) => (
+                    <div key={conseq.id} className="causal-card consequence">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase' }}>
+                          📉 Downstream Consequence
+                        </span>
+                        <span style={{ fontSize: '10px', fontWeight: 600, color: '#7c3aed', background: '#f5f3ff', padding: '1px 6px', borderRadius: '4px' }}>
+                          {conseq.estimated_delay}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>
+                        {conseq.title}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#64748b' }}>
+                        Type: {conseq.impact_type}
                       </div>
                     </div>
                   ))}
                 </div>
+
+                {/* CONTRADICTORY EVIDENCE PANEL */}
+                {causalAnalysis?.contradictory_evidence?.length > 0 && (
+                  <div style={{ marginTop: '16px', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: '10px', padding: '14px 16px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#c2410c', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <AlertTriangle size={15} /> Preserved Contradictory Evidence
+                    </div>
+                    {causalAnalysis.contradictory_evidence.map((c, i) => (
+                      <div key={i} style={{ fontSize: '12px', color: '#7c2d12', marginTop: '6px', lineHeight: 1.45 }}>
+                        <strong>{c.source} ({c.reading}):</strong> {c.reconciliation_decision}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
+            )}
+
+            {/* =================================================================
+                SUB-TAB 3: INTERACTIVE SIGNAL ARRIVAL TIMELINE (Requirement 3)
+                ================================================================= */}
+            {incidentTab === 'timeline' && (
+              <div className="macos-card" style={{ padding: '22px' }}>
+                <div style={{ marginBottom: '18px' }}>
+                  <h3 style={{ margin: '0 0 4px 0', fontSize: '15px', color: '#0f172a', fontWeight: 700 }}>
+                    Interactive Signal Arrival Timeline & Historical State Reconstruction
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+                    Scrub backwards and forwards to witness how incident graph, confidence, delayed signals, and root cause evolve without altering production records.
+                  </p>
+                </div>
+
+                {/* SCRUBBER CONTROLS */}
+                <div className="timeline-scrubber-box">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <button 
+                        className="macos-btn-primary"
+                        style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        onClick={() => setIsPlayingTimeline(!isPlayingTimeline)}
+                      >
+                        {isPlayingTimeline ? <Pause size={13} /> : <Play size={13} />}
+                        <span>{isPlayingTimeline ? 'Pause Playback' : 'Play Timeline'}</span>
+                      </button>
+
+                      <button 
+                        className="macos-btn-secondary"
+                        style={{ padding: '6px 10px', fontSize: '12px' }}
+                        disabled={timelineStep <= 0}
+                        onClick={() => setTimelineStep(prev => Math.max(0, prev - 1))}
+                      >
+                        <SkipBack size={13} />
+                      </button>
+
+                      <button 
+                        className="macos-btn-secondary"
+                        style={{ padding: '6px 10px', fontSize: '12px' }}
+                        disabled={timelineStep >= 8}
+                        onClick={() => setTimelineStep(prev => Math.min(8, prev + 1))}
+                      >
+                        <SkipForward size={13} />
+                      </button>
+
+                      <button 
+                        className="macos-btn-secondary"
+                        style={{ padding: '6px 10px', fontSize: '12px' }}
+                        onClick={() => { setTimelineStep(0); setIsPlayingTimeline(false); }}
+                      >
+                        <RotateCcw size={13} />
+                      </button>
+                    </div>
+
+                    <div style={{ fontSize: '12px', color: '#475569' }}>
+                      Step: <strong>{timelineStep + 1} of 9</strong> • Playback Event Time: <strong style={{ color: '#0284c7' }}>{reconstructedState?.playback_time || '08:03 IST'}</strong>
+                    </div>
+                  </div>
+
+                  {/* RANGE SLIDER */}
+                  <input 
+                    type="range"
+                    min="0"
+                    max="8"
+                    value={timelineStep}
+                    onChange={(e) => {
+                      setTimelineStep(parseInt(e.target.value));
+                      setIsPlayingTimeline(false);
+                    }}
+                    className="scrubber-slider"
+                  />
+
+                  {/* TICKS */}
+                  <div className="scrubber-step-ticks">
+                    <span>08:03 Rain Influx</span>
+                    <span>08:05 Cloudburst</span>
+                    <span>08:06 Depth Gauge</span>
+                    <span>08:08 CAD 112</span>
+                    <span>08:09 Speed Drop</span>
+                    <span style={{ color: '#d97706' }}>08:04 (Delayed)</span>
+                    <span style={{ color: '#7c3aed' }}>08:12 Duplicate</span>
+                    <span style={{ color: '#ea580c' }}>08:13 Conflict</span>
+                    <span style={{ color: '#ef4444' }}>08:14 Dropout</span>
+                  </div>
+
+                  {/* ACTIVE RECONSTRUCTED EVENT PREVIEW */}
+                  {reconstructedState?.current_event && (
+                    <div className="scrubber-event-preview">
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                            {reconstructedState.current_event.title}
+                          </span>
+
+                          {reconstructedState.current_event.is_delayed && (
+                            <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: '#fef3c7', color: '#b45309' }}>
+                              ⏱️ DELAYED ARRIVAL (Observed at {reconstructedState.current_event.event_timestamp}, Ingested at {reconstructedState.current_event.ingestion_timestamp})
+                            </span>
+                          )}
+
+                          {reconstructedState.current_event.is_duplicate && (
+                            <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: '#f3e8ff', color: '#7e22ce' }}>
+                              🔄 EXCLUDED DUPLICATE
+                            </span>
+                          )}
+
+                          {reconstructedState.current_event.is_contradictory && (
+                            <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: '#ffedd5', color: '#c2410c' }}>
+                              ⚠️ CONTRADICTORY SENSOR
+                            </span>
+                          )}
+
+                          {reconstructedState.current_event.is_dropout && (
+                            <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: '#fee2e2', color: '#b91c1c' }}>
+                              📡 SENSOR DROPOUT
+                            </span>
+                          )}
+                        </div>
+
+                        <div style={{ fontSize: '12px', color: '#475569' }}>
+                          {reconstructedState.current_event.description}
+                        </div>
+
+                        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
+                          Source: <strong>{reconstructedState.current_event.source}</strong> • Event Type: <strong>{reconstructedState.current_event.event_type}</strong>
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: 'right', minWidth: '130px' }}>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>Reconstructed Confidence</div>
+                        <div style={{ fontSize: '20px', fontWeight: 800, color: reconstructedState.confidence_score >= 0.85 ? '#059669' : (reconstructedState.confidence_score >= 0.65 ? '#d97706' : '#ef4444') }}>
+                          {Math.round(reconstructedState.confidence_score * 100)}%
+                        </div>
+                        <div style={{ fontSize: '10px', fontWeight: 600, color: '#64748b' }}>
+                          Status: {reconstructedState.incident_status}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* GRAPH NODES AT THIS HISTORICAL STEP */}
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '10px' }}>
+                    Reconstructed Evidence Graph State ({reconstructedState?.nodes_count || 0} Active Graph Nodes at Playback Point):
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {reconstructedState?.nodes?.map((node) => (
+                      <div 
+                        key={node.id} 
+                        style={{ 
+                          padding: '8px 12px', 
+                          borderRadius: '8px', 
+                          background: '#ffffff', 
+                          border: `1px solid ${node.color}`, 
+                          borderLeft: `4px solid ${node.color}`,
+                          fontSize: '11px',
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{node.label.replace('\n', ' - ')}</div>
+                        <div style={{ fontSize: '10px', color: '#64748b' }}>Tier: {node.tier}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* =================================================================
+                SUB-TAB 4: MUNICIPAL WORK ORDERS LIST (Requirement 6)
+                ================================================================= */}
+            {incidentTab === 'work_orders' && (
+              <div className="macos-card" style={{ padding: '22px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
+                  <div>
+                    <h3 style={{ margin: '0 0 4px 0', fontSize: '15px', color: '#0f172a', fontWeight: 700 }}>
+                      Municipal Response Work Orders ({municipalWorkOrders.length})
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+                      Structured municipal dispatch drafts with required on-site verification, safety constraints, and audit trail.
+                    </p>
+                  </div>
+
+                  <button 
+                    className="macos-btn-primary" 
+                    style={{ fontSize: '12px', padding: '7px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    onClick={() => handleGenerateWorkOrderDraft()}
+                    disabled={isDraftingWorkOrder}
+                  >
+                    <Plus size={14} />
+                    <span>{isDraftingWorkOrder ? 'Drafting...' : 'Draft New Work Order'}</span>
+                  </button>
+                </div>
+
+                {municipalWorkOrders.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+                    <FileText size={32} style={{ marginBottom: '8px', opacity: 0.5 }} />
+                    <div>No work orders drafted for this incident yet.</div>
+                    <button 
+                      className="macos-btn-primary" 
+                      style={{ marginTop: '12px', fontSize: '12px', padding: '6px 14px' }}
+                      onClick={() => handleGenerateWorkOrderDraft()}
+                    >
+                      Generate Draft from Evidence Assessment
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
+                    {municipalWorkOrders.map((wo) => (
+                      <div key={wo.work_order_id} className="macos-card" style={{ border: '1px solid #e2e8f0', padding: '14px 16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 800, color: '#0284c7' }}>{wo.work_order_id}</span>
+                          <span style={{ 
+                            fontSize: '10px', 
+                            fontWeight: 700, 
+                            padding: '2px 8px', 
+                            borderRadius: '99px',
+                            background: wo.status === 'APPROVED' ? '#dcfce7' : (wo.status === 'REJECTED' ? '#fee2e2' : '#fef3c7'),
+                            color: wo.status === 'APPROVED' ? '#166534' : (wo.status === 'REJECTED' ? '#b91c1c' : '#b45309')
+                          }}>
+                            {wo.status}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#0f172a', marginBottom: '4px' }}>
+                          {wo.location_name}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#475569', lineHeight: 1.4, marginBottom: '8px' }}>
+                          {wo.problem_description}
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#64748b', borderTop: '1px dashed #f1f5f9', paddingTop: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span>Priority: <strong>{wo.priority}</strong></span>
+                          <button 
+                            className="macos-btn-secondary" 
+                            style={{ fontSize: '11px', padding: '3px 8px' }}
+                            onClick={() => handleOpenExistingWorkOrder(wo)}
+                          >
+                            Review & Audit ➔
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* =================================================================
+                SUB-TAB 5: CITYWIDE GIS MAP LAYER & VERIFIED REPORTS
+                ================================================================= */}
+            {incidentTab === 'map' && (
+              <div className="city-incidents-grid">
+                {/* CITYWIDE MAP */}
+                <div className="macos-card macos-map-card" style={{ height: '700px' }}>
+                  <div className="macos-map-floating-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: 'calc(100% - 28px)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="macos-chip-dot" />
+                      <span>Citywide Verified Incident Layer ({cityIncidents.length} active)</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <select 
+                        className="macos-input"
+                        style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: 600, color: '#0284c7', cursor: 'pointer', outline: 'none' }}
+                        value={mapProvider}
+                        onChange={(e) => setMapProvider(e.target.value)}
+                      >
+                        <option value="google">🗺️ Google Maps</option>
+                        <option value="google_hybrid">🛰️ Satellite</option>
+                        <option value="osm">🌐 OpenStreetMap</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div ref={cityMapContainerRef} className="macos-map-container" />
+                </div>
+
+                {/* INCIDENT FEED & SUBMIT REPORT */}
+                <div className="city-sidebar-col">
+                  <div className="macos-card" style={{ marginBottom: '16px' }}>
+                    <div className="macos-card-header">
+                      <span className="macos-card-title">
+                        <AlertTriangle size={16} /> Verified Reports
+                      </span>
+                      <button 
+                        className="macos-btn-primary" 
+                        style={{ width: 'auto', padding: '6px 12px', fontSize: '12px' }}
+                        onClick={() => setShowReportModal(true)}
+                      >
+                        <Plus size={13} />
+                        <span>Report Hazard</span>
+                      </button>
+                    </div>
+                    <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 12px 0' }}>
+                      Authorized municipal disruptions and community reports verified via multi-source correlation.
+                    </p>
+
+                    {/* INCIDENTS LIST */}
+                    <div style={{ maxHeight: '580px', overflowY: 'auto', paddingRight: '4px' }}>
+                      {cityIncidents.map((inc) => (
+                        <div 
+                          key={inc.incident_id} 
+                          className="route-incident-card"
+                          style={{ cursor: 'pointer', borderColor: selectedIncident?.incident_id === inc.incident_id ? '#0284c7' : '#e2e8f0' }}
+                          onClick={() => {
+                            setSelectedIncident(inc);
+                            if (cityMapInstanceRef.current && inc.centroid_lat && inc.centroid_lon) {
+                              cityMapInstanceRef.current.setView([inc.centroid_lat, inc.centroid_lon], 14);
+                            }
+                          }}
+                        >
+                          <div className="route-incident-header">
+                            <span className="route-incident-title">{inc.title}</span>
+                            <span style={{ fontSize: '10px', fontWeight: 600, color: '#059669', background: '#ecfdf5', padding: '2px 6px', borderRadius: '99px' }}>
+                              {inc.verification_status || 'VERIFIED'}
+                            </span>
+                          </div>
+                          <div className="route-incident-desc">{inc.description || inc.known_cause}</div>
+                          <div className="route-incident-footer">
+                            <span className={`provenance-badge ${inc.provenance === 'CITIZEN_REPORT' ? 'provenance-citizen' : 'provenance-live'}`}>
+                              {inc.provenance || 'MUNICIPAL FEED'}
+                            </span>
+                            <span style={{ fontSize: '10px' }}>Severity: {inc.severity_level}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
+
 
         {/* =====================================================================
             VIEW 3: PROFILE & ALERTS (Supabase Auth & Fast2SMS Settings)
@@ -1556,7 +2975,7 @@ export default function App() {
                     <ul style={{ margin: 0, paddingLeft: '18px', lineHeight: 1.6 }}>
                       <li>Register your daily origin & destination stored securely in Supabase PostgreSQL</li>
                       <li>350m perpendicular corridor hazard tracking for your exact journey</li>
-                      <li>Automated morning SMS dispatch before your scheduled departure time</li>
+                      <li>Instant SMS (TextBee) and Email dispatch upon hazard escalation and login</li>
                     </ul>
                   </div>
                 </div>
@@ -1633,54 +3052,67 @@ export default function App() {
               )}
             </div>
 
-            {/* FAST2SMS DAILY COMMUTE ALERTS (Phase 13) */}
+            {/* REAL-TIME INCIDENT & LOGIN COMMUTE ALERTS (EVENT-DRIVEN: TEXTBEE SMS + EMAIL) */}
             <div className="macos-card">
               <div className="macos-card-header">
                 <span className="macos-card-title">
-                  <Send size={16} /> Fast2SMS Morning Commute Notifications
+                  <Zap size={16} style={{ color: '#f59e0b' }} /> Real-Time Incident & Login Commute Alerts
                 </span>
-                <span className="provenance-badge provenance-live">Fast2SMS Gateway</span>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  {smsProviderStatus?.textbee?.device_connected ? (
+                    <span className="provenance-badge provenance-verified" style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' }}>
+                      ✓ Phone Connected ({smsProviderStatus?.textbee?.devices?.[0]?.name || 'TextBee'})
+                    </span>
+                  ) : (
+                    <span className="provenance-badge provenance-live" style={{ background: '#f0f9ff', color: '#0284c7', border: '1px solid #bae6fd' }}>
+                      TextBee Gateway
+                    </span>
+                  )}
+                  <span className="provenance-badge provenance-live" style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a' }}>
+                    Instant Event-Driven
+                  </span>
+                </div>
               </div>
 
               <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.5, margin: '0 0 16px 0' }}>
-                Receive an automated, persistent SMS summary of corridor hazards every morning before you depart.
-                Evaluated independently on our server even when the browser is closed.
+                No rigid clock timers or waiting. Alerts evaluate and dispatch <strong>immediately when a hazard occurs</strong> along your corridor ({currentUser?.default_origin ? currentUser.default_origin.split('(')[0].trim() : 'Borivali'} &rarr; {currentUser?.default_destination ? currentUser.default_destination.split('(')[0].trim() : 'Dadar'}), and <strong>every time you log in</strong>. Delivered directly to your connected phone via SMS and your registered Email.
               </p>
 
               <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Daily Hazard Summary SMS</div>
-                    <div style={{ fontSize: '12px', color: '#64748b' }}>Dispatches concise alert at preferred departure time</div>
-                  </div>
-                  <label className="macos-switch">
-                    <input 
-                      type="checkbox" 
-                      checked={Boolean(currentUser?.sms_consent)} 
-                      onChange={(e) => {
-                        if (!currentUser) {
-                          setShowAuthModal(true);
-                          return;
-                        }
-                        const updated = { ...currentUser, sms_consent: e.target.checked, sms_notifications_enabled: e.target.checked };
-                        setCurrentUser(updated);
-                        localStorage.setItem('urbanpulse_user', JSON.stringify(updated));
-                      }}
-                    />
-                    <span className="macos-slider" />
-                  </label>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                  <div>
-                    <label className="macos-label">Recipient Mobile (+91 Indian Number)</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  {/* SMS CHANNEL SETTINGS */}
+                  <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Smartphone size={15} style={{ color: '#0284c7' }} />
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>Instant SMS Alerts</span>
+                      </div>
+                      <label className="macos-switch">
+                        <input 
+                          type="checkbox" 
+                          checked={Boolean(currentUser?.sms_consent)} 
+                          onChange={(e) => {
+                            if (!currentUser) {
+                              setShowAuthModal(true);
+                              return;
+                            }
+                            const updated = { ...currentUser, sms_consent: e.target.checked, sms_notifications_enabled: e.target.checked };
+                            setCurrentUser(updated);
+                            localStorage.setItem('urbanpulse_user', JSON.stringify(updated));
+                          }}
+                        />
+                        <span className="macos-slider" />
+                      </label>
+                    </div>
+                    <label className="macos-label" style={{ fontSize: '11px', marginBottom: '4px' }}>Recipient Mobile (+91 Indian Number)</label>
                     <div className="macos-input-box">
                       <input 
                         type="tel" 
                         className="macos-input" 
-                        placeholder="e.g. 98201 54321" 
-                        defaultValue={currentUser?.phone || ''}
-                        onBlur={(e) => {
+                        placeholder="e.g. 8788201742" 
+                        value={smsPhoneInput}
+                        onChange={(e) => {
+                          setSmsPhoneInput(e.target.value);
                           if (currentUser) {
                             const updated = { ...currentUser, phone: e.target.value };
                             setCurrentUser(updated);
@@ -1689,50 +3121,275 @@ export default function App() {
                         }}
                       />
                     </div>
+                    <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '5px' }}>
+                      Delivered free via connected phone SIM card (TextBee Gateway)
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="macos-label">Scheduled Alert Time (IST)</label>
-                    <div className="macos-input-box">
-                      <Clock size={14} style={{ color: '#64748b' }} />
-                      <input 
-                        type="time" 
-                        className="macos-input" 
-                        defaultValue={currentUser?.scheduled_sms_time || '08:00'}
-                        onBlur={(e) => {
-                          if (currentUser) {
-                            const updated = { ...currentUser, scheduled_sms_time: e.target.value };
+                  {/* EMAIL CHANNEL SETTINGS */}
+                  <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Mail size={15} style={{ color: '#8b5cf6' }} />
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>Instant Email Alerts</span>
+                      </div>
+                      <label className="macos-switch">
+                        <input 
+                          type="checkbox" 
+                          checked={currentUser?.email_notifications_enabled !== false} 
+                          onChange={(e) => {
+                            if (!currentUser) {
+                              setShowAuthModal(true);
+                              return;
+                            }
+                            const updated = { ...currentUser, email_notifications_enabled: e.target.checked };
                             setCurrentUser(updated);
                             localStorage.setItem('urbanpulse_user', JSON.stringify(updated));
-                          }
-                        }}
+                          }}
+                        />
+                        <span className="macos-slider" />
+                      </label>
+                    </div>
+                    <label className="macos-label" style={{ fontSize: '11px', marginBottom: '4px' }}>Registered Commuter Email</label>
+                    <div className="macos-input-box" style={{ background: '#f1f5f9' }}>
+                      <input 
+                        type="email" 
+                        className="macos-input" 
+                        value={currentUser?.email || 'sawantvipul45@gmail.com'}
+                        readOnly
+                        style={{ cursor: 'default', color: '#334155' }}
                       />
+                    </div>
+                    <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '5px' }}>
+                      Sends rich HTML emergency advisory with alternate transit recommendations
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* TEST SMS DISPATCH BUTTON (Phase 13.E) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <button 
-                  className="macos-btn-secondary"
-                  disabled={isSendingTestSms}
-                  onClick={() => {
-                    const phone = currentUser?.phone || prompt('Enter 10-digit Indian mobile number for test SMS:');
-                    if (phone) handleSendTestSms(phone);
-                  }}
-                >
-                  <Send size={13} />
-                  <span>{isSendingTestSms ? 'Dispatching Test...' : 'Send Test SMS Alert'}</span>
-                </button>
+              {/* ACTION BUTTONS & DISPATCH CONTROLS */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <button 
+                    className="macos-btn-primary"
+                    disabled={isScanningCorridor}
+                    onClick={handleScanAndNotify}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: 'linear-gradient(135deg, #0284c7, #2563eb)' }}
+                  >
+                    <Zap size={14} />
+                    <span>{isScanningCorridor ? 'Evaluating Corridor...' : 'Scan Corridor & Dispatch Alert Now'}</span>
+                  </button>
+
+                  <button 
+                    className="macos-btn-secondary"
+                    disabled={isSendingTestSms}
+                    onClick={() => {
+                      const phone = smsPhoneInput.trim() || currentUser?.phone || '8788201742';
+                      handleSendTestSms(phone, false);
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+                  >
+                    <Send size={13} />
+                    <span>{isSendingTestSms ? 'Sending SMS...' : 'Test SMS'}</span>
+                  </button>
+
+                  <button 
+                    className="macos-btn-secondary"
+                    disabled={isSendingTestEmail}
+                    onClick={() => {
+                      const email = currentUser?.email || 'sawantvipul45@gmail.com';
+                      handleSendTestEmail(email);
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+                  >
+                    <Mail size={13} />
+                    <span>{isSendingTestEmail ? 'Sending Email...' : 'Test Email'}</span>
+                  </button>
+
+                  <button 
+                    className="macos-btn-secondary"
+                    style={{ fontSize: '12px', padding: '6px 12px', color: '#0284c7', borderColor: '#bae6fd', background: '#f0f9ff' }}
+                    disabled={isSendingTestSms}
+                    title="Test commute alert workflow & view in Notification Center"
+                    onClick={() => {
+                      const phone = smsPhoneInput.trim() || currentUser?.phone || '8788201742';
+                      handleSendTestSms(phone, true);
+                    }}
+                  >
+                    <Sparkles size={13} />
+                    <span>Simulate Delivery</span>
+                  </button>
+                </div>
+
+                {/* STATUS FEEDBACK */}
+                {scanCorridorStatus && (
+                  <div style={{ fontSize: '12.5px', fontWeight: 600, color: scanCorridorStatus.success ? '#059669' : '#e11d48', background: scanCorridorStatus.success ? '#ecfdf5' : '#fff1f2', border: `1px solid ${scanCorridorStatus.success ? '#a7f3d0' : '#fecdd3'}`, borderRadius: '8px', padding: '8px 12px' }}>
+                    {scanCorridorStatus.message || scanCorridorStatus.error}
+                  </div>
+                )}
 
                 {testSmsStatus && (
-                  <span style={{ fontSize: '12px', color: testSmsStatus.success ? '#059669' : '#e11d48' }}>
-                    {testSmsStatus.success ? `✓ Request accepted (${testSmsStatus.status})` : `✗ ${testSmsStatus.error}`}
-                  </span>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: testSmsStatus.success ? '#059669' : '#e11d48' }}>
+                    SMS: {testSmsStatus.success ? `✓ ${testSmsStatus.message || 'Alert dispatched'}` : `✗ ${testSmsStatus.error || 'SMS dispatch failed'}`}
+                  </div>
+                )}
+
+                {testEmailStatus && (
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: testEmailStatus.success ? '#059669' : '#e11d48' }}>
+                    Email: {testEmailStatus.message}
+                  </div>
+                )}
+
+                {/* TEXTBEE DEVICE LINKING GUIDE (if phone not connected) */}
+                {testSmsStatus && !testSmsStatus.success && testSmsStatus.status === 'textbee_device_required' && (
+                  <div style={{ fontSize: '12px', color: '#0369a1', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', padding: '10px 14px', lineHeight: 1.5 }}>
+                    <div style={{ fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px', color: '#0284c7' }}>
+                      <Smartphone size={15} /> TextBee API Key Connected — One-Time Phone Link Required:
+                    </div>
+                    <ol style={{ margin: '0 0 8px 18px', padding: 0 }}>
+                      <li>Install the <strong>TextBee app</strong> on your Android phone.</li>
+                      <li>Log in with your account or scan your pairing QR code at <a href="https://textbee.dev/dashboard" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: '#0284c7', fontWeight: 600 }}>textbee.dev/dashboard</a>.</li>
+                      <li>Grant SMS permissions on the phone.</li>
+                    </ol>
+                  </div>
                 )}
               </div>
             </div>
+
+            {/* PERSONALIZED LOCATION-BASED ALERT SETTINGS & CHANNELS (Objective 1, 2, 5) */}
+            <div className="macos-card">
+              <div className="macos-card-header">
+                <span className="macos-card-title">
+                  <ShieldAlert size={16} style={{ color: '#0284c7' }} /> Alert Generation & Geographic Perimeter Controls
+                </span>
+                <span className="provenance-badge provenance-live">Decision Engine</span>
+              </div>
+
+              <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.5, margin: '0 0 16px 0' }}>
+                Configure your personalized perimeter thresholds, channel consent, and minimum severity triggers. Alerts are tailored specifically to your locations and route rather than citywide broad-broadcasts.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+                {/* NEARBY RADIUS SLIDER */}
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <label className="macos-label" style={{ margin: 0 }}>Nearby Hazard Radius Perimeter</label>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#0284c7' }}>
+                      {currentUser?.nearby_radius_km || 1.0} km
+                    </span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0.5" 
+                    max="5.0" 
+                    step="0.5"
+                    defaultValue={currentUser?.nearby_radius_km || 1.0}
+                    style={{ width: '100%', accentColor: '#0284c7', cursor: 'pointer' }}
+                    onChange={(e) => {
+                      if (currentUser) {
+                        const val = parseFloat(e.target.value);
+                        const updated = { 
+                          ...currentUser, 
+                          nearby_radius_km: val,
+                          alert_preferences: { ...(currentUser.alert_preferences || {}), nearby_radius_km: val }
+                        };
+                        setCurrentUser(updated);
+                        localStorage.setItem('urbanpulse_user', JSON.stringify(updated));
+                      }
+                    }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>
+                    <span>0.5 km (Strict)</span>
+                    <span>1.0 km (Default)</span>
+                    <span>5.0 km (Wide)</span>
+                  </div>
+                </div>
+
+                {/* MINIMUM SEVERITY THRESHOLD */}
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px' }}>
+                  <label className="macos-label" style={{ marginBottom: '8px' }}>Minimum Disruption Severity</label>
+                  <select 
+                    className="macos-input"
+                    style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '8px', fontSize: '13px', fontWeight: 600, color: '#0f172a' }}
+                    defaultValue={currentUser?.min_alert_severity || 'MODERATE'}
+                    onChange={(e) => {
+                      if (currentUser) {
+                        const updated = { ...currentUser, min_alert_severity: e.target.value };
+                        setCurrentUser(updated);
+                        localStorage.setItem('urbanpulse_user', JSON.stringify(updated));
+                      }
+                    }}
+                  >
+                    <option value="LOW">Low (Include all minor delays & advisories)</option>
+                    <option value="MODERATE">Moderate (Standard: subway waterlogging, lane blocks)</option>
+                    <option value="MAJOR">Major (Only significant arterial gridlocks & flooding)</option>
+                    <option value="CRITICAL">Critical (Only disaster-level track submergence & road closures)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* CHANNELS ACTIVE STRIP */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '16px' }}>
+                <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '10px 12px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#166534', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <CheckCircle2 size={13} /> In-App Notification Center
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#14532d', marginTop: '2px' }}>
+                    Active • Stored in Supabase
+                  </div>
+                </div>
+
+                <div style={{ background: pushPermission === 'granted' ? '#f0fdf4' : '#f8fafc', border: `1px solid ${pushPermission === 'granted' ? '#bbf7d0' : '#e2e8f0'}`, borderRadius: '8px', padding: '10px 12px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: pushPermission === 'granted' ? '#166534' : '#64748b', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Bell size={13} /> Browser Web Push
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>{pushPermission === 'granted' ? 'Permission Active' : 'Not Granted'}</span>
+                    {pushPermission !== 'granted' && (
+                      <button 
+                        className="macos-btn-secondary" 
+                        style={{ padding: '2px 6px', fontSize: '10px' }}
+                        onClick={handleRequestPushPermission}
+                      >
+                        Enable
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ background: currentUser?.sms_consent ? '#f0fdf4' : '#f8fafc', border: `1px solid ${currentUser?.sms_consent ? '#bbf7d0' : '#e2e8f0'}`, borderRadius: '8px', padding: '10px 12px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: currentUser?.sms_consent ? '#166534' : '#64748b', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Send size={13} /> Fast2SMS Gateway
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>
+                    {currentUser?.sms_consent ? 'Consent Granted' : 'Opted Out'}
+                  </div>
+                </div>
+              </div>
+
+              {/* TEST ACTIONS */}
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button 
+                  className="macos-btn-primary"
+                  style={{ fontSize: '12px', padding: '7px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  onClick={handleEvaluateAlertsNow}
+                  disabled={isEvaluatingAlerts}
+                >
+                  <RefreshCw size={12} className={isEvaluatingAlerts ? 'spin' : ''} />
+                  <span>{isEvaluatingAlerts ? 'Evaluating...' : 'Scan & Evaluate Alerts Now'}</span>
+                </button>
+
+                <button 
+                  className="macos-btn-secondary"
+                  style={{ fontSize: '12px', padding: '7px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  onClick={handleTriggerTestAlert}
+                >
+                  <Sparkles size={12} />
+                  <span>Trigger Test In-App & Push Alert</span>
+                </button>
+              </div>
+            </div>
+
 
             {/* COST & FREE-TIER DISCLOSURE BANNER */}
             <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px', fontSize: '12px', color: '#64748b' }}>
@@ -1982,10 +3639,19 @@ export default function App() {
                     if (data.user.default_destination) setDestInput(data.user.default_destination);
                     if (data.user.preferred_mode) setTravelMode(data.user.preferred_mode);
                     setActiveTab('dashboard');
-                    setAuthSuccess(`Logged in as ${data.user.full_name}! Saved commute corridor loaded.`);
+                    if (data.login_alert?.message) {
+                      setScanCorridorStatus({
+                        success: true,
+                        message: `⚡ Login Corridor Scan: ${data.login_alert.message}`
+                      });
+                      setAuthSuccess(`Welcome, ${data.user.full_name}! ⚡ Route Scan: ${data.login_alert.message}`);
+                    } else {
+                      setAuthSuccess(`Logged in as ${data.user.full_name}! Saved commute corridor loaded.`);
+                    }
+                    fetchUserNotifications();
                     setTimeout(() => {
                       setShowAuthModal(false);
-                    }, 800);
+                    }, 1200);
                   } else {
                     setAuthError(data.detail || 'Login failed. Please verify your credentials.');
                   }
@@ -2296,6 +3962,468 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* =====================================================================
+          PHASE 13: EXPLAINABLE OPERATOR BRIEFING MODAL (Requirement 5)
+          ===================================================================== */}
+      {showBriefingModal && (
+        <div className="intel-modal-backdrop" onClick={() => setShowBriefingModal(false)}>
+          <div className="intel-modal-window" style={{ maxWidth: '860px' }} onClick={(e) => e.stopPropagation()}>
+            {/* MODAL HEADER */}
+            <div className="intel-modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Sparkles size={18} color="#0284c7" />
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '15px', color: '#0f172a', fontWeight: 800 }}>
+                    Explainable Operator Briefing • Municipal Command Advisory
+                  </h3>
+                  <div style={{ fontSize: '11px', color: '#64748b' }}>
+                    Incident Reference: <strong>{activeIncidentId}</strong> • Generated at: {operatorBriefing?.generated_at}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ 
+                  fontSize: '11px', 
+                  fontWeight: 700, 
+                  padding: '3px 8px', 
+                  borderRadius: '99px',
+                  background: (operatorBriefing?.confidence_score || 0.93) >= 0.85 ? '#ecfdf5' : '#fef3c7',
+                  color: (operatorBriefing?.confidence_score || 0.93) >= 0.85 ? '#065f46' : '#92400e',
+                  border: '1px solid #a7f3d0'
+                }}>
+                  Confidence: {Math.round((operatorBriefing?.confidence_score || 0.93) * 100)}% ({operatorBriefing?.confidence_grade || 'High'})
+                </span>
+                <button 
+                  onClick={() => setShowBriefingModal(false)}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* MODAL BODY (10 QUESTIONS ANSWERED) */}
+            <div className="intel-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* TARGETED QUERY SEARCH */}
+              <form onSubmit={handleQueryBriefing} style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px', padding: '12px 14px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#0369a1', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <HelpCircle size={14} /> Ask a Specific Explainability Question
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input 
+                    type="text"
+                    value={briefingQueryInput}
+                    onChange={(e) => setBriefingQueryInput(e.target.value)}
+                    placeholder="e.g., Explain why confidence dropped and why Sensor BMC_FLD_MALAD_NORTH was ignored"
+                    className="macos-input"
+                    style={{ flex: 1, background: '#ffffff', fontSize: '12px', padding: '6px 10px', border: '1px solid #93c5fd', borderRadius: '6px' }}
+                  />
+                  <button 
+                    type="submit"
+                    className="macos-btn-primary"
+                    disabled={isQueryingBriefing || !briefingQueryInput.trim()}
+                    style={{ padding: '6px 14px', fontSize: '12px' }}
+                  >
+                    {isQueryingBriefing ? 'Analyzing...' : 'Investigate'}
+                  </button>
+                </div>
+
+                {operatorBriefing?.query_response && (
+                  <div style={{ marginTop: '10px', background: '#ffffff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '10px 12px', fontSize: '12px', color: '#1e3a8a', lineHeight: 1.5 }}>
+                    <strong>Factual Telemetry Investigation:</strong>
+                    <div style={{ marginTop: '4px', whiteSpace: 'pre-line' }}>{operatorBriefing.query_response}</div>
+                  </div>
+                )}
+              </form>
+
+              {/* 1. WHAT IS HAPPENING */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>1. What is Happening?</div>
+                <div style={{ fontSize: '12px', color: '#0f172a', marginTop: '4px', lineHeight: 1.5 }}>
+                  {operatorBriefing?.q1_what_is_happening}
+                </div>
+              </div>
+
+              {/* 2. SUPPORTED EXPLANATION */}
+              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#166534', textTransform: 'uppercase' }}>2. What is the Most Strongly Supported Explanation?</div>
+                <div style={{ fontSize: '12px', color: '#14532d', marginTop: '4px', lineHeight: 1.5 }}>
+                  {operatorBriefing?.q2_supported_explanation}
+                </div>
+              </div>
+
+              {/* 3 & 4. SUPPORTING VS CONTRADICTING OBSERVATIONS */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase' }}>3. Supporting Observations</div>
+                  <ul style={{ margin: '6px 0 0 16px', padding: 0, fontSize: '11px', color: '#475569', lineHeight: 1.5 }}>
+                    {operatorBriefing?.q3_supporting_observations?.map((o, idx) => <li key={idx}>{o}</li>)}
+                  </ul>
+                </div>
+
+                <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '8px', padding: '12px 14px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#ea580c', textTransform: 'uppercase' }}>4. Contradicting Observations (Preserved)</div>
+                  <ul style={{ margin: '6px 0 0 16px', padding: 0, fontSize: '11px', color: '#9a3412', lineHeight: 1.5 }}>
+                    {operatorBriefing?.q4_contradicting_observations?.length > 0 ? (
+                      operatorBriefing.q4_contradicting_observations.map((c, idx) => <li key={idx}>{c}</li>)
+                    ) : (
+                      <li>No unresolved conflicting sensor telemetry recorded.</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+
+              {/* 5. CONFIDENCE CHANGE EXPLANATION */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>5. Why Has the Confidence Assessment Changed?</div>
+                <div style={{ fontSize: '12px', color: '#0f172a', marginTop: '4px', lineHeight: 1.5 }}>
+                  {operatorBriefing?.q5_confidence_delta}
+                </div>
+              </div>
+
+              {/* 7. TRACEABLE SENSOR EXCLUSION LEDGER TABLE */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  7. Traceable Sensor & Report Exclusion Ledger (Factual Reasons Only)
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                    <thead>
+                      <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
+                        <th style={{ padding: '6px 8px', textAlign: 'left', color: '#475569' }}>Source / Sensor ID</th>
+                        <th style={{ padding: '6px 8px', textAlign: 'left', color: '#475569' }}>Status</th>
+                        <th style={{ padding: '6px 8px', textAlign: 'left', color: '#475569' }}>Distance</th>
+                        <th style={{ padding: '6px 8px', textAlign: 'left', color: '#475569' }}>Factual Recorded Reason</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {operatorBriefing?.sensor_exclusion_ledger?.map((s, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '6px 8px', fontWeight: 600, color: '#0f172a' }}>{s.sensor_id}</td>
+                          <td style={{ padding: '6px 8px', color: '#b91c1c' }}>{s.status}</td>
+                          <td style={{ padding: '6px 8px', color: '#64748b' }}>{s.distance_from_centroid_km} km</td>
+                          <td style={{ padding: '6px 8px', color: '#475569', lineHeight: 1.4 }}>{s.reason}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* 8, 9, 10. PUBLIC IMPACT, ACTION, UNCERTAINTIES */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>8. Potential Public Impact</div>
+                <div style={{ fontSize: '12px', color: '#0f172a', marginTop: '4px' }}>{operatorBriefing?.q8_public_impact}</div>
+              </div>
+
+              <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#166534', textTransform: 'uppercase' }}>9. Recommended Operational Action</div>
+                <div style={{ fontSize: '12px', color: '#14532d', marginTop: '4px', whiteSpace: 'pre-line' }}>{operatorBriefing?.q9_recommended_action}</div>
+              </div>
+
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>10. What Remains Uncertain?</div>
+                <ul style={{ margin: '6px 0 0 16px', padding: 0, fontSize: '11px', color: '#64748b' }}>
+                  {operatorBriefing?.q10_uncertainties?.map((u, idx) => <li key={idx}>{u}</li>)}
+                </ul>
+              </div>
+            </div>
+
+            {/* MODAL FOOTER */}
+            <div className="intel-modal-footer">
+              <button 
+                className="macos-btn-secondary" 
+                style={{ fontSize: '12px', padding: '6px 14px' }}
+                onClick={() => {
+                  navigator.clipboard.writeText(JSON.stringify(operatorBriefing, null, 2));
+                  alert('Briefing JSON copied to clipboard.');
+                }}
+              >
+                Copy Briefing JSON
+              </button>
+              <button 
+                className="macos-btn-primary" 
+                style={{ fontSize: '12px', padding: '6px 16px' }}
+                onClick={() => setShowBriefingModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          PHASE 13: MUNICIPAL WORK ORDER REVIEW & APPROVAL MODAL (Requirement 6)
+          ===================================================================== */}
+      {showWorkOrderModal && activeWorkOrder && (
+        <div className="intel-modal-backdrop" onClick={() => setShowWorkOrderModal(false)}>
+          <div className="intel-modal-window" style={{ maxWidth: '880px' }} onClick={(e) => e.stopPropagation()}>
+            {/* WORK ORDER HEADER */}
+            <div className="intel-modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <FileText size={18} color="#0284c7" />
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h3 style={{ margin: 0, fontSize: '15px', color: '#0f172a', fontWeight: 800 }}>
+                      Municipal Response Work Order: {activeWorkOrder.work_order_id}
+                    </h3>
+                    <span style={{ 
+                      fontSize: '10px', 
+                      fontWeight: 800, 
+                      padding: '2px 8px', 
+                      borderRadius: '99px',
+                      background: activeWorkOrder.status === 'APPROVED' ? '#dcfce7' : (activeWorkOrder.status === 'REJECTED' ? '#fee2e2' : '#fef3c7'),
+                      color: activeWorkOrder.status === 'APPROVED' ? '#166534' : (activeWorkOrder.status === 'REJECTED' ? '#b91c1c' : '#b45309')
+                    }}>
+                      {activeWorkOrder.status}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b' }}>
+                    Incident Reference: <strong>{activeWorkOrder.incident_id}</strong> • Location: <strong>{activeWorkOrder.location_name}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setShowWorkOrderModal(false)}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* WORK ORDER BODY */}
+            <div className="intel-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* FEEDBACK BANNER */}
+              {workOrderFeedback && (
+                <div style={{ 
+                  padding: '10px 14px', 
+                  borderRadius: '8px', 
+                  fontSize: '12px', 
+                  fontWeight: 600,
+                  background: workOrderFeedback.success ? '#ecfdf5' : '#fee2e2',
+                  color: workOrderFeedback.success ? '#065f46' : '#b91c1c',
+                  border: `1px solid ${workOrderFeedback.success ? '#a7f3d0' : '#fca5a5'}`
+                }}>
+                  {workOrderFeedback.message}
+                </div>
+              )}
+
+              {/* EDIT MODE TOGGLE INFO */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '11px', color: '#475569' }}>
+                  Created By: <strong>{activeWorkOrder.created_by}</strong> • Department: <strong>{activeWorkOrder.department}</strong> • Priority: <strong style={{ color: '#b91c1c' }}>{activeWorkOrder.priority}</strong>
+                </span>
+
+                {activeWorkOrder.status === 'DRAFT' && !isEditingWorkOrder && (
+                  <button 
+                    className="macos-btn-secondary" 
+                    style={{ fontSize: '11px', padding: '4px 10px' }}
+                    onClick={() => setIsEditingWorkOrder(true)}
+                  >
+                    ✏️ Edit Draft Content
+                  </button>
+                )}
+              </div>
+
+              {/* PROBLEM DESCRIPTION */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: '4px' }}>Problem Description</div>
+                {isEditingWorkOrder ? (
+                  <textarea 
+                    value={editedProblemDesc}
+                    onChange={(e) => setEditedProblemDesc(e.target.value)}
+                    className="macos-input"
+                    rows={3}
+                    style={{ width: '100%', fontSize: '12px', background: '#ffffff', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+                  />
+                ) : (
+                  <div style={{ fontSize: '12px', color: '#0f172a', lineHeight: 1.5 }}>{activeWorkOrder.problem_description}</div>
+                )}
+              </div>
+
+              {/* RECOMMENDED TACTICAL RESPONSE */}
+              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#166534', textTransform: 'uppercase', marginBottom: '4px' }}>Recommended Tactical Response</div>
+                {isEditingWorkOrder ? (
+                  <textarea 
+                    value={editedResponse}
+                    onChange={(e) => setEditedResponse(e.target.value)}
+                    className="macos-input"
+                    rows={3}
+                    style={{ width: '100%', fontSize: '12px', background: '#ffffff', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+                  />
+                ) : (
+                  <div style={{ fontSize: '12px', color: '#14532d', lineHeight: 1.5 }}>{activeWorkOrder.recommended_response}</div>
+                )}
+              </div>
+
+              {/* SUGGESTED RESOURCES TABLE */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  Suggested Resource Categories (Marked Requires On-Site Verification)
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                    <thead>
+                      <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
+                        <th style={{ padding: '6px 8px', textAlign: 'left', color: '#475569' }}>Category</th>
+                        <th style={{ padding: '6px 8px', textAlign: 'left', color: '#475569' }}>Resource Item</th>
+                        <th style={{ padding: '6px 8px', textAlign: 'left', color: '#475569' }}>Qty</th>
+                        <th style={{ padding: '6px 8px', textAlign: 'left', color: '#475569' }}>Verification Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeWorkOrder.suggested_resources?.map((res, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '6px 8px', fontWeight: 600, color: '#0f172a' }}>{res.category}</td>
+                          <td style={{ padding: '6px 8px', color: '#334155' }}>{res.item}</td>
+                          <td style={{ padding: '6px 8px', color: '#475569' }}>{res.recommended_qty}</td>
+                          <td style={{ padding: '6px 8px' }}>
+                            <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: '#fef3c7', color: '#b45309' }}>
+                              {res.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* VERIFICATION STEPS & SAFETY CONSIDERATIONS */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase' }}>Required Verification Steps</div>
+                  <ul style={{ margin: '6px 0 0 16px', padding: 0, fontSize: '11px', color: '#475569', lineHeight: 1.45 }}>
+                    {activeWorkOrder.verification_steps?.map((step, idx) => <li key={idx}>{step}</li>)}
+                  </ul>
+                </div>
+
+                <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '12px 14px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#b91c1c', textTransform: 'uppercase' }}>Safety Considerations</div>
+                  <ul style={{ margin: '6px 0 0 16px', padding: 0, fontSize: '11px', color: '#7f1d1d', lineHeight: 1.45 }}>
+                    {activeWorkOrder.safety_considerations?.map((safe, idx) => <li key={idx}>{safe}</li>)}
+                  </ul>
+                </div>
+              </div>
+
+              {/* OPERATOR REVIEW NOTES */}
+              {activeWorkOrder.status === 'DRAFT' && (
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>
+                    Operator Decision Notes (Appended to Audit Trail)
+                  </div>
+                  <input 
+                    type="text"
+                    value={workOrderOperatorNotes}
+                    onChange={(e) => setWorkOrderOperatorNotes(e.target.value)}
+                    placeholder="Enter review remarks before approving or rejecting..."
+                    className="macos-input"
+                    style={{ width: '100%', fontSize: '12px', padding: '7px 10px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+                  />
+                </div>
+              )}
+
+              {/* CHRONOLOGICAL AUDIT TRAIL TABLE */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>
+                  Chronological Municipal Audit Trail ({workOrderAuditTrail.length} Records)
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
+                    <thead>
+                      <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
+                        <th style={{ padding: '4px 6px', textAlign: 'left', color: '#475569' }}>Action</th>
+                        <th style={{ padding: '4px 6px', textAlign: 'left', color: '#475569' }}>Actor</th>
+                        <th style={{ padding: '4px 6px', textAlign: 'left', color: '#475569' }}>Role</th>
+                        <th style={{ padding: '4px 6px', textAlign: 'left', color: '#475569' }}>Status</th>
+                        <th style={{ padding: '4px 6px', textAlign: 'left', color: '#475569' }}>Timestamp</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {workOrderAuditTrail.map((log, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '4px 6px', fontWeight: 700, color: log.action === 'APPROVED' ? '#166534' : (log.action === 'REJECTED' ? '#b91c1c' : '#0284c7') }}>
+                            {log.action}
+                          </td>
+                          <td style={{ padding: '4px 6px', color: '#334155' }}>{log.actor}</td>
+                          <td style={{ padding: '4px 6px', color: '#64748b' }}>{log.actor_role}</td>
+                          <td style={{ padding: '4px 6px', color: '#475569' }}>{log.previous_status || 'NONE'} ➔ {log.new_status}</td>
+                          <td style={{ padding: '4px 6px', color: '#64748b' }}>{log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : 'N/A'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* WORK ORDER FOOTER BUTTONS */}
+            <div className="intel-modal-footer">
+              <button 
+                className="macos-btn-secondary" 
+                style={{ fontSize: '12px', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                onClick={() => handleExportWorkOrderJson()}
+              >
+                <Download size={13} /> Export JSON
+              </button>
+
+              {isEditingWorkOrder ? (
+                <>
+                  <button 
+                    className="macos-btn-secondary" 
+                    style={{ fontSize: '12px', padding: '6px 12px' }}
+                    onClick={() => setIsEditingWorkOrder(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="macos-btn-primary" 
+                    style={{ fontSize: '12px', padding: '6px 16px' }}
+                    onClick={() => handleSaveWorkOrderEdits()}
+                  >
+                    Save Changes
+                  </button>
+                </>
+              ) : (
+                <>
+                  {activeWorkOrder.status === 'DRAFT' && (
+                    <>
+                      <button 
+                        className="macos-btn-secondary" 
+                        style={{ fontSize: '12px', padding: '6px 14px', color: '#b91c1c', borderColor: '#fca5a5' }}
+                        onClick={() => handleRejectWorkOrder()}
+                      >
+                        Reject
+                      </button>
+                      <button 
+                        className="macos-btn-primary" 
+                        style={{ fontSize: '12px', padding: '6px 16px', background: '#059669', borderColor: '#059669' }}
+                        onClick={() => handleApproveWorkOrder()}
+                      >
+                        ✓ Authorize & Approve
+                      </button>
+                    </>
+                  )}
+                  <button 
+                    className="macos-btn-secondary" 
+                    style={{ fontSize: '12px', padding: '6px 14px' }}
+                    onClick={() => setShowWorkOrderModal(false)}
+                  >
+                    Close
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
+

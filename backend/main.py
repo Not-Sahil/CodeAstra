@@ -14,8 +14,21 @@ from backend.supabase_service import (
     get_supabase_status,
     save_commute_query_record,
     record_replay_action_log,
-    sync_active_incidents
+    sync_active_incidents,
+    save_user_notification,
+    get_user_notifications,
+    mark_notification_as_read,
+    mark_all_notifications_as_read,
+    get_unread_notifications_count,
+    save_municipal_work_order,
+    update_municipal_work_order,
+    get_municipal_work_orders,
+    get_municipal_work_order_by_id,
+    get_work_order_audit_logs,
+    save_operator_briefing,
+    get_operator_briefings
 )
+from backend.alert_engine import alert_engine
 from backend.auth_service import (
     register_user,
     login_user,
@@ -27,6 +40,7 @@ from backend.weather_service import WeatherService
 from backend.source_health import source_health_monitor
 from backend.citizen_reports import citizen_report_manager, CitizenReportSubmission
 from backend.sms_service import sms_service, sendCommuteSmsAlert
+from backend.email_service import email_service
 from backend.scheduler import commute_scheduler
 
 app = FastAPI(
@@ -90,11 +104,16 @@ def auth_list_users():
     return {"users": get_all_users()}
 
 @app.post("/api/auth/login")
-def auth_login(req: LoginRequest):
-    """Authenticate commuter with email/user_code/phone and password."""
+async def auth_login(req: LoginRequest):
+    """Authenticate commuter with email/user_code/phone and password, and immediately scan corridor for login-time alerts."""
     try:
         user = login_user(req.identifier, req.password)
-        return {"status": "SUCCESS", "user": user}
+        login_alert = None
+        try:
+            login_alert = await commute_scheduler.evaluate_and_send_user_alert(user, is_login_or_manual=True)
+        except Exception as e_alert:
+            logger.warning(f"Error evaluating login alert for {user.get('email')}: {e_alert}")
+        return {"status": "SUCCESS", "user": user, "login_alert": login_alert}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -160,23 +179,231 @@ def submit_citizen_incident_report(report: CitizenReportSubmission):
 class TestSmsPayload(BaseModel):
     phone: str = Field(..., description="10-digit Indian mobile number")
     message: Optional[str] = "UrbanPulse: Rain and waterlogging alert along your commute corridor."
+    simulate: Optional[bool] = False
+    user_code: Optional[str] = None
 
 @app.post("/api/alerts/test-sms")
 def test_sms_dispatch(payload: TestSmsPayload):
-    """Phase 13.E: Protected test-sms dispatch endpoint with Indian phone normalization and rate limiting."""
+    """Phase 13.E: Protected test-sms dispatch endpoint with Indian phone normalization, simulation fallback, and rate limiting."""
+    if payload.simulate:
+        save_user_notification({
+            "user_code": payload.user_code or "COMMUTER",
+            "alert_type": "SCHEDULED",
+            "title": "Morning Commute SMS (Simulated)",
+            "message": payload.message or "UrbanPulse: Good morning! Your commute route Borivali->Dadar is CLEAR. Est. travel: ~65m. Safe journey!",
+            "severity": "LOW",
+            "channels": ["SMS", "IN_APP"],
+            "delivery_status": "DELIVERED",
+            "is_read": False,
+            "evidence_summary": {"source": "FAST2SMS_SIMULATION", "recipient": payload.phone}
+        })
+        return {
+            "success": True,
+            "status": "simulated_delivered",
+            "message": f"Simulated SMS alert delivered to Notification Center for {sms_service.mask_phone(payload.phone)}.",
+            "recipient": payload.phone,
+            "message_content": payload.message
+        }
+
     result = sms_service.send_commute_sms_alert(payload.phone, payload.message or "UrbanPulse test alert")
-    if not result.get("success"):
-        # If disabled or mocked, returns 200 with structured status
-        if result.get("status") in ["mock_accepted", "duplicate_suppressed"]:
-            return result
-        raise HTTPException(status_code=400, detail=result.get("error") or "SMS dispatch rejected")
+    
+    # Mirror into user notifications for audit trail
+    if payload.user_code:
+        provider_name = result.get("provider", "SMS")
+        save_user_notification({
+            "user_code": payload.user_code,
+            "alert_type": "SCHEDULED",
+            "title": f"{provider_name} Commute Alert Dispatch",
+            "message": payload.message or "UrbanPulse test alert",
+            "severity": "MODERATE",
+            "channels": ["SMS"],
+            "delivery_status": "DELIVERED" if result.get("success") else "FAILED",
+            "is_read": False,
+            "evidence_summary": {"provider": provider_name, "result": result}
+        })
+
+    return result
+
+@app.get("/api/alerts/sms-provider-status")
+def get_sms_provider_status():
+    """Returns SMS gateway configuration, active provider (TextBee / Fast2SMS), and connected device status."""
+    return sms_service.get_provider_status()
+
+class ScanAndNotifyRequest(BaseModel):
+    user_code: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+
+@app.post("/api/alerts/scan-and-notify")
+async def scan_and_notify_commuter(req: ScanAndNotifyRequest):
+    """
+    Immediate corridor hazard scan and multi-channel dispatch (SMS + Email + In-App) on login or on-demand request.
+    """
+    user = None
+    if req.user_code:
+        user = get_user_by_code(req.user_code)
+    elif req.email:
+        for u in get_all_users():
+            if (u.get("email") or "").lower() == req.email.lower():
+                user = u
+                break
+
+    if not user:
+        user = {
+            "id": "anon",
+            "user_code": req.user_code or "COMMUTER",
+            "full_name": "Commuter",
+            "email": req.email or "",
+            "phone": req.phone or "",
+            "default_origin": req.origin or "Borivali (West)",
+            "default_destination": req.destination or "Dadar (West)",
+            "preferred_mode": "DRIVE"
+        }
+    else:
+        if req.phone:
+            user["phone"] = req.phone
+        if req.origin:
+            user["default_origin"] = req.origin
+        if req.destination:
+            user["default_destination"] = req.destination
+
+    res = await commute_scheduler.evaluate_and_send_user_alert(user, is_login_or_manual=True)
+    return {"status": "SUCCESS", "details": res}
+
+class TestEmailPayload(BaseModel):
+    email: str
+    name: Optional[str] = "Commuter"
+    origin: Optional[str] = "Borivali"
+    destination: Optional[str] = "Dadar"
+
+@app.post("/api/alerts/test-email")
+def test_email_dispatch(payload: TestEmailPayload):
+    """Sends a test emergency commute corridor email alert."""
+    result = email_service.send_commute_alert_email(
+        to_email=payload.email,
+        user_name=payload.name or "Commuter",
+        alert_title=f"Emergency Commute Corridor Alert ({payload.origin} -> {payload.destination})",
+        alert_message="UrbanPulse AI: Real-time incident detection active for your commute route. Dispatches immediately upon hazard detection or login.",
+        corridor_info={
+            "origin": payload.origin or "Borivali",
+            "destination": payload.destination or "Dadar",
+            "recommended_mode": "Western Railway Train",
+            "time_saved_min": 15,
+            "eta_min": 45
+        },
+        severity="MAJOR"
+    )
     return result
 
 @app.post("/api/scheduler/trigger")
 async def trigger_scheduler_check():
-    """Trigger on-demand check for scheduled morning commute alerts."""
-    dispatched = await commute_scheduler.check_and_dispatch_due_alerts()
+    """Trigger on-demand check for real-time commute alerts."""
+    dispatched = await commute_scheduler.check_and_dispatch_realtime_alerts()
     return {"status": "SUCCESS", "dispatched_count": len(dispatched), "details": dispatched}
+
+# -----------------------------------------------------------------------------
+# PERSONALIZED ALERT GENERATION & NOTIFICATION CENTER ENDPOINTS (Objective 1, 2, 5, 8)
+# -----------------------------------------------------------------------------
+class EvaluateAlertsRequest(BaseModel):
+    user_code: Optional[str] = None
+    email: Optional[str] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+
+class MarkAllReadRequest(BaseModel):
+    user_identifier: str
+
+@app.get("/api/notifications/{user_identifier}")
+def fetch_user_notifications(user_identifier: str, limit: int = 50):
+    """Fetch notifications for authenticated commuter with unread counter."""
+    notifs = get_user_notifications(user_identifier, limit=limit)
+    unread_count = get_unread_notifications_count(user_identifier)
+    return {
+        "user_identifier": user_identifier,
+        "notifications": notifs,
+        "total_count": len(notifs),
+        "unread_count": unread_count
+    }
+
+@app.post("/api/notifications/{notification_id}/read")
+def read_notification(notification_id: str, user_identifier: Optional[str] = None):
+    """Mark a notification as read."""
+    success = mark_notification_as_read(notification_id, user_identifier=user_identifier)
+    return {"status": "SUCCESS" if success else "NOT_FOUND", "notification_id": notification_id}
+
+@app.post("/api/notifications/read-all")
+def read_all_notifications(req: MarkAllReadRequest):
+    """Mark all notifications as read for a user."""
+    updated = mark_all_notifications_as_read(req.user_identifier)
+    return {"status": "SUCCESS", "updated_count": updated}
+
+@app.post("/api/alerts/evaluate-now")
+def evaluate_user_alerts(req: EvaluateAlertsRequest):
+    """
+    On-demand personalized location-based alert generation.
+    Evaluates active incidents against commuter's GPS coordinates, saved places, and route corridor.
+    """
+    user = None
+    if req.user_code:
+        user = get_user_by_code(req.user_code)
+    elif req.email:
+        from backend.auth_service import get_all_users
+        for u in get_all_users():
+            if (u.get("email") or "").lower() == req.email.lower():
+                user = u
+                break
+    
+    if not user:
+        from backend.auth_service import get_all_users
+        all_u = get_all_users()
+        user = all_u[0] if all_u else {
+            "id": "anon",
+            "user_code": req.user_code or "COMMUTER",
+            "full_name": "Active Commuter",
+            "default_origin": "Ashokvan (Borivali East)",
+            "default_destination": "Versova (Andheri West)",
+            "alert_preferences": {"notify_nearby": True, "notify_commute": True}
+        }
+
+    coords = None
+    if req.lat is not None and req.lon is not None:
+        coords = {"lat": req.lat, "lon": req.lon}
+
+    new_alerts = alert_engine.evaluate_alerts_for_user(user, current_coords=coords)
+    user_id = user.get("user_code") or user.get("id") or "COMMUTER"
+    all_notifs = get_user_notifications(user_id)
+
+    return {
+        "status": "SUCCESS",
+        "user_code": user_id,
+        "newly_generated_alerts": new_alerts,
+        "newly_generated_count": len(new_alerts),
+        "total_notifications": all_notifs,
+        "unread_count": get_unread_notifications_count(user_id)
+    }
+
+@app.post("/api/alerts/test-trigger")
+def sample_trigger_alert(req: EvaluateAlertsRequest):
+    """Generates a verified demonstration alert for testing in-app notification center and push."""
+    user_id = req.user_code or "COMMUTER_DEMO"
+    import time
+    demo_notif = {
+        "user_code": user_id,
+        "alert_type": "COMMUTE",
+        "title": "Commute Corridor Alert (MAJOR): Andheri Subway Waterlogging",
+        "message": "Heavy water accumulation (45cm) reported at Andheri Subway. Diversions active via Gokhale Bridge.",
+        "severity": "MAJOR",
+        "channels": ["IN_APP", "WEB_PUSH"],
+        "delivery_status": "DELIVERED",
+        "is_read": False,
+        "missing_data_qualification": None,
+        "evidence_summary": {"source": "MUMBAI_DISASTER_CAD_112", "confidence_score": 0.92},
+        "idempotency_key": f"test_{user_id}_{int(time.time())}"
+    }
+    save_user_notification(demo_notif)
+    return {"status": "SUCCESS", "notification": demo_notif}
 
 @app.get("/api/simulation/timeline")
 def get_simulation_timeline():
@@ -194,6 +421,134 @@ def get_incident_graph(incident_id: str):
 @app.get("/api/incident/{incident_id}/ledger")
 def get_incident_ledger(incident_id: str):
     return engine.get_evidence_confidence_ledger(incident_id)
+
+# -----------------------------------------------------------------------------
+# CORE CAUSAL INTELLIGENCE & MUNICIPAL RESPONSE ENDPOINTS (Phase 13)
+# -----------------------------------------------------------------------------
+class OperatorBriefingRequest(BaseModel):
+    query: Optional[str] = None
+
+class CreateWorkOrderDraftRequest(BaseModel):
+    incident_id: str = "INC_MUM_20260715_01"
+    operator_name: Optional[str] = "OPERATOR_DESK"
+
+class UpdateWorkOrderRequest(BaseModel):
+    status: Optional[str] = None
+    problem_description: Optional[str] = None
+    recommended_response: Optional[str] = None
+    priority: Optional[str] = None
+    department: Optional[str] = None
+    operator_notes: Optional[str] = None
+    actor: Optional[str] = "OPERATOR"
+    role: Optional[str] = "OPERATOR"
+
+class WorkOrderDecisionRequest(BaseModel):
+    actor: Optional[str] = "OPERATOR"
+    role: Optional[str] = "OPERATOR"
+    notes: Optional[str] = None
+
+@app.get("/api/incident/{incident_id}/causal-analysis")
+def get_incident_causal_analysis(incident_id: str):
+    """Requirement 2: Explicit Root-Cause vs. Symptom Distinction."""
+    return engine.get_root_cause_analysis(incident_id)
+
+@app.get("/api/incident/{incident_id}/timeline-scrubber")
+def get_incident_timeline_scrubber(incident_id: str):
+    """Requirement 3: Interactive Signal Arrival Timeline."""
+    return {
+        "incident_id": incident_id,
+        "events": engine.get_timeline_scrubber_events(incident_id)
+    }
+
+@app.get("/api/incident/{incident_id}/reconstruct-step")
+def reconstruct_incident_step(incident_id: str, step: int = 8):
+    """Requirement 3: Historical state reconstruction without mutating production data."""
+    return engine.reconstruct_incident_state_at_step(incident_id, step)
+
+@app.get("/api/incident/{incident_id}/comparison")
+def get_incident_comparison(incident_id: str):
+    """Requirement 4: Before vs. After comparison (Hackathon Centerpiece)."""
+    return engine.get_before_vs_after_comparison(incident_id)
+
+@app.post("/api/incident/{incident_id}/operator-briefing")
+def post_incident_operator_briefing(incident_id: str, req: OperatorBriefingRequest = None):
+    """Requirement 5: Explainable Operator Briefing with optional query filter."""
+    query = req.query if req else None
+    return engine.generate_explainable_operator_briefing(incident_id, query)
+
+@app.get("/api/incident/{incident_id}/operator-briefing")
+def get_incident_operator_briefing_get(incident_id: str, query: Optional[str] = None):
+    """Requirement 5: Explainable Operator Briefing GET accessor."""
+    return engine.generate_explainable_operator_briefing(incident_id, query)
+
+@app.post("/api/work-orders/draft")
+def create_draft_work_order(req: CreateWorkOrderDraftRequest):
+    """Requirement 6: Generate municipal work order draft."""
+    return engine.generate_draft_work_order(req.incident_id, req.operator_name)
+
+@app.get("/api/work-orders")
+def list_municipal_work_orders(incident_id: Optional[str] = None):
+    """Requirement 6: List municipal work orders."""
+    return {"work_orders": get_municipal_work_orders(incident_id)}
+
+@app.get("/api/work-orders/{work_order_id}")
+def get_single_work_order(work_order_id: str):
+    """Requirement 6: Retrieve single municipal work order with audit trail."""
+    order = get_municipal_work_order_by_id(work_order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Work order not found")
+    audit = get_work_order_audit_logs(work_order_id)
+    return {"work_order": order, "audit_trail": audit}
+
+@app.patch("/api/work-orders/{work_order_id}")
+def update_work_order_route(work_order_id: str, req: UpdateWorkOrderRequest):
+    """Requirement 6: Edit or update draft municipal work order."""
+    updates = req.dict(exclude_unset=True, exclude={"actor", "role"})
+    try:
+        updated = update_municipal_work_order(work_order_id, updates, req.actor, req.role)
+        if not updated:
+            raise HTTPException(status_code=404, detail="Work order not found")
+        return {"status": "SUCCESS", "work_order": updated}
+    except PermissionError as pe:
+        raise HTTPException(status_code=403, detail=str(pe))
+
+@app.post("/api/work-orders/{work_order_id}/approve")
+def approve_work_order_route(work_order_id: str, req: WorkOrderDecisionRequest):
+    """Requirement 6: Approve municipal work order with role authorization."""
+    try:
+        updated = update_municipal_work_order(
+            work_order_id,
+            {"status": "APPROVED", "operator_notes": req.notes or "Approved for field response verification."},
+            actor=req.actor,
+            role=req.role
+        )
+        if not updated:
+            raise HTTPException(status_code=404, detail="Work order not found")
+        return {"status": "SUCCESS", "message": "Work order approved successfully.", "work_order": updated}
+    except PermissionError as pe:
+        raise HTTPException(status_code=403, detail=str(pe))
+
+@app.post("/api/work-orders/{work_order_id}/reject")
+def reject_work_order_route(work_order_id: str, req: WorkOrderDecisionRequest):
+    """Requirement 6: Reject municipal work order with role authorization."""
+    try:
+        updated = update_municipal_work_order(
+            work_order_id,
+            {"status": "REJECTED", "operator_notes": req.notes or "Rejected by reviewer."},
+            actor=req.actor,
+            role=req.role
+        )
+        if not updated:
+            raise HTTPException(status_code=404, detail="Work order not found")
+        return {"status": "SUCCESS", "message": "Work order rejected.", "work_order": updated}
+    except PermissionError as pe:
+        raise HTTPException(status_code=403, detail=str(pe))
+
+@app.get("/api/work-orders/{work_order_id}/audit-trail")
+def get_work_order_audit_route(work_order_id: str):
+    """Requirement 6: Retrieve chronological audit trail."""
+    return {"work_order_id": work_order_id, "audit_trail": get_work_order_audit_logs(work_order_id)}
+
 
 @app.get("/api/commute-fingerprint/{user_id}")
 def get_commute_fingerprint(user_id: str):

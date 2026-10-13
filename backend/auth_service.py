@@ -223,7 +223,8 @@ def update_user_profile(user_code: str, updates: Dict[str, Any]) -> Dict[str, An
     allowed_fields = [
         "full_name", "phone", "default_origin", "default_destination",
         "preferred_mode", "scheduled_sms_time", "sms_consent",
-        "sms_notifications_enabled", "alert_preferences"
+        "sms_notifications_enabled", "alert_preferences",
+        "nearby_radius_km", "min_alert_severity", "saved_locations"
     ]
     for key in allowed_fields:
         if key in updates:
